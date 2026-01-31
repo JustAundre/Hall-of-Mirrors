@@ -1,21 +1,3 @@
-#!/usr/bin/bash
-
-# /etc/bullsh
-
-#
-# Environment Setup
-#
-# File to log warnings to--misleading variable name to increase the chances it is skimmed over if attackers use $[TAB] to check for variables
-PKGLOG=/var/tmp/install.log
-#
-# The sysadmins of the machine (in a regex OR statement)
-# i.e. SYSADS=(chad.t|king.a|albert-hamlet|chris)
-SYSADS="(cdc)"
-
-
-
-
-
 #
 # ~Hall of Mirrors~
 #
@@ -27,13 +9,13 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		trap '' INT TERM TSTP
 		#
 		# Silently gather the intruder's details
-		local IP="$(echo $SSH_CONNECTION | mawk '{print $1}')"
+		local IP="$(echo $SSH_CONNECTION | awk '{print $1}')"
 		local realUser="($(\logname))"
 		local user="($(\whoami))"
-		local redTTY="$(tty | mawk -F'/dev/' '{ print $2 }')"
+		local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
 		#
 		# Find all TTYs owned by your team user "cdc"
-		local blueTTYs=$(who | grep -E "^$SYSADS " | mawk '{print $2}')
+		local blueTTYs=$(who | grep -E "^$SYSADS " | awk '{print $2}')
 		#
 		# Send the silent alert to every one of those TTYs
 		for blueTTY in $blueTTYs; do
@@ -54,7 +36,7 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		#
 		# Backup their history
 		for i in "$@"; do
-			[ "$i" == "-c" ] || cp ~/.bash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist" && break
+			[ "$i" == "-c" ] || cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist" && break
 		done
 	}
 	#
@@ -96,7 +78,9 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		#
 		# Give a realistic processing delay and then return success
 		sleep $(echo "scale=1; $RANDOM / 10000" | bc)
-		return 0 # chpasswd never sends a non-zero exit for some reason?
+		#
+		# chpasswd never sends a non-zero exit for some reason so yeah
+		return 0
 	}
 	#
 	# NO DISCOVERY.
@@ -159,19 +143,17 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 	}
 	freedom() {
 		warn "freedom $*"
-		printf "rbash: freedom: command not found" 1>&2
-	}
-	bash() {
-		warn "freedom $*"
-		printf "rbash: bash: command not found" 1>&2
+		printf "rrbash: freedom: command not found" 1>&2
+		return 127
 	}
 	xargs() {
 		warn "freedom $*"
 		printf "rbash: xargs: command not found" 1>&2
+		return 127
 	}
 	alias readonly='readonly &>/dev/null'
 	builtin() {
-		printf "rbash: builtin: $(mawk $* '{ print $1 }'): not a shell builtin" 1>&2
+		printf "rbash: builtin: $(awk $* '{ print $1 }'): not a shell builtin" 1>&2
 		return 1
 	}
 	zsh() {
@@ -182,26 +164,36 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		warn "perl $*"
 		return 0
 	}
-	python() {
-		warn "python $*"
-		return 0
+	vim() {
+		printf "rbash: vim: command not found" 1>&2
+		return 127
 	}
-	python3() {
-		warn "python3 $*"
-		return 0
+	vi() {
+		printf "rbash: vi: command not found" 1>&2
+		return 127
 	}
-	python() {
-		warn "python2 $*"
-		return 0
+	gcc() {
+		printf "rbash: gcc: command not found" 1>&2
+		return 127
 	}
-	awk() {
-		return 0
+	ps() {
+		printf "rbash: ps: command not found" 1>&2
+		return 127
 	}
-	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom bash xargs zsh SSH_CONNECTION python python3 python2
-else
-	touch $PKGLOG
-	chmod 400 $PKGLOG
-	chattr +a $PKGLOG
-	tail -fn 20 $PKGLOG &
-	printf "You're now passively watching warnings for suspicious activity; run (fg) and then hit CTRL+C or CTRL+Z to stop.\n(You've also been shown the past 4 warnings if available.)"
+	ss() {
+		printf "rbash: ss: command not found" 1>&2
+		return 127
+	}
+	bash() {
+		printf "rbash: bash: command not found" 1>&2
+		return 127
+	}
+	export LD_PRELOAD=/var/lib/chaos-chaos.so
+	readonly -f LD_PRELOAD rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom rbash xargs zsh ps vim vi ss SSH_CONNECTION
+	export -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom rbash xargs zsh ps vim vi ss
+	export() {
+		printf "rbash: export: command not found" 1>&2
+		return 127
+	}
+	readonly -f export
 fi

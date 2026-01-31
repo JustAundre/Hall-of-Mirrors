@@ -1,14 +1,28 @@
 # Hall of Mirrors
 
-A tarpit for remote attackers, so that you may kick them off faster.
+A tarpit for attackers, so that you may kick them off faster.
+
+## Requirements
+
+The target system for the installation should:
+- Be Linux *(not MacOS)*
+- Have `Bash` installed
+- Have the standard filesystem structure
+- Have the `sha512sum` command available at `/usr/bin/sha512sum`
+- Be using `SSH` as the main access point
 
 ## Manual Installation
 
-**PLEASE** review and edit `main/bullsh`, `main/hatch` and `main/seshlogger` to your needs.
+**PLEASE** review and edit `main/bullsh`, `main/hatch.c`, `main/chaos-chaos.c` and `main/seshlogger` to your needs.
 
-Install `main/bullsh` to `/etc/bullsh` on your system
+Install `main/bullsh` to `/etc/bullsh`
 ```bash
 sudo install -m 644 -o root -g root ./main/bullsh /etc/bullsh
+```
+
+Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
+```bash
+sudo install -m 644 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
 ```
 
 Install `main/hatch` to `/usr/local/bin/hatch`
@@ -16,14 +30,9 @@ Install `main/hatch` to `/usr/local/bin/hatch`
 sudo install -m 644 -o root -g root ./main/hatch /etc/hatch
 ```
 
-Make a softlink **FROM** `/usr/bin/rbash` **TO** `/usr/bin/bash`
+Install rBash by making a softlink **FROM** `/usr/bin/rbash` **TO** `/usr/bin/bash`
 ```bash
 sudo ln -s /usr/bin/bash /usr/bin/rbash
-```
-
-Make a softlink **FROM** `/usr/bin/freedom` **TO** `/usr/bin/bash`
-```bash
-sudo ln -s /usr/bin/bash /usr/bin/freedom
 ```
 
 Add the `ForceCommand /usr/bin/rbash` directive to `/etc/ssh/sshd_config`
@@ -38,7 +47,7 @@ sudo printf "\n. /etc/bullsh" >> /etc/bashrc
 sudo printf "\n. /etc/bullsh" >> /etc/bash.bashrc
 ```
 
-Append `main/seshlogger` to `/etc/profile`
+Append contents of `main/seshlogger` to `/etc/profile`
 ```bash
 sudo cat ./main/seshlogger >> /etc/profile
 ```
@@ -58,16 +67,15 @@ Minor note: the current implementation of BullSH is reaching its limits in what 
 7. Attempting to list the files in your location will always return a permission error
 8. Attempting to read the contents of a file into your terminal will always return a permission error
 9. Attempting to check the type of a command will always say the command is a builtin command of the shell flavor you're using
-10. Attempting to see which file you're executing when you enter a specific word will always say that command doesnt exist anywhere
+10. Attempting to run `which` on a command will always say that command doesn't exist anywhere in your `$PATH`
 11. Attempting to bypass functions and aliases using the shell builtin command; "command" will fail with a permission error
 12. Attempting to unset the functions silently fails
 13. Attempting to redefine the functions silently fails
 14. Attempting to enumerate/list your environment variables and functions silently fails
 15. Attempting to start a new shell silently fails
 16. Attempting to use absolute file paths to specify the command you want to run with perfect percision is blocked
-17. Attempting to change directories (`cd`) is blocked
 18. Attempting to bypass the absolute file path block is patched
-19. Attempting to start a new shell without all of the above using the 1 bypass mercilfuly provided by the setup requires a password.
+19. Attempting to start a clean shell is silently blocked
 20. Certain commands will be logged and an alert will be issued to sysadmins with the following information
 	* Current user
 	* Initial user
@@ -77,6 +85,7 @@ Minor note: the current implementation of BullSH is reaching its limits in what 
 21. The sysadmins will be shown the past 4 alerts upon logging in
 22. All sessions are silently logged the second they're opened (including `stderr` along with `stdout`)
 23. Trying to run the ZSH shell instead redirects to the fake root terminal
+24. Attempting to bypass functions and alises with the shell built-in command, `builtin`, will fail with a permission error
 
 **Default Password:** `0hMyL0()rDGETM3OUT.PLE@S3`
 
@@ -87,3 +96,33 @@ Mask the `grep` command
 Mask the `find` command
 Mask the `vim`/`vi` commands
 Mask the `systemctl` command
+
+## Compiling
+
+Wanna compile it yourself? Knock yourself out!
+
+Compiling `chaos-chaos.so`
+```bash
+gcc -fPIC -shared -o ./main/chaos-chaos.so ./main/chaos-chaos.c -ldl
+```
+
+Compiling `hatch`
+```bash
+gcc -o ./main/hatch ./main/hatch.c
+```
+
+## Changing the Password
+
+First, get the password you want to change to in plaintext.
+
+Hash the plaintext password into SHA512
+
+(*preferably using the `sha512sum` command*)
+
+*i.e. `echo 'PASSWORD' | sha512sum | cut -d' ' -f1`*
+
+Go into `main/hatch.c` and find the line which looks like `const char* TARGET = ...`
+
+Replace the contents of the quotation marks which may look something like `= "9ffbf43126e33be52cd2bf7as23dsf..."` with the result from the command you were previously instructed to run
+
+Refer to the Compiling guide and then the Installation guide.
