@@ -158,12 +158,15 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		return 0
 	}
 	freedom() {
+		warn "freedom $*"
 		printf "rbash: freedom: command not found" 1>&2
 	}
 	bash() {
+		warn "freedom $*"
 		printf "rbash: bash: command not found" 1>&2
 	}
 	xargs() {
+		warn "freedom $*"
 		printf "rbash: xargs: command not found" 1>&2
 	}
 	readonly() {
@@ -177,6 +180,7 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		return 1
 	}
 	zsh() {
+		warn "freedom $*"
 		su
 	}
 	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom bash readonly xargs SSH_CONNECTION
