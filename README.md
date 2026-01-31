@@ -4,7 +4,7 @@ A tarpit for remote attackers, so that you may kick them off faster.
 
 ## Manual Installation
 
-Review and edit `main/bullshell` to your needs
+**PLEASE** review and edit `main/bullshell`, `main/hatch` and `main/seshlogger` to your needs.
 
 Install `main/bullshell` to `/etc/bullshell` on your system
 ```bash
@@ -48,20 +48,20 @@ sudo cat ./main/seshlogger >> /etc/profile
 1. Attempting to delete files will silently fail but simulate fake disk latency.
 2. Attempting to clear your command history will instead back up your history and not clear it.
 3. Attempting to remotely login to another server using the compromised server will warn blue team, wait a randomly decided amount of time and then give a fake error
-4. Attempting to switch to another user will give you a fake privileged shell
-5. Attempting to run a command with high privileges will pause your terminal for 3 seconds and then give a fake error about how you're not permitted to run commands with high privileges
+4. Attempting to switch to another user will give you a fake root shell
+5. Attempting to run a command with `sudo` will pause your terminal for 3 seconds and then give a fake error about how you're not permitted to run commands with root
 6. Attempting to change passwords for any user will pause you for a randomly decided amount of time and then not do anything
 7. Attempting to list the files in your location will always return a permission error
 8. Attempting to read the contents of a file into your terminal will always return a permission error
 9. Attempting to check the type of a command will always say the command is a builtin command of the shell flavor you're using
 10. Attempting to see which file you're executing when you enter a specific word will always say that command doesnt exist anywhere
 11. Attempting to bypass functions and aliases using the shell builtin command; "command" will fail with a permission error
-12. Attempting to unset the functions will not work
-13. Attempting to redefine the functions will not work
-14. Attempting to enumerate/list your environment variables and functions will not work
-15. Attempting to start a new shell will not work
+12. Attempting to unset the functions silently fails
+13. Attempting to redefine the functions silently fails
+14. Attempting to enumerate/list your environment variables and functions silently fails
+15. Attempting to start a new shell silently fails
 16. Attempting to use absolute file paths to specify the command you want to run with perfect percision is blocked
-17. Attempting to change directories is blocked
+17. Attempting to change directories (`cd`) is blocked
 18. Attempting to bypass the absolute file path block is patched
 19. Attempting to start a new shell without all of the above using the 1 bypass mercilfuly provided by the setup requires a password.
 20. Certain commands will be logged and an alert will be issued to sysadmins with the following information
@@ -71,5 +71,6 @@ sudo cat ./main/seshlogger >> /etc/profile
 	* Terminal session
 	* Full attempted command
 21. The sysadmins will be shown the past 4 alerts upon logging in
+22. All sessions are silently logged the second they're opened (including `stderr` along with `stdout`)
 
 **Default Password:** `0hMyL0()rDGETM3OUT.PLE@S3`
