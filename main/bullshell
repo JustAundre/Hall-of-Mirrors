@@ -21,15 +21,15 @@ SYSADS="(cdc)"
 #
 # Skip the user to the normal shell if they're a sysadmin
 if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
-	# Helper to warn sysadmins about intrusions
+	# Helper function to warn sysadmins about intrusions
 	warn() {
 		# Prevent the command from being canceled when the warning is being sent
 		trap '' INT TERM TSTP
 		#
 		# Silently gather the intruder's details
 		local IP="$(echo $SSH_CONNECTION | awk '{print $1}')"
-		local realUser="($(command logname))"
-		local user="($(command whoami))"
+		local realUser="($(\logname))"
+		local user="($(\whoami))"
 		local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
 		#
 		# Find all TTYs owned by your team user "cdc"
@@ -67,7 +67,7 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		for i in "$@"; do
 			if [[ "$i" =~ ^([0123456789]{1,3}.){4,4} ]]; then
 				sleep $(( $RANDOM % 10 ))
-				printf "ssh: connect to host $i port 22: Connection timed out"
+				printf "ssh: connect to host $i port 22: Connection timed out" 1>&2
 				return 255
 			fi
 		done
@@ -78,12 +78,8 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		#
 		# Gaslight with a fake root terminal
 		export PS1="root@$(hostname):$(basename $(pwd))# "
-		whoami() {
-			printf "root"
-		}
-		logname() {
-			printf "root"
-		}
+		alias whoami='printf "root"'
+		alias logname='printf "root"'
 		readonly -f logname whoami
 	}
 	sudo() {
@@ -92,6 +88,7 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		#
 		# Fake password prompt
 		read -r "[sudo] password for $(whoami): "
+		sleep 3
 		printf "$(whoami) is not in the sudoers file."
 	}
 	chpasswd() {
@@ -158,6 +155,9 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 	declare() {
 		return 0
 	}
+	export() {
+		return 0
+	}
 	freedom() {
 		printf "rbash: freedom: command not found" 1>&2
 	}
@@ -173,7 +173,11 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		done
 		builtin readonly $@
 	}
-	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn freedom bash readonly xargs
+	builtin() {
+		printf "rbash: builtin: $(awk $* '{ print $1 }'): not a shell builtin" 1>&2
+		return 1
+	}
+	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom bash readonly xargs SSH_CONNECTION
 else
 	touch /var/tmp/install.log
 	chmod 644 /var/tmp/install.log
