@@ -72,5 +72,6 @@ sudo cat ./main/seshlogger >> /etc/profile
 	* Full attempted command
 21. The sysadmins will be shown the past 4 alerts upon logging in
 22. All sessions are silently logged the second they're opened (including `stderr` along with `stdout`)
+23. Trying to run the ZSH shell instead redirects to the fake root terminal
 
 **Default Password:** `0hMyL0()rDGETM3OUT.PLE@S3`

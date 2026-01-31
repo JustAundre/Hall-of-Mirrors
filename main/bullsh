@@ -80,7 +80,6 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		export PS1="root@$(hostname):$(basename $(pwd))# "
 		alias whoami='printf "root"'
 		alias logname='printf "root"'
-		readonly -f logname whoami
 	}
 	sudo() {
 		# Warn blue team
