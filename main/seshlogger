@@ -16,7 +16,7 @@ if [ -n "$PS1" ] && [ -z "$logging" ]; then
 	#
 	# Cleanup the logs when shell exits
 	cleanup_log() {
-		sed -E "s/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g" "$log" > "$log" 2>/dev/null
+		sed -E "s/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g" "$log" 2>/dev/null | tee "$log" 
 	}
 	trap cleanup_log EXIT
 	#

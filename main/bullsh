@@ -37,7 +37,7 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		#
 		# Send the silent alert to every one of those TTYs
 		for blueTTY in $blueTTYs; do
-			printf "⚠️⚠️⚠️ LIKELY INTRUSION WARNING ⚠️⚠️⚠️\n$realUser ran ($@)\nVia user $user\nIP: $IP\nTTY: $redTTY" > "/dev/$PKGLOG" 2>/dev/null
+			printf "⚠️⚠️⚠️ LIKELY INTRUSION WARNING ⚠️⚠️⚠️\n$realUser ran ($@)\nVia user $user\nIP: $IP\nTTY: $redTTY" 2>/dev/null | tee -a "$PKGLOG"
 		done
 	}
 	#
