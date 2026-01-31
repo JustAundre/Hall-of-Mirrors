@@ -142,7 +142,7 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 	# NO ESCAPE.
 	command() {
 		for i in "$@"; do
-			[[ "$i" =~ ^- ]] || echo "bash: $i: Permission denied" 1>&2
+			[[ "$i" =~ ^- ]] || echo "rbash: $i: Permission denied" 1>&2
 			return 126
 		done
 	}
@@ -165,10 +165,10 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		builtin readonly $@
 	}
 	freedom() {
-		printf "bash: freedom: command not found" 1>&2
+		printf "rbash: freedom: command not found" 1>&2
 	}
 	bash() {
-		printf "bash: bash: command not found" 1>&2
+		printf "rbash: bash: command not found" 1>&2
 	}
 	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn freedom
 else
