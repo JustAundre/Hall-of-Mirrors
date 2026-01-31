@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 SHA512HASH="3b143e352086df25e948560dffbe12d266e6a44de9162c8e19b6688868eb36131831ce197ce7d5acfa86cc50dd2a4c0ebbf86614d05e5e52da713a79a1fadd28"
-read -srp "What's the password?: " GIVENPASS
-if [ "$(echo "$GIVENPASS" | sha512sum | awk -F' ' '{ print $1 }')" = "$SHA512HASH" ]; then
+read -sr
+if [ "$(echo "$REPLY" | sha512sum | awk -F' ' '{ print $1 }')" = "$SHA512HASH" ]; then
+	unset reply
 	freedom --norc
 else
+	unset reply
 	su
 fi
