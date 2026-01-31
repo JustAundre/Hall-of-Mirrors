@@ -167,6 +167,9 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 	freedom() {
 		printf "bash: freedom: command not found" 1>&2
 	}
+	bash() {
+		printf "bash: bash: command not found" 1>&2
+	}
 	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn freedom
 else
 	touch /var/tmp/install.log
