@@ -1,0 +1,177 @@
+#!/usr/bin/bash
+
+# /etc/bullshell
+
+#
+# Environment Setup
+#
+# File to log warnings to--misleading variable name to increase the chances it is skimmed over if attackers use $[TAB] to check for variables
+PKGLOG=/var/tmp/install.log
+#
+# The sysadmins of the machine (in a regex OR statement)
+# i.e. SYSADS=(chad.t|king.a|albert-hamlet|chris)
+SYSADS="(cdc)"
+
+
+
+
+
+#
+# ~Hall of Mirrors~
+#
+# Skip the user to the normal shell if they're a sysadmin
+if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
+	# Helper to warn sysadmins about intrusions
+	warn() {
+		# Prevent the command from being canceled when the warning is being sent
+		trap '' INT TERM TSTP
+		#
+		# Silently gather the intruder's details
+		local IP="$(echo $SSH_CONNECTION | awk '{print $1}')"
+		local realUser="($(command logname))"
+		local user="($(command whoami))"
+		local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
+		#
+		# Find all TTYs owned by your team user "cdc"
+		local blueTTYs=$(who | grep -E "^$SYSADS " | awk '{print $2}')
+		#
+		# Send the silent alert to every one of those TTYs
+		for blueTTY in $blueTTYs; do
+			printf "⚠️⚠️⚠️ LIKELY INTRUSION WARNING ⚠️⚠️⚠️\n$realUser ran ($@)\nVia user $user\nIP: $IP\nTTY: $redTTY" > "/dev/$PKGLOG" 2>/dev/null
+		done
+	}
+	#
+	# Your digital footprint is staying.
+	rm() {
+		# Use find to pretend like its actually deleting shit
+		for i in "$@"; do
+			find "$i" >/dev/null 2>/dev/null
+		done
+	}
+	history() {
+		# Warn the blue team
+		warn "history $*"
+		#
+		# Backup their history
+		for i in "$@"; do
+			[ "$i" == "-c" ] || cp ~/.bash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist" && break
+		done
+	}
+	#
+	# Alert on suspicious commands
+	ssh() {
+		# Warn the blue team
+		warn "ssh $*"
+		#
+		# Execute the real command
+		for i in "$@"; do
+			if [[ "$i" =~ ^([0123456789]{1,3}.){4,4} ]]; then
+				sleep $(( $RANDOM % 10 ))
+				printf "ssh: connect to host $i port 22: Connection timed out"
+				return 255
+			fi
+		done
+	}
+	su() {
+		# Warn the blue team
+		warn "su $*"
+		#
+		# Gaslight with a fake root terminal
+		export PS1="root@$(hostname):$(basename $(pwd))# "
+		whoami() {
+			printf "root"
+		}
+		logname() {
+			printf "root"
+		}
+		readonly -f logname whoami
+	}
+	sudo() {
+		# Warn blue team
+		warn "sudo $*"
+		#
+		# Fake password prompt
+		read -r "[sudo] password for $(whoami): "
+		printf "$(whoami) is not in the sudoers file."
+	}
+	chpasswd() {
+		# Warn the blue team
+		warn "chpasswd $@"
+		#
+		# Give a realistic processing delay and then return success
+		sleep $(echo "scale=1; $RANDOM / 10000" | bc)
+		return 0 # chpasswd never sends a non-zero exit for some reason?
+	}
+	#
+	# NO DISCOVERY.
+	ls() {
+		for i in "$@"; do
+			if [[ "$i" =~ ^- ]]; then
+				printf "ls: cannot open directory '$i': Permission denied" 1>&2
+				return 2
+			fi
+		done
+	}
+	cat() {
+		for i in "$@"; do
+			if [[ "$i" =~ ^- ]]; then
+				echo "cat: $i: Permission denied" 1>&2
+				return 1
+			fi
+		done
+	}
+	less() {
+		for i in "$@"; do
+			echo "$i: Permission denied" 1>&2
+			return 1
+		done
+	}
+	type() {
+		for i in "$@"; do
+			echo "$i is a shell builtin"
+			return 0
+		done
+	}
+	which() {
+		for i in "$@"; do
+			echo "which: no $i in ($PATH)" 1>&2
+			return 1
+		done
+	}
+	#
+	# NO ESCAPE.
+	command() {
+		for i in "$@"; do
+			[[ "$i" =~ ^- ]] || echo "bash: $i: Permission denied" 1>&2
+			return 126
+		done
+	}
+	unset() {
+		return 0
+	}
+	unalias() {
+		return 0
+	}
+	env() {
+		return 0
+	}
+	declare() {
+		return 0
+	}
+	readonly() {
+		for i in "$@"; do
+			[[ "$i" =~ ^- ]] && return 0
+		done
+		builtin readonly $@
+	}
+	freedom() {
+		printf "bash: freedom: command not found" 1>&2
+	}
+	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn freedom
+else
+	touch /var/tmp/install.log
+	chmod 644 /var/tmp/install.log
+	chattr +a /var/tmp/install.log
+	tail -fn 20 /var/tmp/install.log &
+	printf "You're now passively watching warnings for suspicious activity; run (fg) and then hit CTRL+C or CTRL+Z to stop.\n(You've also been shown the past 4 warnings if available.)"
+fi
