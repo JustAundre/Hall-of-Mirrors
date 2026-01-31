@@ -47,6 +47,7 @@ sudo cat ./main/seshlogger >> /etc/profile
 
 **ILL-ADVISED TO ATTEMPT TO DO ANYTHING INSIDE OF BULLSH; MAY YIELD UNDESIRABLE BEHAVIOR**
 **ONLY RUN COMMANDS IN BULLSH TO TEST ITS FUNCTIONALITY AND REPORT BUGS**
+Minor note: the current implementation of BullSH is reaching its limits in what it can do; a recode may needed and may take at most a week or longer if I take a break day.
 
 1. Attempting to delete files will silently fail but simulate fake disk latency.
 2. Attempting to clear your command history will instead back up your history and not clear it.

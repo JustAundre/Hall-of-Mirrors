@@ -27,13 +27,13 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		trap '' INT TERM TSTP
 		#
 		# Silently gather the intruder's details
-		local IP="$(echo $SSH_CONNECTION | awk '{print $1}')"
+		local IP="$(echo $SSH_CONNECTION | mawk '{print $1}')"
 		local realUser="($(\logname))"
 		local user="($(\whoami))"
-		local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
+		local redTTY="$(tty | mawk -F'/dev/' '{ print $2 }')"
 		#
 		# Find all TTYs owned by your team user "cdc"
-		local blueTTYs=$(who | grep -E "^$SYSADS " | awk '{print $2}')
+		local blueTTYs=$(who | grep -E "^$SYSADS " | mawk '{print $2}')
 		#
 		# Send the silent alert to every one of those TTYs
 		for blueTTY in $blueTTYs; do
@@ -169,21 +169,35 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		warn "freedom $*"
 		printf "rbash: xargs: command not found" 1>&2
 	}
-	readonly() {
-		for i in "$@"; do
-			[[ "$i" =~ ^- ]] && return 0
-		done
-		builtin readonly $@
-	}
+	alias readonly='readonly &>/dev/null'
 	builtin() {
-		printf "rbash: builtin: $(awk $* '{ print $1 }'): not a shell builtin" 1>&2
+		printf "rbash: builtin: $(mawk $* '{ print $1 }'): not a shell builtin" 1>&2
 		return 1
 	}
 	zsh() {
-		warn "freedom $*"
+		warn "zsh $*"
 		su
 	}
-	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom bash readonly xargs SSH_CONNECTION
+	perl() {
+		warn "perl $*"
+		return 0
+	}
+	python() {
+		warn "python $*"
+		return 0
+	}
+	python3() {
+		warn "python3 $*"
+		return 0
+	}
+	python() {
+		warn "python2 $*"
+		return 0
+	}
+	awk() {
+		return 0
+	}
+	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom bash xargs zsh SSH_CONNECTION python python3 python2
 else
 	touch $PKGLOG
 	chmod 400 $PKGLOG
