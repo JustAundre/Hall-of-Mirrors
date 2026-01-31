@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-# /etc/bullshell
+# /etc/bullsh
 
 #
 # Environment Setup
@@ -179,9 +179,9 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 	}
 	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom bash readonly xargs SSH_CONNECTION
 else
-	touch /var/tmp/install.log
-	chmod 644 /var/tmp/install.log
-	chattr +a /var/tmp/install.log
-	tail -fn 20 /var/tmp/install.log &
+	touch $PKGLOG
+	chmod 400 $PKGLOG
+	chattr +a $PKGLOG
+	tail -fn 20 $PKGLOG &
 	printf "You're now passively watching warnings for suspicious activity; run (fg) and then hit CTRL+C or CTRL+Z to stop.\n(You've also been shown the past 4 warnings if available.)"
 fi

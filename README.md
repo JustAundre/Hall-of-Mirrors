@@ -4,11 +4,11 @@ A tarpit for remote attackers, so that you may kick them off faster.
 
 ## Manual Installation
 
-**PLEASE** review and edit `main/bullshell`, `main/hatch` and `main/seshlogger` to your needs.
+**PLEASE** review and edit `main/bullsh`, `main/hatch` and `main/seshlogger` to your needs.
 
-Install `main/bullshell` to `/etc/bullshell` on your system
+Install `main/bullsh` to `/etc/bullsh` on your system
 ```bash
-sudo install -m 644 -o root -g root ./main/bullshell /etc/bullshell
+sudo install -m 644 -o root -g root ./main/bullsh /etc/bullsh
 ```
 
 Install `main/hatch` to `/usr/local/bin/hatch`
@@ -31,11 +31,11 @@ Add the `ForceCommand /usr/bin/rbash` directive to `/etc/ssh/sshd_config`
 sudo printf "\n#Drop everyone into a restricted shell by default\nForceCommand /usr/bin/rbash" >>/etc/ssh/sshd_config
 ```
 
-Add the `. /etc/bullshell` directive to `/etc/bashrc` AND/OR `/etc/bash.bashrc` (depending on your flavor of Linux).
+Add the `. /etc/bullsh` directive to `/etc/bashrc` AND/OR `/etc/bash.bashrc` (depending on your flavor of Linux).
 ```bash
-sudo printf "\n. /etc/bullshell" >> /etc/bashrc
+sudo printf "\n. /etc/bullsh" >> /etc/bashrc
 # OR
-sudo printf "\n. /etc/bullshell" >> /etc/bash.bashrc
+sudo printf "\n. /etc/bullsh" >> /etc/bash.bashrc
 ```
 
 Append `main/seshlogger` to `/etc/profile`
