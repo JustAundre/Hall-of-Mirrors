@@ -45,6 +45,9 @@ sudo cat ./main/seshlogger >> /etc/profile
 
 ## Features
 
+**ILL-ADVISED TO ATTEMPT TO DO ANYTHING INSIDE OF BULLSH; MAY YIELD UNDESIRABLE BEHAVIOR**
+**ONLY RUN COMMANDS IN BULLSH TO TEST ITS FUNCTIONALITY AND REPORT BUGS**
+
 1. Attempting to delete files will silently fail but simulate fake disk latency.
 2. Attempting to clear your command history will instead back up your history and not clear it.
 3. Attempting to remotely login to another server using the compromised server will warn blue team, wait a randomly decided amount of time and then give a fake error
@@ -75,3 +78,11 @@ sudo cat ./main/seshlogger >> /etc/profile
 23. Trying to run the ZSH shell instead redirects to the fake root terminal
 
 **Default Password:** `0hMyL0()rDGETM3OUT.PLE@S3`
+
+## Roadmap
+
+Mask the `set` command
+Mask the `grep` command
+Mask the `find` command
+Mask the `vim`/`vi` commands
+Mask the `systemctl` command
