@@ -158,19 +158,22 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 	declare() {
 		return 0
 	}
-	readonly() {
-		for i in "$@"; do
-			[[ "$i" =~ ^- ]] && return 0
-		done
-		builtin readonly $@
-	}
 	freedom() {
 		printf "rbash: freedom: command not found" 1>&2
 	}
 	bash() {
 		printf "rbash: bash: command not found" 1>&2
 	}
-	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn freedom
+	xargs() {
+		printf "rbash: xargs: command not found" 1>&2
+	}
+	readonly() {
+		for i in "$@"; do
+			[[ "$i" =~ ^- ]] && return 0
+		done
+		builtin readonly $@
+	}
+	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn freedom bash readonly xargs
 else
 	touch /var/tmp/install.log
 	chmod 644 /var/tmp/install.log
