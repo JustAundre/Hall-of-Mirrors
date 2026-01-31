@@ -177,6 +177,9 @@ if [[ ! "$(whoami)" =~ ^$SYSADS$ ]]; then
 		printf "rbash: builtin: $(awk $* '{ print $1 }'): not a shell builtin" 1>&2
 		return 1
 	}
+	zsh() {
+		su
+	}
 	readonly -f rm history ssh chpasswd su unset unalias command less cat env declare ls which type rm sudo warn builtin export freedom bash readonly xargs SSH_CONNECTION
 else
 	touch $PKGLOG
