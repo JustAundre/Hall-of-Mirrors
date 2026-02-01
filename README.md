@@ -38,6 +38,16 @@ Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
 sudo install -m 644 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
 ```
 
+Install `main/securecloak` to `/etc/securecloak`
+```bash
+sudo install -m 644 -o root -g root ./main/securecloak /etc/securecloak
+```
+
+Add the `. /etc/securecloak` directive to `/etc/bashrc` *OR* `/etc/bash.bashrc` (depending on your flavor of Linux).
+```bash
+sudo printf "# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak" >>/etc/bashrc >>/etc/bash.bashrc
+```
+
 Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
 ```bash
 sudo printf "\n#Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" >>/etc/ssh/sshd_config
