@@ -57,7 +57,7 @@ sudo() {
 	warn "sudo $*"
 	#
 	# Fake password prompt
-	read -r "[sudo] password for $USER: "
+	read -p "[sudo] password for $USER: "
 	#
 	# Fake incorrect password timeout
 	sleep 3
@@ -80,7 +80,7 @@ chpasswd() {
 # Your digital footprint is staying.
 rm() {
 	# Warn the blue team
-	warn "history $*"
+	warn "rm $*"
 	#
 	# Use find to pretend like its actually deleting shit
 	for i in "$@"; do
@@ -93,8 +93,12 @@ history() {
 	#
 	# Backup their history
 	for i in "$@"; do
-		[ "$i" == "-c" ] || cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist" && break
+		if ! [ "$i" == "-c" ] {
+			cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist"
+			return 0
+		}
 	done
+	builtin command history $@
 }
 #
 # Harder escape
@@ -108,8 +112,10 @@ command() {
 env() {
 	return 0
 }
+set() {
+	return 0
+}
 bash() {
-	clear
 	su
 }
 export LD_PRELOAD=/var/lib/chaos-chaos.so
