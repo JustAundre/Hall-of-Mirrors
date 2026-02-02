@@ -95,7 +95,6 @@ void logAttempt(const char* attempt) {
 }
 //
 // Main Logic
-// The meat of the shell--make them think they're root.
 int main() {
 	char input[128];
 	char inputHash[129];
@@ -111,6 +110,8 @@ int main() {
 			break;
 		}
 	}
+	//
+	// The "terminal"
 	while (1) {
 		// Fake root access :3
 		printf("root@%s# ", hostname);
@@ -135,7 +136,7 @@ int main() {
 			//
 			// Force exit after failure
 			printf("Connection to %s closed.\n", hostname);
-			exit(1); 
+			exit(1);
 		}
 	}
 	return 0;

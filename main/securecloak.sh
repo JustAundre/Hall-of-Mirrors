@@ -1,6 +1,9 @@
 # Helper function to warn sysadmins about intrusions
 PKGLOG="/var/tmp/install.log"
 warn() {
+	# Basic error handling
+	[ -z "$@" ] && return 1
+	#
 	# Prevent the command from being canceled when the warning is being sent
 	trap '' INT TERM TSTP
 	#
@@ -9,7 +12,7 @@ warn() {
 	local realUser="$(\logname)"
 	local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
 	#
-	# Find all TTYs owned by your team user "cdc"
+	# Find all TTYs owned by a sysadmin
 	local blueTTYs=$(who | grep -E "^$SYSADS " | awk '{print $2}')
 	#
 	# Send the silent alert to every one of those TTYs
@@ -37,7 +40,7 @@ su() {
 	warn "su $*"
 	#
 	# Gaslight with a fake root terminal
-	export PS1="root@$(hostname):$(basename $(pwd))# "
+	export PS1="root@\h \w # "
 	echo() {
 		printf "root\n"
 	}
@@ -111,8 +114,8 @@ bash() {
 }
 export LD_PRELOAD=/var/lib/chaos-chaos.so
 readonly -f chpasswd sudo su ssh history rm warn bash env
+export -f chpasswd sudo su ssh history rm warn bash env
 readonly SSH_CONNECTION PKGLOG
-export -f chpasswd sudo su ssh history rm
 #
 # Session logging logic
 function sessionLog() {
@@ -144,3 +147,6 @@ function sessionLog() {
 }
 sessionLog
 unset sessionLog
+#
+# Restore PS1 and TERM variable
+export PS1="\u@\h \w \$ " TERM="xterm-256color"
