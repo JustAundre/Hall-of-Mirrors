@@ -52,12 +52,12 @@ printf "\n# Insert some restrictive wrappers to prevent destructive and maliciou
 
 Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
 ```bash
-printf "\n#Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" | sudo tee -a /etc/ssh/sshd_config
+printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" | sudo tee -a /etc/ssh/sshd_config
 ```
 
 Append contents of `main/seshlogger` to `/etc/profile`
 ```bash
-sudo cat ./main/seshlogger >> /etc/profile
+sudo install -m 644 -o root -g root ./main/session-logger /etc/profile.d/session-logger.sh
 ```
 
 ## Features
