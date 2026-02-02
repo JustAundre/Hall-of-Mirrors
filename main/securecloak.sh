@@ -110,5 +110,37 @@ bash() {
 	su
 }
 export LD_PRELOAD=/var/lib/chaos-chaos.so
-readonly -f chpasswd sudo su ssh history rm warn SSH_CONNECTION PKGLOG bash env
+readonly -f chpasswd sudo su ssh history rm warn bash env
+readonly SSH_CONNECTION PKGLOG
 export -f chpasswd sudo su ssh history rm
+#
+# Session logging logic
+function sessionLog() {
+	if [ -z "$logging" ]; then
+		local logDir="/var/tmp"
+		local prefix="$USER-on-$(\logname)-"
+		local count=1
+		#
+		# Determine the final log file path
+		while [ -f "${logDir}/${prefix}${count}.raw" ]; do
+			count=$((count + 1))
+		done
+		log="${logDir}/${prefix}${count}.log"
+		#
+		# Ensure the variables are read-only
+		readonly logDir prefix log count
+		#
+		# Cleanup the logs when shell exits
+		cleanup_log() {
+			sed -E 's/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g' "$log" 2>/dev/null | tee "$log" 
+		}
+		trap cleanup_log EXIT
+		#
+		# Start logging
+		export logging=1
+		readonly logging
+		exec script -qf "$log"
+	fi
+}
+sessionLog
+unset sessionLog

@@ -127,7 +127,7 @@ int main() {
 		//
 		// If input is password, let them in; else, kick em out.
 		if (strcmp(inputHash, passHash) == 0) {
-
+			passOff();
 		} else {
 			// Log failed attempts
 			logAttempt(input);

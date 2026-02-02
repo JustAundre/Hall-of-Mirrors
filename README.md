@@ -42,7 +42,7 @@ sudo install -m 644 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.s
 
 Install `main/securecloak` to `/etc/securecloak`
 ```bash
-sudo install -m 644 -o root -g root ./main/securecloak /etc/securecloak
+sudo install -m 644 -o root -g root ./main/securecloak.sh /etc/securecloak.sh
 ```
 
 Add the `. /etc/securecloak` directive to `/etc/bashrc` *OR* `/etc/bash.bashrc` (depending on your flavor of Linux).
@@ -53,11 +53,6 @@ printf "\n# Insert some restrictive wrappers to prevent destructive and maliciou
 Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
 ```bash
 printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" | sudo tee -a /etc/ssh/sshd_config
-```
-
-Install `main/session-logger.sh` to `/etc/profile.d/session-logger.sh`
-```bash
-sudo install -m 644 -o root -g root ./main/session-logger.sh /etc/profile.d/session-logger.sh
 ```
 
 ## Features
