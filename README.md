@@ -55,9 +55,9 @@ Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
 printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" | sudo tee -a /etc/ssh/sshd_config
 ```
 
-Append contents of `main/seshlogger` to `/etc/profile`
+Install `main/session-logger.sh` to `/etc/profile.d/session-logger.sh`
 ```bash
-sudo install -m 644 -o root -g root ./main/session-logger /etc/profile.d/session-logger.sh
+sudo install -m 644 -o root -g root ./main/session-logger.sh /etc/profile.d/session-logger.sh
 ```
 
 ## Features
