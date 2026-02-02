@@ -8,12 +8,12 @@ warn() {
 	trap '' INT TERM TSTP
 	#
 	# Silently gather the intruder's details
-	local IP="$(echo $SSH_CONNECTION | awk '{print $1}')"
+	local IP="$(echo $SSH_CONNECTION | awk '{ print $1 }')"
 	local realUser="$(\logname)"
 	local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
 	#
 	# Find all TTYs owned by a sysadmin
-	local blueTTYs=$(who | grep -E "^$SYSADS " | awk '{print $2}')
+	local blueTTYs=$(who | grep -E "^$SYSADS " | awk '{ print $2 }')
 	#
 	# Send the silent alert to every one of those TTYs
 	for blueTTY in $blueTTYs; do
@@ -130,9 +130,6 @@ function sessionLog() {
 		done
 		log="${logDir}/${prefix}${count}.log"
 		#
-		# Ensure the variables are read-only
-		readonly logDir prefix log count
-		#
 		# Cleanup the logs when shell exits
 		cleanup_log() {
 			sed -E 's/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g' "$log" 2>/dev/null | tee "$log" 
@@ -140,8 +137,7 @@ function sessionLog() {
 		trap cleanup_log EXIT
 		#
 		# Start logging
-		export logging=1
-		readonly logging
+		readonly logging=1
 		exec script -qf "$log"
 	fi
 }

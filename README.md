@@ -58,9 +58,9 @@ printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" 
 ## Features
 
 1. Attempting to do enter anything that ISN'T the password is met with a no permission error from "*Bash*"
-2. After dropping into the real shell, you cannot `exit` back into BullSHH.
-3. All sessions after escaping BullSHH are logged (including `stderr`/`stdout` along with commands ran)
-4. Every wrong escape attempt in BullSSH also issues a warning
+2. After dropping into the real shell, you cannot `exit` back into BullSH.
+3. All sessions after escaping BullSH are logged (including `stderr`/`stdout` along with commands ran)
+4. Every wrong escape attempt in BullSH also issues a warning
 5. After escaping, some commands will instead issue an alert to sysadmins with
 * The username
 * The IP address
