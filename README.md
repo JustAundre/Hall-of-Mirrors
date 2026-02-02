@@ -12,10 +12,11 @@ The target system for the installation must...
 
 ## Manual Installation
 
-To install the this, you *should* have, but are allowed to *not* have...
+To install the this, you *should* preferably have, but are allowed to not have...
 - Have a shell, preferably `bash`.
 - Have `gcc`
 - Have `git`
+- Have `tee`
 
 Clone the repository/download its source code
 ```bash
@@ -46,12 +47,12 @@ sudo install -m 644 -o root -g root ./main/securecloak /etc/securecloak
 
 Add the `. /etc/securecloak` directive to `/etc/bashrc` *OR* `/etc/bash.bashrc` (depending on your flavor of Linux).
 ```bash
-sudo printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak" >>/etc/bashrc >>/etc/bash.bashrc
+printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak" >>/etc/bashrc | sudo tee -a /etc/bash.bashrc /etc/bashrc
 ```
 
 Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
 ```bash
-sudo printf "\n#Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" >>/etc/ssh/sshd_config
+printf "\n#Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" | sudo tee -a /etc/ssh/sshd_config
 ```
 
 Append contents of `main/seshlogger` to `/etc/profile`
