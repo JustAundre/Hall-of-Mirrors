@@ -11,7 +11,18 @@ const char* passHash = "d8e6e9a45f9d5cc17fc41abf91919728088f068cea0ddb788a4cf10c
 // Log file for failed login attempts
 const char* logFile = "/var/tmp/install.log";
 //
-// A function to handle the int signal
+// Whitelisted users ( i.e. {"root", "john.doe", "jane", NULL} -- KEEP THE NULL.)
+const char* sysAdmins[] = {"cdc", NULL};
+//
+// Function to pass off into real shell
+void passOff() {
+	char *args[] = {"/usr/bin/bash", "-i", NULL};
+	execv("/usr/bin/bash", args);
+	perror("execv");
+	exit(1);
+}
+//
+// Function to handle the int signal
 void handleSigInt(int sig) {
 	char hostname[1024];
 	gethostname(hostname, sizeof(hostname));
@@ -89,10 +100,17 @@ int main() {
 	char input[128];
 	char inputHash[129];
 	char hostname[1024];
-
 	gethostname(hostname, sizeof(hostname));
 	signal(SIGINT, handleSigInt);
-
+	//
+	// Pass off whitelisted sysadmins to the real shell immediately
+	char *currentUser = getenv("USER");
+	for (int i = 0; sysAdmins[i] != NULL; i++) {
+		if (strcmp(currentUser, sysAdmins[i]) == 0) {
+			passOff();
+			break;
+		}
+	}
 	while (1) {
 		// Fake root access :3
 		printf("root@%s# ", hostname);
@@ -109,10 +127,7 @@ int main() {
 		//
 		// If input is password, let them in; else, kick em out.
 		if (strcmp(inputHash, passHash) == 0) {
-			char *args[] = {"/usr/bin/bash", "-i", NULL};
-			execv("/usr/bin/bash", args);
-			perror("execv");
-			exit(1);
+
 		} else {
 			// Log failed attempts
 			logAttempt(input);
