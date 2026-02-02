@@ -28,7 +28,7 @@ Change directory into the project
 cd "./Hall-of-Mirrors"
 ```
 
-**PLEASE** review and edit `main/bullsh.c`, `main/chaos-chaos.c` and `main/seshlogger` to your needs.
+**PLEASE** review and edit `main/bullsh.c`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs.
 
 Install `main/bullsh` to `/usr/bin/bullsh`
 ```bash
@@ -40,14 +40,14 @@ Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
 sudo install -m 644 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
 ```
 
-Install `main/securecloak` to `/etc/securecloak`
+Install `main/securecloak.sh` to `/etc/securecloak.sh`
 ```bash
 sudo install -m 644 -o root -g root ./main/securecloak.sh /etc/securecloak.sh
 ```
 
 Add the `. /etc/securecloak` directive to `/etc/bashrc` *OR* `/etc/bash.bashrc` (depending on your flavor of Linux).
 ```bash
-printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak" >>/etc/bashrc | sudo tee -a /etc/bash.bashrc /etc/bashrc
+printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak" | sudo tee -a /etc/bash.bashrc /etc/bashrc
 ```
 
 Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
