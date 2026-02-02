@@ -1,6 +1,3 @@
-#
-# ~Hall of Mirrors~
-#
 # Helper function to warn sysadmins about intrusions
 PKGLOG="/var/tmp/install.log"
 warn() {
@@ -18,26 +15,6 @@ warn() {
 	# Send the silent alert to every one of those TTYs
 	for blueTTY in $blueTTYs; do
 		printf "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY)." 2>/dev/null >> "$PKGLOG"
-	done
-}
-#
-# Your digital footprint is staying.
-rm() {
-	# Warn the blue team
-	warn "history $*"
-	#
-	# Use find to pretend like its actually deleting shit
-	for i in "$@"; do
-		find "$i" >/dev/null 2>/dev/null
-	done
-}
-history() {
-	# Warn the blue team
-	warn "history $*"
-	#
-	# Backup their history
-	for i in "$@"; do
-		[ "$i" == "-c" ] || cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist" && break
 	done
 }
 #
@@ -96,6 +73,28 @@ chpasswd() {
 	# chpasswd never sends a non-zero exit for some reason so yeah
 	return 0
 }
+#
+# Your digital footprint is staying.
+rm() {
+	# Warn the blue team
+	warn "history $*"
+	#
+	# Use find to pretend like its actually deleting shit
+	for i in "$@"; do
+		find "$i" >/dev/null 2>/dev/null
+	done
+}
+history() {
+	# Warn the blue team
+	warn "history $*"
+	#
+	# Backup their history
+	for i in "$@"; do
+		[ "$i" == "-c" ] || cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist" && break
+	done
+}
+#
+# Harder escape
 command() {
 	if [ -z "$1" ]; then
 		printf "bash: $1: No permission\n"
@@ -103,6 +102,13 @@ command() {
 	fi
 	return 0
 }
+env() {
+	return 0
+}
+bash() {
+	clear
+	su
+}
 export LD_PRELOAD=/var/lib/chaos-chaos.so
-readonly -f chpasswd sudo su ssh history rm warn SSH_CONNECTION PKGLOG
+readonly -f chpasswd sudo su ssh history rm warn SSH_CONNECTION PKGLOG bash env
 export -f chpasswd sudo su ssh history rm

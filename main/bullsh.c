@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include <openssl/evp.h>
+#include <time.h>
 //
 // SHA512 password hash
-const char* password_hash = "d8e6e9a45f9d5cc17fc41abf91919728088f068cea0ddb788a4cf10c303dfe90765a641915a111935756751e7a4d7add1587ff28e05b878d5c5fcb0c51b96c6a";
+const char* passHash = "d8e6e9a45f9d5cc17fc41abf91919728088f068cea0ddb788a4cf10c303dfe90765a641915a111935756751e7a4d7add1587ff28e05b878d5c5fcb0c51b96c6a";
+//
+// Log file for failed login attempts
+const char* logFile = "/var/tmp/install.log";
 //
 // A function to handle the int signal
 void handleSigInt(int sig) {
@@ -20,30 +23,40 @@ void handleSigInt(int sig) {
 //
 // Function to hash input
 void hashInput(const char* input, char* output) {
-	unsigned char hash[EVP_MAX_MD_SIZE];
-	unsigned int length;
-	EVP_MD_CTX* context = EVP_MD_CTX_new();
-	EVP_DigestInit_ex(context, EVP_sha512(), NULL);
-	EVP_DigestUpdate(context, input, strlen(input));
-	EVP_DigestFinal_ex(context, hash, &length);
-	EVP_MD_CTX_free(context);
-	for(unsigned int i = 0; i < length; i++)
-		sprintf(output + (i * 2), "%02x", hash[i]);
+	// Write the input to a file
+	FILE *hash = fopen("/tmp/hashIn.txt", "w");
+	if (hash == NULL) return; // Basic error check
+	fprintf(hash, "%s", input);
+	fclose(hash);
+	//
+	// Hash the file and store the result in another file
+	system("sha512sum /tmp/hashIn.txt | awk '{print $1}' > /tmp/hashOut.txt");
+	//
+	// READ the hash back into the 'output' buffer
+	FILE *res = fopen("/tmp/hashOut.txt", "r");
+	if (res != NULL) {
+		// Read 128 characters (the SHA512 hex string)
+		if (fgets(output, 129, res) != NULL) {
+			// Remove any trailing newline that might be there
+			output[strcspn(output, "\n")] = 0;
+		}
+		fclose(res);
+	}
+	//
+	// Cleanup
+	remove("/tmp/hashIn.txt");
+	remove("/tmp/hashOut.txt");
 }
 //
 // Function to log failed attempts
 void logAttempt(const char* attempt) {
 	// Descrete false name for the log file
-	FILE *f = fopen("/var/tmp/install.log", "a");
+	FILE *f = fopen(logFile, "a");
 	if (f == NULL) return;
 	//
 	// Get metadata
 	char *user = getenv("USER");
 	char *ssh_info = getenv("SSH_CONNECTION");
-	//
-	// Default values if not running via SSH
-	if (user == NULL) user = "unknown";
-	if (ssh_info == NULL) ssh_info = "local_console";
 	//
 	// Extract just the IP from the SSH string
 	char connection[128];
@@ -62,19 +75,20 @@ void logAttempt(const char* attempt) {
 	fclose(f);
 }
 //
+// Main Logic
 // The meat of the shell--make them think they're root.
 int main() {
 	char input[128];
-	char hashed_input[129];
+	char inputHash[129];
 	char hostname[1024];
 
 	gethostname(hostname, sizeof(hostname));
 	signal(SIGINT, handleSigInt);
 
 	while (1) {
+		// Fake root access :3
 		printf("root@%s# ", hostname);
 		fflush(stdout);
-
 		if (fgets(input, sizeof(input), stdin) == NULL) {
 			printf("\033[0m");
 			break;
@@ -82,21 +96,27 @@ int main() {
 		//
 		// \033[0m Resets text to normal
 		printf("\033[0m");
-
+		//
+		// Parses the input
 		input[strcspn(input, "\n")] = 0;
 		if (strlen(input) == 0) continue;
-
-		hashInput(input, hashed_input);
-
-		if (strcmp(hashed_input, password_hash) == 0) {
+		hashInput(input, inputHash);
+		//
+		// If input is password, let them in; else, kick em out.
+		if (strcmp(inputHash, passHash) == 0) {
 			printf("...\n");
 			char *args[] = {"/bin/bash", NULL};
 			execv("/bin/bash", args);
 			perror("execv");
 			exit(1);
 		} else {
-			logAttempt(input); // Log failed attempts
+			// Log failed attempts
+			logAttempt(input);
 			printf("-bash: %s: Permission denied\n", input);
+			//
+			// Force exit after failure
+			printf("Connection to %s closed.\n", hostname);
+			exit(1); 
 		}
 	}
 	return 0;
