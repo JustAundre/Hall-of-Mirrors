@@ -16,7 +16,7 @@ const char* sysAdmins[] = {"cdc", NULL};
 //
 // Function to pass off into real shell
 void passOff() {
-	char *args[] = {"/usr/bin/bash", "-i", NULL};
+	char *args[] = {"/usr/bin/bash", "-i", "-l", NULL};
 	execv("/usr/bin/bash", args);
 	perror("execv");
 	exit(1);

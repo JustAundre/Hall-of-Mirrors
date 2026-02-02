@@ -47,7 +47,7 @@ sudo install -m 644 -o root -g root ./main/securecloak.sh /etc/securecloak.sh
 
 Add the `. /etc/securecloak` directive to `/etc/bashrc` *OR* `/etc/bash.bashrc` (depending on your flavor of Linux).
 ```bash
-printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak" | sudo tee -a /etc/bash.bashrc /etc/bashrc
+printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak.sh" | sudo tee -a /etc/bash.bashrc /etc/bashrc
 ```
 
 Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
