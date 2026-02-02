@@ -94,9 +94,6 @@ int main() {
 			break;
 		}
 		//
-		// \033[0m Resets text to normal
-		printf("\033[0m");
-		//
 		// Parses the input
 		input[strcspn(input, "\n")] = 0;
 		if (strlen(input) == 0) continue;
