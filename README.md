@@ -1,6 +1,6 @@
 # Hall of Mirrors
 
-BullSSH, the BullShit Shell for SSH.
+BullSH, the BullShit Shell for SSH.
 
 ## Requirements
 
@@ -32,7 +32,7 @@ cd "./Hall-of-Mirrors"
 
 Install `main/bullsh` to `/usr/bin/bullsh`
 ```bash
-sudo install -m 644 -o root -g root ./main/bullsh /etc/bullsh
+sudo install -m 655 -o root -g root ./main/bullsh /usr/bin/bullsh
 ```
 
 Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
@@ -62,7 +62,7 @@ sudo install -m 644 -o root -g root ./main/session-logger.sh /etc/profile.d/sess
 
 ## Features
 
-1. Attempting to do enter anything that ISN'T the password is met with a no permission error from *"Bash"*
+1. Attempting to do enter anything that ISN'T the password is met with a no permission error from "*Bash*"
 2. After dropping into the real shell, you cannot `exit` back into BullSHH.
 3. All sessions after escaping BullSHH are logged (including `stderr`/`stdout` along with commands ran)
 4. Every wrong escape attempt in BullSSH also issues a warning

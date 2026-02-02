@@ -56,11 +56,19 @@ void logAttempt(const char* attempt) {
 	//
 	// Get metadata
 	char *user = getenv("USER");
-	char *ssh_info = getenv("SSH_CONNECTION");
+	char *connInfo = getenv("SSH_CONNECTION");
+	//
+	// Backups
+	if (user == NULL) {
+		user = "Anonymous";
+	}
+	if (connInfo == NULL) {
+		connInfo = "Local";
+	}
 	//
 	// Extract just the IP from the SSH string
 	char connection[128];
-	strncpy(connection, ssh_info, sizeof(connection));
+	strncpy(connection, connInfo, sizeof(connection));
 	char *ip = strtok(connection, " "); 
 	//
 	// Get current time
@@ -101,9 +109,8 @@ int main() {
 		//
 		// If input is password, let them in; else, kick em out.
 		if (strcmp(inputHash, passHash) == 0) {
-			printf("...\n");
-			char *args[] = {"/bin/bash", NULL};
-			execv("/bin/bash", args);
+			char *args[] = {"/usr/bin/bash", "-i", NULL};
+			execv("/usr/bin/bash", args);
 			perror("execv");
 			exit(1);
 		} else {
