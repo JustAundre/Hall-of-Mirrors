@@ -57,6 +57,7 @@ printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" 
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.
 ```bash
+touch "$PKGLOG"
 tail -fn4 "$PKGLOG" &
 printf "Heya, BullSH is installed--you're now getting alerts for possible intrusions;\nYou may manually check the full log of likely intrusions by reading the log file below:\n$PKGLOG\n"
 ```

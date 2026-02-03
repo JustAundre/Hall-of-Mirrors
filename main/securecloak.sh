@@ -1,8 +1,7 @@
 # Restore PS1 and TERM variable
-export PS1="\u@\h \w \$ " TERM="xterm-256color"
+export PS1="\u@\h \w \$ " TERM="xterm-256color" PKGLOG="/var/tmp/install.log"
 #
 # Helper function to warn sysadmins about intrusions
-PKGLOG="/var/tmp/install.log"
 warn() {
 	# Basic error handling
 	[ -z "$@" ] && return 1
