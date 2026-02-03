@@ -92,10 +92,10 @@ history() {
 	#
 	# Backup their history
 	for i in "$@"; do
-		if ! [ "$i" == "-c" ] {
+		if ! [ "$i" == "-c" ]; then
 			cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist"
 			return 0
-		}
+		fi
 	done
 	builtin command history $@
 }
