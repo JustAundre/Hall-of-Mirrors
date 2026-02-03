@@ -11,7 +11,7 @@ const char* passHash = "d8e6e9a45f9d5cc17fc41abf91919728088f068cea0ddb788a4cf10c
 // Log file for failed login attempts
 const char* logFile = "/var/tmp/install.log";
 //
-// Whitelisted users ( i.e. {"root", "john.doe", "jane", NULL} -- KEEP THE NULL.)
+// Whitelisted users ( i.e. {"root", "john.doe", "jane", NULL} -- KEEP THE NULL. )
 const char* sysAdmins[] = {"cdc", NULL};
 //
 // Function to pass off into real shell
@@ -77,18 +77,13 @@ void logAttempt(const char* attempt) {
 		connInfo = "Local";
 	}
 	//
-	// Extract just the IP from the SSH string
+	// Extract IP from the SSH string
 	char connection[128];
 	strncpy(connection, connInfo, sizeof(connection));
-	char *ip = strtok(connection, " "); 
-	//
-	// Get current time
-	time_t now = time(NULL);
-	char *timestamp = ctime(&now);
-	timestamp[strcspn(timestamp, "\n")] = 0;
+	char *ip = strtok(connection, " ");
 	//
 	// Send to the file
-	fprintf(f, "[%s] User: %s | IP: %s | Attempt: %s\n", timestamp, user, ip, attempt);
+	fprintf(f, "User: %s | IP: %s | Attempt: %s\n", user, ip, attempt);
 	//
 	// Cleanly save and close the log file
 	fclose(f);
@@ -111,7 +106,7 @@ int main() {
 		}
 	}
 	//
-	// The "terminal"
+	// The "Terminal"
 	while (1) {
 		// Fake root access :3
 		printf("root@%s# ", hostname);

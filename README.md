@@ -55,6 +55,12 @@ Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
 printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" | sudo tee -a /etc/ssh/sshd_config
 ```
 
+Append the below to the end of each Sysadmin's `~/.bashrc` file.
+```bash
+tail -fn4 "$PKGLOG" &
+printf "Heya, BullSH is installed--you're now getting alerts for possible intrusions;\nYou may manually check the full log of likely intrusions by reading the log file below:\n$PKGLOG\n"
+```
+
 ## Features
 
 1. Attempting to do enter anything that ISN'T the password is met with a no permission error from "*Bash*"

