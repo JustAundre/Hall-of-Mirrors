@@ -103,7 +103,7 @@ history() {
 # Harder escape
 command() {
 	if [ -z "$1" ]; then
-		printf "bash: $1: No permission\n"
+		printf "bash: $1: Permission denied\n"
 		return 127
 	fi
 	return 0

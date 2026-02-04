@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+# The prompt to show on each new line
+PS1='[root@$hostname ~]# '
+#
 # What kind of annoyance on a wrong password shall await them?
 annoyanceType="bullshit"
 #
@@ -19,7 +22,8 @@ userIP="Local Console"
 [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }')
 #
 # Prevent termination attempts
-trap '' INT TERM TSTP
+trap 'printf "\n$PS1"' INT
+trap '' TERM TSTP
 #
 # Function to log likely intrusions
 warn() {
@@ -47,10 +51,10 @@ annoyance() {
 		for i in {1..7}; do
 			if [ $(printf "($RANDOM / 1100) > 20\n" | bc -l) -eq 1 ]; then
 				sleep 1
-				head -c 512 /dev/random
-				printf "\n[root@$hostname ~]# "
+				head -c 512 /dev/urandom
 			fi
 		done
+		printf "\n$PS1"
 	fi
 	return 0
 }
@@ -58,7 +62,7 @@ annoyance() {
 # Fake a (root) terminal
 while true; do
 	# Take user input
-	read -rp "[root@$hostname ~]# " input
+	read -rp "$PS1" input
 	#
 	# Check input
 	if [ "$input" == "" ]; then
