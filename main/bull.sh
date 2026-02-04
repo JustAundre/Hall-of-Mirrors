@@ -61,7 +61,9 @@ while true; do
 	read -rp "[root@$hostname ~]# " input
 	#
 	# Check input
-	if builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
+	if [ "$input" == "" ]; then
+		sleep .1
+	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
 		# Send a warning
 		warn "$input"
 		#
