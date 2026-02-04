@@ -6,6 +6,7 @@ hostname="$(hostname | awk -F'.' '{ print $1 }')"
 PS1="[root@$hostname ~]# "
 #
 # What kind of annoyance on a wrong password shall await them?
+# Options: "bullshit", "disco", "confusion".
 annoyanceType="bullshit"
 #
 # The amount of login attempts
@@ -55,6 +56,12 @@ annoyance() {
 			fi
 		done
 		printf "\n$PS1"
+	elif [ "$annoyanceType" == "confusion" ]; then
+		for i in {1..50}; do
+			printf "\e[$(($RANDOM % 24 + 1));$(($RANDOM % 80 + 1))H?"
+			sleep 0.01
+		done
+		printf "\e[99;1H\n$PS1"
 	fi
 	return 0
 }
