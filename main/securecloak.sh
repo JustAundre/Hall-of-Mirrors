@@ -1,5 +1,5 @@
 # Restore PS1 and TERM variable
-export PS1="\u@\h \w \$ " TERM="xterm-256color" PKGLOG="/var/tmp/install.log"
+export PS1="\u@\h \w \$ " TERM="xterm-256color"
 #
 # Helper function to warn sysadmins about intrusions
 warn() {
@@ -27,7 +27,7 @@ ssh() {
 	#
 	# Execute the real command
 	for i in "$@"; do
-		if [[ "$i" =~ ^([0123456789]{1,3}.){4,4} ]]; then
+		if [[ "$i" =~ ^.+\@([0123456789]{1,3}.){4,4}$ ]]; then
 			sleep $(( $RANDOM % 10 ))
 			printf "ssh: connect to host $i port 22: Connection timed out\n" 1>&2
 			return 255
@@ -56,7 +56,7 @@ sudo() {
 	warn "sudo $*"
 	#
 	# Fake password prompt
-	read -p "[sudo] password for $USER: "
+	read -sp "[sudo] password for $USER: "
 	#
 	# Fake incorrect password timeout
 	sleep 3
@@ -118,8 +118,8 @@ bash() {
 	su
 }
 readonly -f chpasswd sudo su ssh history rm warn bash env
+declare -rx SSH_CONNECTION PKGLOG="/var/tmp/install.log"
 export -f chpasswd sudo su ssh history rm warn bash env
-readonly SSH_CONNECTION PKGLOG
 #
 # Session logging logic
 function sessionLog() {
@@ -132,7 +132,7 @@ function sessionLog() {
 		while [ -f "${logDir}/${prefix}${count}.raw" ]; do
 			count=$((count + 1))
 		done
-		log="${logDir}/${prefix}${count}.log"
+		local log="${logDir}/${prefix}${count}.log"
 		#
 		# Cleanup the logs when shell exits
 		cleanup_log() {
@@ -141,7 +141,7 @@ function sessionLog() {
 		trap cleanup_log EXIT
 		#
 		# Start logging
-		readonly logging=1
+		declare -rx logging=1
 		exec script -qf "$log"
 	fi
 }

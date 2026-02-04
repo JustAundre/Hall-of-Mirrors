@@ -6,9 +6,12 @@ BullSH, the BullShit Shell for SSH.
 
 The target system for the installation must...
 - Be Linux *(not MacOS)*
-- Use `sudo` for administrative action authentication
 - Have the standard filesystem structure
 - Be using `SSH` as the main access point
+
+Additionally, please note that this is only as effective as the system is secure;
+
+Servers get hit by the weakest link more often than not.
 
 ## Manual Installation
 
@@ -28,16 +31,11 @@ Change directory into the project
 cd "./Hall-of-Mirrors"
 ```
 
-**PLEASE** review and edit `main/bullsh.c`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs.
+**PLEASE** review and edit `main/bull.sh`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs.
 
-Install `main/bullsh` to `/usr/bin/bullsh`
+Install `main/bull.sh` to `/usr/bin/bull.sh`
 ```bash
-sudo install -m 755 -o root -g root ./main/bullsh /usr/bin/bullsh
-```
-
-Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
-```bash
-sudo install -m 644 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
+sudo install -m 755 -o root -g root ./main/bull.sh /usr/bin/bull.sh
 ```
 
 Install `main/securecloak.sh` to `/etc/securecloak.sh`
@@ -45,14 +43,19 @@ Install `main/securecloak.sh` to `/etc/securecloak.sh`
 sudo install -m 755 -o root -g root ./main/securecloak.sh /etc/securecloak.sh
 ```
 
+Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
+```bash
+sudo install -m 644 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
+```
+
 Add the `. /etc/securecloak.sh` directive to `/etc/bashrc` **OR** `/etc/bash.bashrc` (depending on your flavor of Linux).
 ```bash
 printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak.sh 2>/dev/null" | sudo tee -a /etc/bashrc
 ```
 
-Add the `ForceCommand /usr/bin/bullsh` directive to `/etc/ssh/sshd_config`
+Add the `ForceCommand /usr/bin/bull.sh` directive to `/etc/ssh/sshd_config`
 ```bash
-printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bullsh" | sudo tee -a /etc/ssh/sshd_config
+printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bull.sh" | sudo tee -a /etc/ssh/sshd_config
 ```
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.
@@ -77,25 +80,17 @@ printf "Heya, BullSH is installed--you're now getting alerts for possible intrus
 Default Password: 
 `0hMyL0()rDGETM3OUT.PLE@S3`
 
-## Compiling
-
-(I actively encourage you to compile it yourself.)
+## Self-compiling (Encouraged)
 
 Compiling `chaos-chaos.so`
 ```bash
 gcc -fPIC -shared -o ./main/chaos-chaos.so ./main/chaos-chaos.c -ldl
 ```
 
-Compiling `bull`
-```bash
-gcc -o ./main/bullsh ./main/bullsh.c
-```
-
 ## Changing the Password
 
-First, get the password you want to change to in plaintext. Hash the plaintext password into SHA512<br>
-(preferably using the `sha512sum` command like `printf 'PASSWORD_HERE' | sha512sum | cut -d' ' -f1`)<br>
-Go into `main/hatch.c` and find the line which looks like `const char* TARGET = ...`<br>
-Replace the contents of the quotation marks which may look something like `= "9ffbf43126e33be52cd2bf7as23dsf..."` with the result from the command you were previously instructed to run
+First, get the password you want to change to in plaintext. Hash your ideal plaintext password into [SHA512](https://qr.ae/pCmBQJ)<br>
+(preferably using the [sha512sum](https://www.computerhope.com/unix/sha512sum.htm) command like `printf 'PASSWORD_HERE' | sha512sum | cut -d' ' -f1`)<br>
+Go into `main/bull.sh` and find the `passHash` variable to your new hash<br>
 
 Refer to the Compiling guide and then the Installation guide.

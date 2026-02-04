@@ -109,7 +109,7 @@ int main() {
 	// The "Terminal"
 	while (1) {
 		// Fake root access :3
-		printf("root@%s# ", hostname);
+		printf("root@%s ~ # ", hostname);
 		fflush(stdout);
 		if (fgets(input, sizeof(input), stdin) == NULL) {
 			printf("\033[0m");
