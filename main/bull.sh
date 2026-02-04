@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+# What kind of annoyance on a wrong password shall await them?
+annoyanceType="bullshit"
+#
 # The amount of login attempts
 counts=0
 #
@@ -20,21 +23,33 @@ trap '' INT TERM TSTP
 #
 # Function to log likely intrusions
 warn() {
+	# Send identifiers to the specified log file
 	printf "Failed 2FA from user ($USER), UID ($EUID) originating from IP ($userIP). Input was: ($*)\n" | tee -a /var/tmp/install.log &>/dev/null
 	#
 	# Random delay to simulate disk-seek latency
 	sleep "$(awk 'BEGIN { print 1.5 + (rand() * 2) }')"
+	#
+	# End function
+	return 0
 }
 #
-# Function to strobe the terminal quickly
-strobe() {
+# Function to send an annoyance to the terminal which got the password wrong
+annoyance() {
 	pkill -P "$$"
-	for i in {1..500}; do
-		printf "\e[?5h"
-		sleep .0001
-		printf "\e[?5l"
-		sleep .0001
-	done
+	if [ "$annoyanceType" == "disco" ]; then
+		for i in {1..500}; do
+			printf "\e[?5h"
+			sleep .0001
+			printf "\e[?5l"
+			sleep .0001
+		done
+	elif [ "$annoyanceType" == "bullshit" ]; then
+		for i in {1..10}; do
+			[ $(printf "($RANDOM / 1000) > 20\n" | bc -l) -eq 1 ] && timeout .1 cat /dev/random
+			sleep .9
+		done
+	fi
+	return 0
 }
 #
 # Fake a (root) terminal
@@ -65,7 +80,7 @@ while true; do
 		printf "rbash: $cmd: command not found"
 		#
 		# Strobe the terminal with black and white for a few seconds.
-		strobe &
+		annoyance &
 		#
 		# Increment the attempts
 		(( counts++ ))

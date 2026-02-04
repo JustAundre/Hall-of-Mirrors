@@ -8,6 +8,7 @@ The target system for the installation must...
 - Be Linux *(not MacOS)*
 - Have the standard filesystem structure
 - Be using `SSH` as the main access point
+- Have the basic calculator (`bc`) binary installed
 
 Additionally, please note that this is only as effective as the system is secure;
 
