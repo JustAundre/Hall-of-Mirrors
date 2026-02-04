@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+# Hostname of the machine up to the first dot (exclusive of first dot)
+hostname="$(hostname | awk -F'.' '{ print $1 }')"
+#
 # The prompt to show on each new line
 PS1="[root@$hostname ~]# "
 #
@@ -10,9 +13,6 @@ counts=0
 #
 # Whether the script stops checking for the password (y/n)
 fuckOff="n"
-#
-# Hostname of the machine up to the first dot (exclusive of first dot)
-hostname="$(hostname | awk -F'.' '{ print $1 }')"
 #
 # Password hash
 passHash='d8e6e9a45f9d5cc17fc41abf91919728088f068cea0ddb788a4cf10c303dfe90765a641915a111935756751e7a4d7add1587ff28e05b878d5c5fcb0c51b96c6a'
