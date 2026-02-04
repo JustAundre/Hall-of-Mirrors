@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 # The prompt to show on each new line
-PS1='[root@$hostname ~]# '
+PS1="[root@$hostname ~]# "
 #
 # What kind of annoyance on a wrong password shall await them?
 annoyanceType="bullshit"
