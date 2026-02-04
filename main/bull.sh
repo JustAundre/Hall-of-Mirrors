@@ -62,7 +62,7 @@ while true; do
 	#
 	# Check input
 	if [ "$input" == "" ]; then
-		sleep .1
+		true
 	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
 		# Send a warning
 		warn "$input"
