@@ -57,9 +57,9 @@ annoyance() {
 		done
 		printf "\n$PS1"
 	elif [ "$annoyanceType" == "confusion" ]; then
-		for i in {1..50}; do
-			printf "\e[$(($RANDOM % 24 + 1));$(($RANDOM % 80 + 1))H?"
-			sleep 0.01
+		for i in {1..1000}; do
+			printf "\e[$(($RANDOM % 80 + 1));$(($RANDOM % 200 + 1))H."
+			sleep .001
 		done
 		printf "\e[99;1H\n$PS1"
 	fi
