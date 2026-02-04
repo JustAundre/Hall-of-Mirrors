@@ -82,7 +82,7 @@ while true; do
 		#
 		# If the input is a bash builtin, say command not found
 		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
-		printf "rbash: $cmd: command not found"
+		printf "rbash: $cmd: command not found\n"
 		#
 		# Strobe the terminal with black and white for a few seconds.
 		annoyance &
