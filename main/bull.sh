@@ -44,11 +44,11 @@ annoyance() {
 			sleep .0001
 		done
 	elif [ "$annoyanceType" == "bullshit" ]; then
-		for i in {1..10}; do
-			if [ $(printf "($RANDOM / 1000) > 20\n" | bc -l) -eq 1 ]; then
-				timeout .1 cat /dev/random
+		for i in {1..7}; do
+			if [ $(printf "($RANDOM / 1100) > 20\n" | bc -l) -eq 1 ]; then
+				sleep 1
+				head -c 512 /dev/random
 				printf "\n[root@$hostname ~]# "
-				sleep .9
 			fi
 		done
 	fi
