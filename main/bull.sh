@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+# Where to send warnings to
+declare -rx PKGLOG="/var/tmp/install.log"
+#
 # Hostname of the machine up to the first dot (exclusive of first dot)
 hostname="$(hostname | awk -F'.' '{ print $1 }')"
 #
@@ -29,7 +32,7 @@ trap '' TERM TSTP
 # Function to log likely intrusions
 warn() {
 	# Send identifiers to the specified log file
-	printf "Failed 2FA from user ($USER), UID ($EUID) originating from IP ($userIP). Input was: ($*)\n" | tee -a /var/tmp/install.log &>/dev/null
+	printf "Failed 2FA from user ($USER), UID ($EUID) originating from IP ($userIP). Input was: ($*)\n" | tee -a "$PKGLOG" &>/dev/null
 	#
 	# Random delay to simulate disk-seek latency
 	sleep "$(awk 'BEGIN { print 1.5 + (rand() * 2) }')"
@@ -91,6 +94,7 @@ while true; do
 	#
 	# Check input
 	if [ "$input" == "" ]; then
+		# Restart the loop
 		continue
 	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
 		# Send a warning
@@ -98,23 +102,22 @@ while true; do
 		#
 		# If the input is a bash builtin, say permission denied
 		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
-		printf "rbash: $cmd: Permission denied"
+		echo "rbash: $cmd: Permission denied"
 		#
 		# Add command to history
 		history -s "$input"
 	elif [ "$fuckOff" == "n" ] && [ $(printf -- "%s" "$input" | sha512sum | awk '{ print $1 }') == "$passHash" ]; then
 		# If the input is the password, enter a real shell
-		printf '...welcome.\n'
 		trap - INT TERM TSTP
-		unset passHash userIP hostname counts HISTFILE HISTSIZE
-		builtin exec /usr/bin/bash -il
+		unset passHash userIP hostname counts fuckOff HISTFILE HISTSIZE
+		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
 	else
 		# Send a warning
 		warn "$input"
 		#
 		# If the input is a bash builtin, say command not found
 		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
-		printf "rbash: $cmd: command not found\n"
+		echo "rbash: $cmd: command not found"
 		#
 		# Strobe the terminal with black and white for a few seconds.
 		annoyance &

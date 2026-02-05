@@ -41,17 +41,12 @@ sudo install -m 755 -o root -g root ./main/bull.sh /usr/bin/bull.sh
 
 Install `main/securecloak.sh` to `/etc/securecloak.sh`
 ```bash
-sudo install -m 755 -o root -g root ./main/securecloak.sh /etc/securecloak.sh
+sudo install -m 755 -o root -g root ./main/securecloak.sh /opt/securecloak.sh
 ```
 
 Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
 ```bash
-sudo install -m 644 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
-```
-
-Add the `. /etc/securecloak.sh` directive to `/etc/bashrc` **OR** `/etc/bash.bashrc` (depending on your flavor of Linux).
-```bash
-printf "\n# Insert some restrictive wrappers to prevent destructive and malicious action and warn on said attempts of such actions\n. /etc/securecloak.sh 2>/dev/null" | sudo tee -a /etc/bashrc
+sudo install -m 744 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
 ```
 
 Add the `ForceCommand /usr/bin/bull.sh` directive to `/etc/ssh/sshd_config`

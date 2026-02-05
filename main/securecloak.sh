@@ -1,5 +1,5 @@
 # Restore PS1 and TERM variable
-export PS1="\u@\h \w \$ " TERM="xterm-256color"
+export PS1='\u@\h \w \$ ' TERM="xterm-256color"
 #
 # Helper function to warn sysadmins about intrusions
 warn() {
@@ -40,9 +40,6 @@ su() {
 	#
 	# Gaslight with a fake root terminal
 	export PS1="root@\h \w # "
-	echo() {
-		printf "root\n"
-	}
 	whoami() {
 		printf "root\n"
 	}
@@ -103,7 +100,8 @@ history() {
 # Harder escape
 command() {
 	if [ -z "$1" ]; then
-		printf "bash: $1: Permission denied\n"
+		local cmd=$(printf "$1" | awk '{ print $1 }')
+		printf "bash: $cmd: Permission denied\n"
 		return 127
 	fi
 	return 0
@@ -115,11 +113,11 @@ set() {
 	return 0
 }
 bash() {
+	sleep .25
 	su
 }
-readonly -f chpasswd sudo su ssh history rm warn bash env
-declare -rx SSH_CONNECTION PKGLOG="/var/tmp/install.log"
-export -f chpasswd sudo su ssh history rm warn bash env
+declare -rfx chpasswd sudo su ssh history rm warn bash env
+declare -rx SSH_CONNECTION
 #
 # Session logging logic
 function sessionLog() {
