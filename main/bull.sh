@@ -1,4 +1,9 @@
 #!/usr/bin/bash
+# Area to temporarily save command history to
+HISTFILE="/tmp/.ssh_session_$RANDOM"
+touch "$HISTFILE"
+HISTSIZE=50
+#
 # Hostname of the machine up to the first dot (exclusive of first dot)
 hostname="$(hostname | awk -F'.' '{ print $1 }')"
 #
@@ -72,11 +77,11 @@ annoyance() {
 # Fake a (root) terminal
 while true; do
 	# Take user input
-	read -rpe "$PS1" input
+	read -rep "$PS1" input
 	#
 	# Check input
 	if [ "$input" == "" ]; then
-		true
+		continue
 	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
 		# Send a warning
 		warn "$input"
@@ -84,11 +89,14 @@ while true; do
 		# If the input is a bash builtin, say permission denied
 		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
 		printf "rbash: $cmd: Permission denied"
+		#
+		# Add command to history
+		history -s "$input"
 	elif [ "$fuckOff" == "n" ] && [ $(printf -- "%s" "$input" | sha512sum | awk '{ print $1 }') == "$passHash" ]; then
 		# If the input is the password, enter a real shell
 		printf '...welcome.\n'
 		trap - INT TERM TSTP
-		unset passHash userIP hostname counts
+		unset passHash userIP hostname counts HISTFILE HISTSIZE
 		builtin exec /usr/bin/bash -il
 	else
 		# Send a warning
@@ -108,5 +116,8 @@ while true; do
 		if [ "$counts" == "3" ]; then
 			readonly fuckOff="y"
 		fi
+		#
+		# Add command to history
+		history -s "$input"
 	fi
 done
