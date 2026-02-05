@@ -43,8 +43,11 @@ annoyance() {
 	pkill -P "$$"
 	if [ "$annoyanceType" == "disco" ]; then
 		for i in {1..500}; do
+			# Flash white
 			printf "\e[?5h"
 			sleep .0001
+			#
+			# Back to normal
 			printf "\e[?5l"
 			sleep .0001
 		done
@@ -69,7 +72,7 @@ annoyance() {
 # Fake a (root) terminal
 while true; do
 	# Take user input
-	read -rp "$PS1" input
+	read -rpe "$PS1" input
 	#
 	# Check input
 	if [ "$input" == "" ]; then
@@ -85,7 +88,7 @@ while true; do
 		# If the input is the password, enter a real shell
 		printf '...welcome.\n'
 		trap - INT TERM TSTP
-		unset passHash userIP hostname
+		unset passHash userIP hostname counts
 		builtin exec /usr/bin/bash -il
 	else
 		# Send a warning
