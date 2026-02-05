@@ -135,10 +135,10 @@ function sessionLog() {
 		local log="${logDir}/${prefix}${count}.log"
 		#
 		# Cleanup the logs when shell exits
-		cleanup_log() {
+		cleanupLog() {
 			sed -E 's/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g' "$log" 2>/dev/null | tee "$log" 
 		}
-		trap cleanup_log EXIT
+		trap cleanupLog EXIT
 		#
 		# Start logging
 		declare -rx logging=1

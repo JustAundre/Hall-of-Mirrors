@@ -7,7 +7,7 @@ PS1="[root@$hostname ~]# "
 #
 # What kind of annoyance on a wrong password shall await them?
 # Options: "bullshit", "disco", "confusion".
-annoyanceType="bullshit"
+annoyanceType="confusion"
 #
 # The amount of login attempts
 counts=0
@@ -60,11 +60,26 @@ annoyance() {
 		done
 		printf "\n$PS1"
 	elif [ "$annoyanceType" == "confusion" ]; then
-		for i in {1..1000}; do
-			printf "\e[$(($RANDOM % 80 + 1));$(($RANDOM % 200 + 1))H."
-			sleep .001
+		# Hide the cursor
+		tput civis
+		#
+		# Get current screen dimensions
+		rows=$(tput lines)
+		cols=$(tput cols)
+		#
+		# The SPAM
+		for i in {1..500}; do
+			# Generate random coordinates within the current window size
+			r=$((RANDOM % rows + 1))
+			c=$((RANDOM % cols + 1))
+			#
+			# Print it at the aforementioned coordinates
+			printf "\e[%d;%dH%s" "$r" "$c" "$(head -c 1 /dev/urandom)"
 		done
-		printf "\e[99;1H\n$PS1"
+		#
+		# Move cursor to the bottom and show it again so your prompt is clean
+		printf "\e[%d;1H" "$rows"
+		tput cnorm
 	fi
 	return 0
 }
