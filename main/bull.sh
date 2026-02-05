@@ -1,9 +1,4 @@
 #!/usr/bin/bash
-# Area to temporarily save command history to
-HISTFILE="/tmp/.ssh_session_$RANDOM"
-touch "$HISTFILE"
-HISTSIZE=50
-#
 # Hostname of the machine up to the first dot (exclusive of first dot)
 hostname="$(hostname | awk -F'.' '{ print $1 }')"
 #
