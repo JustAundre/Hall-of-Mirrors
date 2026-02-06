@@ -32,7 +32,7 @@ Change directory into the project
 cd "./Hall-of-Mirrors"
 ```
 
-**PLEASE** review and edit `main/bull.sh`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs.
+**PLEASE** review and edit `main/bull.sh`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs; recompile as needed.
 
 Create the warning log
 ```bash
