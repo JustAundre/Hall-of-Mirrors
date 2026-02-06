@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 # Terminate duplicate sessions of the same user to prevent accidental self-DDoSing
-pgrep -f "bull.sh" -u $USER | grep -v "^$$\$" | xargs kill -9 2>/dev/null
+pgrep -f "$(readlink -f $0)" -u "$USER" | grep -v "^$$\$" | xargs kill -9 2>/dev/null
 #
 # Variables
 declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to

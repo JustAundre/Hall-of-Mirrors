@@ -5,7 +5,7 @@ BullSH, the BullShit Shell for SSH.
 ## Requirements
 
 The target system for the installation must...
-- Be Linux *(not MacOS)*
+- Be Linux (*not MacOS*)
 - Have the standard filesystem structure
 - Be using `SSH` as the main access point
 - Have the basic calculator (`bc`) binary installed
@@ -61,8 +61,7 @@ printf "\n# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | s
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.
 ```bash
-head -n3 /opt/bull.sh > /tmp/sourcevar.sh
-. /tmp/sourcevar.sh
+export $(sed -n 's/declare -r //; /^PKGLOG=/p' /opt/bull.sh)
 tail -fn4 "$PKGLOG" &
 printf "Heya, BullSH is installed--you're now getting alerts for possible intrusions;\nYou may manually check the full log of likely intrusions by reading the log file below:\n$PKGLOG\n"
 ```
