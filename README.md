@@ -34,24 +34,24 @@ cd "./Hall-of-Mirrors"
 
 **PLEASE** review and edit `main/bull.sh`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs.
 
-Install `main/bull.sh` to `/usr/bin/bull.sh`
+Install `main/bull.sh` to `/opt/bull.sh`
 ```bash
-sudo install -m 755 -o root -g root ./main/bull.sh /usr/bin/bull.sh
+sudo install -m 755 -o root -g root ./main/bull.sh /opt/bull.sh
 ```
 
-Install `main/securecloak.sh` to `/etc/securecloak.sh`
+Install `main/securecloak.sh` to `/opt/securecloak.sh`
 ```bash
 sudo install -m 755 -o root -g root ./main/securecloak.sh /opt/securecloak.sh
 ```
 
-Install `main/chaos-chaos.so` to `/var/lib/chaos-chaos.so`
+Install `main/chaos-chaos.so` to `/opt/chaos-chaos.so`
 ```bash
-sudo install -m 744 -o root -g root ./main/chaos-chaos.so /var/lib/chaos-chaos.so
+sudo install -m 744 -o root -g root ./main/chaos-chaos.so /opt/chaos-chaos.so
 ```
 
 Add the `ForceCommand /usr/bin/bull.sh` directive to `/etc/ssh/sshd_config`
 ```bash
-printf "\n# Drop everyone into BullSH by default\nForceCommand /usr/bin/bull.sh" | sudo tee -a /etc/ssh/sshd_config
+printf "\n# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | sudo tee -a /etc/ssh/sshd_config
 ```
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.

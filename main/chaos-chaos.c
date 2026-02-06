@@ -8,10 +8,10 @@
 // Helper to check if a path is a vital system path
 static int isAllowed(const char *path) {
 	if (!path) return 0;
-	if (strncmp(path, "/usr/bin/hatch", 10) == 0) return 1;
 	if (strncmp(path, "/etc/bash.bashrc", 10) == 0) return 1;
 	if (strncmp(path, "/etc/bashrc", 10) == 0) return 1;
-	if (strncmp(path, "/etc/bullsh", 10) == 0) return 1;
+	if (strncmp(path, "/opt/bull.sh", 10) == 0) return 1;
+	if (strncmp(path, "/dev/urandom", 10) == 0) return 1;
 	return 0;
 }
 //
