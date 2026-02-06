@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+# Terminate duplicate sessions of the same user to prevent accidental self-DDoSing
+pgrep -f "bull.sh" -u $USER | grep -v "^$$\$" | xargs kill -9 2>/dev/null
+#
 # Variables
 declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
 declare -r LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
@@ -16,14 +19,13 @@ userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNE
 trap 'stty sane; printf "\n$PS1"' INT
 trap '' TERM TSTP QUIT
 trap 'exit 0' HUP
+trap 'pkill -P $$; exit 0' EXIT
 #
 # Function to log likely intrusions
 warn() {
 	# Send identifiers to the specified log file
-	printf "Failed 2FA from user ($USER), UID ($EUID) originating from IP ($userIP). Input was: ($*)\n" | tee -a "$PKGLOG" &>/dev/null
-	#
-	# End function
-	return 0
+	printf "Failed 2FA from user $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null
+	return
 }
 #
 # Function to send an annoyance to the terminal which got the password wrong
@@ -140,7 +142,7 @@ inputCheck() {
 # Fake an rBash terminal
 while true; do
 	# Take user input
-	read -rep "$PS1" input
+	read -t 30 -rep "$PS1" input || exit 0
 	#
 	# Check input
 	inputCheck
