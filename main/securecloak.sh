@@ -147,4 +147,4 @@ sessionLog
 unset sessionLog
 #
 # An extra surprise :3
-export LD_PRELOAD=/var/lib/chaos-chaos.so
+export LD_PRELOAD=/opt/chaos-chaos.so

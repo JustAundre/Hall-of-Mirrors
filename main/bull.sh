@@ -14,7 +14,7 @@ userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNE
 #
 # Handle and prevent various termination signals
 trap 'stty sane; printf "\n$PS1"' INT
-trap '' TERM TSTP
+trap '' TERM TSTP SIGQUIT
 #
 # Function to log likely intrusions
 warn() {
