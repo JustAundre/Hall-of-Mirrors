@@ -7,6 +7,7 @@ declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
 declare -r LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
 declare -r passHash='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash
 declare -r hashRounds=250 # How many times to hash inputs
+declare -r TMOUT=60 # How many seconds before timing out for inactivity
 counts=0 # The amount of login attempts to start with
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
 fuckOff="n" # Whether the script stops checking for the password (y/n)
@@ -142,7 +143,7 @@ inputCheck() {
 # Fake an rBash terminal
 while true; do
 	# Take user input
-	read -t 30 -rep "$PS1" input || exit 0
+	read -t "$TMOUT" -rep "$PS1" input || exit 0
 	#
 	# Check input
 	inputCheck
