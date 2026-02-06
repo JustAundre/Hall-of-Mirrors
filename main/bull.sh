@@ -110,6 +110,12 @@ hash() {
 #
 # Function to pass into the real shell
 passOff() {
+	# Log the successful attempt
+	echo "✅ MFA layer $mfaAt passed by $USER, UID $EUID -- originating from $userIP." | tee -a "$PKGLOG" &>/dev/null
+	#
+	# Reset the attempt counter
+	counts=0
+	#
 	# Remove sig traps
 	trap - INT TERM TSTP QUIT
 	#
@@ -119,7 +125,7 @@ passOff() {
 	# Unset the timeout
 	unset TMOUT
 	#
-	# If set, apply 2nd layer.
+	# If allowed, last layer.
 	if [ "$mfaLayer" -eq 3 ]; then
 		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
 	else
@@ -172,18 +178,10 @@ inputCheck() {
 		# Fail the attempt
 		return 1
 	elif [ "$mfaAt" -eq 1 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash1" ]; then
-		# If the input is the password...
-		# Log the correct login attempt
-		echo "✅ MFA layer 1 passed by $USER, UID $EUID -- originating from $userIP." | tee -a "$PKGLOG" &>/dev/null
-		#
-		# Pass the attempt
+		# If the input is the password pass the attempt
 		return 0
 	elif [ "$mfaAt" -eq 2 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash2" ]; then
-		# If the input is the password...
-		# Log the correct login attempt
-		echo "✅ MFA layer 2 passed by $USER, UID $EUID -- originating from $userIP." | tee -a "$PKGLOG" &>/dev/null
-		#
-		# Pass the attempt
+		# If the input is the password pass the attempt
 		return 0
 	else
 		# Send a warning

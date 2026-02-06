@@ -34,7 +34,7 @@ cd "./Hall-of-Mirrors"
 
 **PLEASE** review and edit `main/bull.sh`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs; recompile as needed.
 
-Create the warning log
+Create the warning log file
 ```bash
 sudo install -m 766 -o root -g root /dev/null /var/tmp/install.log
 ```
