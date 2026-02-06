@@ -3,7 +3,7 @@
 hashRounds=250 # How many times to hash inputs
 declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
 hostname="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
-PS1="[$USER@$hostname ~]# " # The prompt to show on each new line
+PS1="$USER@$hostname ~ $ " # The prompt to show on each new line
 annoyanceType="confusion" # What kind of annoyance on a wrong password shall await them?
 counts=0 # The amount of login attempts to start with
 maxCounts=3 # The max amount of login attempts before all inputs silently fail
