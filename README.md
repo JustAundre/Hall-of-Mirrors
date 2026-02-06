@@ -54,16 +54,22 @@ Install `main/chaos-chaos.so` to `/opt/chaos-chaos.so`
 sudo install -m 744 -o root -g root ./main/chaos-chaos.so /opt/chaos-chaos.so
 ```
 
-Add the `ForceCommand /usr/bin/bull.sh` directive to `/etc/ssh/sshd_config`
+Add the `ForceCommand /opt/bull.sh` directive to `/etc/ssh/sshd_config`
 ```bash
 printf "\n# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | sudo tee -a /etc/ssh/sshd_config
 ```
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.
 ```bash
-export $(sed -n 's/declare -r //; /^PKGLOG=/p' /opt/bull.sh)
+PKGLOG=$(awk -F'"' '/PKGLOG=/ {print $2}' /opt/bull.sh)
 tail -fn4 "$PKGLOG" &
 printf "Heya, BullSH is installed--you're now getting alerts for possible intrusions;\nYou may manually check the full log of likely intrusions by reading the log file below:\n$PKGLOG\n"
+```
+
+Append the below to the end of `/etc/ssh/sshd_config`, where SYS_ADMIN_USER is the user you would like to exclude; repeat as necessary (or not if you don't wish to exclude anyone.)
+```bash
+Match User SYS_ADMIN_USER
+    ForceCommand none
 ```
 
 ## Features

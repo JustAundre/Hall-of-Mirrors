@@ -1,18 +1,33 @@
 #!/usr/bin/bash
-# Terminate duplicate sessions of the same user to prevent accidental self-DDoSing
-pgrep -f "$(readlink -f $0)" -u "$USER" | grep -v "^$$\$" | xargs kill -9 2>/dev/null
 #
-# Variables
+# Anti-DDoSing
+#
+# Kill duplicate sessions from the same user
+pgrep -f "$0" -u "$USER" | grep -v "^$$\$" | xargs kill -9 2>/dev/null
+#
+# In the event the fake shell is escaped, near-immediately kick them.
+declare -x TMOUT=1
+
+
+
+
+
+#
+# Environment
+#
 declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
 declare -r LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
-declare -r passHash='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash
+declare -r passHash1='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash for the 1st MFA layer
+declare -r passHash2='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash for the 2nd MFA layer
 declare -r hashRounds=250 # How many times to hash inputs
-declare -r TMOUT=60 # How many seconds before timing out for inactivity
-counts=0 # The amount of login attempts to start with
+declare -r readTimeout=20 # How many seconds before timing out for inactivity
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
+declare -r mfaLayer=3 # How many layers of MFA do you want? (Max 3)
+mfaAt=1 # What layer of the MFA you're at (don't change)
+counts=0 # The amount of login attempts to start with
 fuckOff="n" # Whether the script stops checking for the password (y/n)
-hostname="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
-PS1="$USER@$hostname ~ $ " # The prompt to show on each new line
+HOSTNAME="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
+PS1="$USER@$HOSTNAME ~ $ " # The prompt to show on each new line
 annoyanceType="confusion" # What kind of annoyance on a wrong password shall await them?
 userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
 #
@@ -21,27 +36,32 @@ trap 'stty sane; printf "\n$PS1"' INT
 trap '' TERM TSTP QUIT
 trap 'exit 0' HUP
 trap 'pkill -P $$; exit 0' EXIT
+
+
+
+
+
 #
-# Function to log likely intrusions
+# Helper Functions
+#
+# Send identifiers to a log file
 warn() {
-	# Send identifiers to the specified log file
-	printf "Failed 2FA from user $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null
+	echo "⚠️ MFA layer 1 failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null
 	return
 }
 #
 # Function to send an annoyance to the terminal which got the password wrong
 annoyance() {
 	pkill -P "$$"
+	# Flash black and white really fast for a few seconds
 	if [ "$annoyanceType" == "disco" ]; then
 		for i in {1..500}; do
-			# Flash white
 			printf "\e[?5h"
 			sleep .0001
-			#
-			# Back to normal
 			printf "\e[?5l"
 			sleep .0001
 		done
+	# Throw a wall of random bullshit at the terminal
 	elif [ "$annoyanceType" == "bullshit" ]; then
 		for i in {1..7}; do
 			if [ $(printf "($RANDOM / 1100) > 20\n" | bc -l) -eq 1 ]; then
@@ -50,6 +70,7 @@ annoyance() {
 			fi
 		done
 		printf "\n$PS1"
+	# Splatter random bullshit onto the terminal
 	elif [ "$annoyanceType" == "confusion" ]; then
 		# Hide the cursor
 		tput civis
@@ -75,7 +96,7 @@ annoyance() {
 	return 0
 }
 #
-# Hashing function
+# Function to hash input
 hash() {
 	# Hash the input
 	for ((i=0; i<hashRounds; i++)); do
@@ -87,26 +108,54 @@ hash() {
 	return 0
 }
 #
+# Function to pass into the real shell
+passOff() {
+	# Remove sig traps
+	trap - INT TERM TSTP QUIT
+	#
+	# Remove unecessary variables
+	unset userIP HOSTNAME counts fuckOff HISTFILE HISTSIZE
+	#
+	# Unset the timeout
+	unset TMOUT
+	#
+	# If set, apply 2nd layer.
+	if [ "$mfaLayer" -eq 3 ]; then
+		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
+	else
+		builtin exec /usr/bin/bash -i
+	fi
+}
+#
 # Function to check input
 inputCheck() {
-	# Increment the amount of attempts used
+	# Increase the amount of login attempts by 1
 	(( counts++ ))
 	#
 	# If failed attempts exceed 3, stop checking for the correct password.
-	if (( counts > "3" )) && [ "$fuckOff" != "y" ]; then
-		readonly fuckOff="y"
-	fi
+	[ "$counts" -gt 3 ] && [ "$fuckOff" != "y" ] && readonly fuckOff="y"
 	#
 	# Check the input
 	if [ -z "$input" ]; then
 		return 0
 	elif [[ "$input" == *"/"* ]]; then
-		for i in "$input"; do
+		# Send a warning
+		warn "$input"
+		#
+		# Check each argument of the input and see if it has a forward slash
+		read -ra args <<< "$input"
+		for i in "$args"; do
 			if [[ "$i" == *"/"* ]]; then
 				echo "rbash: $i: cannot specify '/' in command names" 1>&2
 				return 1
 			fi
 		done
+		#
+		# Add command to history
+		history -s "$input"
+		#
+		# Fail the attempt
+		return 1
 	elif [[ "$input" == "exit" || "$input" == "logout" ]]; then
 		exit 0
 	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null || builtin type $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
@@ -119,11 +168,23 @@ inputCheck() {
 		#
 		# Add command to history
 		history -s "$input"
-	elif [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash" ]; then
-		# If the input is the password, enter a real shell
-		trap - INT TERM TSTP QUIT
-		unset passHash userIP hostname counts fuckOff HISTFILE HISTSIZE
-		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
+		#
+		# Fail the attempt
+		return 1
+	elif [ "$mfaAt" -eq 1 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash1" ]; then
+		# If the input is the password...
+		# Log the correct login attempt
+		echo "✅ MFA layer 1 passed by $USER, UID $EUID -- originating from $userIP." | tee -a "$PKGLOG" &>/dev/null
+		#
+		# Pass the attempt
+		return 0
+	elif [ "$mfaAt" -eq 2 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash2" ]; then
+		# If the input is the password...
+		# Log the correct login attempt
+		echo "✅ MFA layer 2 passed by $USER, UID $EUID -- originating from $userIP." | tee -a "$PKGLOG" &>/dev/null
+		#
+		# Pass the attempt
+		return 0
 	else
 		# Send a warning
 		warn "$input"
@@ -137,14 +198,35 @@ inputCheck() {
 		#
 		# Make some NOISE!!!
 		annoyance &
+		#
+		# Fail the attempt
+		return 1
 	fi
 }
+
+
+
+
+
 #
-# Fake an rBash terminal
+# The Backbone
+#
+# Trap user in a while loop over a fake terminal
 while true; do
 	# Take user input
-	read -t "$TMOUT" -rep "$PS1" input || exit 0
+	[ "$mfaAt" -eq 1 ] && read -t "$readTimeout" -rep "$PS1" input || exit 0
 	#
 	# Check input
-	inputCheck
+	if inputCheck && [ "$mfaLayer" -gt 1 ]; then
+		(( mfaAt++ ))
+		echo "This account is currently not available."
+		while true; do
+			read -t "$readTimeout" -re input || exit 0
+			if inputCheck; then
+				passOff
+			fi
+		done
+	else
+		passOff
+	fi
 done
