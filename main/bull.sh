@@ -89,7 +89,7 @@ inputCheck() {
 	(( counts++ ))
 	#
 	# If failed attempts exceed 3, stop checking for the correct password.
-	if (( counts > "3" )) && ! [ "$fuckOff" != "y" ]; then
+	if (( counts > "3" )) && [ "$fuckOff" != "y" ]; then
 		readonly fuckOff="y"
 	fi
 	#
