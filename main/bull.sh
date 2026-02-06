@@ -1,20 +1,20 @@
 #!/usr/bin/bash
 # Variables
-hashRounds=250 # How many times to hash inputs
 declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
+declare -r LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
+declare -r passHash='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash
+declare -r hashRounds=250 # How many times to hash inputs
+counts=0 # The amount of login attempts to start with
+declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
+fuckOff="n" # Whether the script stops checking for the password (y/n)
 hostname="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
 PS1="$USER@$hostname ~ $ " # The prompt to show on each new line
 annoyanceType="confusion" # What kind of annoyance on a wrong password shall await them?
-counts=0 # The amount of login attempts to start with
-maxCounts=3 # The max amount of login attempts before all inputs silently fail
-fuckOff="n" # Whether the script stops checking for the password (y/n)
-passHash='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash
-readonly LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
 userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
 #
 # Handle and prevent various termination signals
 trap 'stty sane; printf "\n$PS1"' INT
-trap '' TERM TSTP SIGQUIT
+trap '' TERM TSTP QUIT
 #
 # Function to log likely intrusions
 warn() {
@@ -99,23 +99,25 @@ inputCheck() {
 	elif [[ "$input" == *"/"* ]]; then
 		for i in "$input"; do
 			if [[ "$i" == *"/"* ]]; then
-				printf "rbash: $i: cannot specify '/' in command names" 1>&2
+				echo "rbash: $i: cannot specify '/' in command names" 1>&2
 				return 1
 			fi
 		done
+	elif [[ "$input" == "exit" || "$input" == "logout" ]]; then
+		exit 0
 	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null || builtin type $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
 		# Send a warning
 		warn "$input"
 		#
 		# If the input is a builtin or command in the $PATH, give a permission denied error.
 		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
-		printf "rbash: $cmd: Permission denied\n" 1>&2
+		echo "rbash: $cmd: Permission denied" 1>&2
 		#
 		# Add command to history
 		history -s "$input"
 	elif [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash" ]; then
 		# If the input is the password, enter a real shell
-		trap - INT TERM TSTP
+		trap - INT TERM TSTP QUIT
 		unset passHash userIP hostname counts fuckOff HISTFILE HISTSIZE
 		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
 	else
@@ -124,7 +126,7 @@ inputCheck() {
 		#
 		# If the input is not the password, a shell builtin or a command in the $PATH, give a not found error.
 		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
-		printf "rbash: $cmd: command not found\n" 1>&2
+		echo "rbash: $cmd: command not found" 1>&2
 		#
 		# Add command to history
 		history -s "$input"

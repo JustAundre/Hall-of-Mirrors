@@ -41,12 +41,12 @@ su() {
 	# Gaslight with a fake root terminal
 	export PS1="root@\h \w # "
 	whoami() {
-		printf "root\n"
+		echo "root"
 	}
 	logname() {
-		printf "root\n"
+		echo "root"
 	}
-	export -f echo whoami logname
+	export -f whoami logname
 }
 sudo() {
 	# Warn blue team
@@ -56,10 +56,10 @@ sudo() {
 	read -sp "[sudo] password for $USER: "
 	#
 	# Fake incorrect password timeout
-	sleep 3
+	sleep 2.5
 	#
 	# Fake error
-	printf "$USER is not in the sudoers file.  This incident will be reported.\n" 1>&2
+	echo "$USER is not in the sudoers file.  This incident will be reported." 1>&2
 	return 1
 }
 chpasswd() {

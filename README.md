@@ -34,6 +34,11 @@ cd "./Hall-of-Mirrors"
 
 **PLEASE** review and edit `main/bull.sh`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs.
 
+Create the warning log
+```bash
+sudo install -m 766 -o root -g root /dev/null /var/tmp/install.log
+```
+
 Install `main/bull.sh` to `/opt/bull.sh`
 ```bash
 sudo install -m 755 -o root -g root ./main/bull.sh /opt/bull.sh
@@ -56,7 +61,8 @@ printf "\n# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | s
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.
 ```bash
-touch "$PKGLOG"
+head -n3 /opt/bull.sh > /tmp/sourcevar.sh
+. /tmp/sourcevar.sh
 tail -fn4 "$PKGLOG" &
 printf "Heya, BullSH is installed--you're now getting alerts for possible intrusions;\nYou may manually check the full log of likely intrusions by reading the log file below:\n$PKGLOG\n"
 ```
