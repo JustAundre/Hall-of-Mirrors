@@ -12,9 +12,10 @@ PS1="$USER@$hostname ~ $ " # The prompt to show on each new line
 annoyanceType="confusion" # What kind of annoyance on a wrong password shall await them?
 userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
 #
-# Handle and prevent various termination signals
+# Handle various termination signals
 trap 'stty sane; printf "\n$PS1"' INT
 trap '' TERM TSTP QUIT
+trap 'exit 0' HUP
 #
 # Function to log likely intrusions
 warn() {
