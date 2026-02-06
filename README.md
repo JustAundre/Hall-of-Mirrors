@@ -86,7 +86,12 @@ gcc -fPIC -shared -o ./main/chaos-chaos.so ./main/chaos-chaos.c -ldl
 ## Changing the Password
 
 First, get the password you want to change to in plaintext. Hash your ideal plaintext password into [SHA512](https://qr.ae/pCmBQJ)<br>
-(preferably using the [sha512sum](https://www.computerhope.com/unix/sha512sum.htm) command like `printf 'PASSWORD_HERE' | sha512sum | cut -d' ' -f1`)<br>
+
+(Preferably using the [sha512sum](https://www.computerhope.com/unix/sha512sum.htm))
+
+Note: the default [hashing rounds](https://www.reddit.com/r/linuxquestions/comments/yvf994/what_is_meant_by_rounds_in_regards_to_secure/?rdt=60089) for BullSH is 250
+
 Go into `main/bull.sh` and find the `passHash` variable to your new hash<br>
+
 
 Refer to the Compiling guide and then the Installation guide.
