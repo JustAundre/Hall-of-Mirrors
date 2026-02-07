@@ -17,24 +17,24 @@ declare -x TMOUT=1
 #
 declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
 declare -r LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
-declare -r passHash1='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash for the 1st MFA layer
-declare -r passHash2='a88aab92b40add9e567f4c5546abe499091f1542c703f1616df863ab82be773a826b8838af41941760ab9b7effa64fa73c5216429163a8ccdd1086353b1b783d' # Password hash for the 2nd MFA layer
-declare -r hashRounds=250 # How many times to hash inputs
+declare -r passHash1='f02016bf576c54bc5f3160ae1a682b74d00f3d69be709a31dc20a43114627becd08ea97fb203c00492db42526208e4d92ce949f4ad99012500307dd27ecdf3dc' # Password hash for the 1st MFA layer
+declare -r passHash2='f02016bf576c54bc5f3160ae1a682b74d00f3d69be709a31dc20a43114627becd08ea97fb203c00492db42526208e4d92ce949f4ad99012500307dd27ecdf3dc' # Password hash for the 2nd MFA layer
+declare -r hashRounds=2500 # How many times to hash inputs
 declare -r readTimeout=20 # How many seconds before timing out for inactivity
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
-declare -r mfaLayer=3 # How many layers of MFA do you want? (Max 3)
+declare -r mfaLayers=3 # How many layers of MFA do you want? (Max 3)
 mfaAt=1 # What layer of the MFA you're at (don't change)
-counts=0 # The amount of login attempts to start with
+counts=0 # The amount of login attempts to start with (don't change)
 fuckOff="n" # Whether the script stops checking for the password (y/n)
 HOSTNAME="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
 PS1="$USER@$HOSTNAME ~ $ " # The prompt to show on each new line
-annoyanceType="confusion" # What kind of annoyance on a wrong password shall await them?
+annoyanceType="none" # What kind of annoyance on a wrong password shall await them?
 userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
 #
 # Handle various termination signals
 trap 'stty sane; printf "\n$PS1"' INT
 trap '' TERM TSTP QUIT
-trap 'exit 0' HUP
+trap 'pkill -P $$; exit 0' HUP
 trap 'pkill -P $$; exit 0' EXIT
 
 
@@ -52,7 +52,9 @@ warn() {
 #
 # Function to send an annoyance to the terminal which got the password wrong
 annoyance() {
+	# Stop previously triggered annoyances to prevent stacking and spiked CPU usage
 	pkill -P "$$"
+	#
 	# Flash black and white really fast for a few seconds
 	if [ "$annoyanceType" == "disco" ]; then
 		for i in {1..500}; do
@@ -64,7 +66,7 @@ annoyance() {
 	# Throw a wall of random bullshit at the terminal
 	elif [ "$annoyanceType" == "bullshit" ]; then
 		for i in {1..7}; do
-			if [ $(printf "($RANDOM / 1100) > 20\n" | bc -l) -eq 1 ]; then
+			if [ $(echo "($RANDOM / 1100) > 20" | bc -l) -eq 1 ]; then
 				sleep 1
 				head -c 512 /dev/urandom
 			fi
@@ -92,20 +94,15 @@ annoyance() {
 		# Move cursor to the bottom and show it again so your prompt is clean
 		printf "\e[%d;1H$PS1" "$rows"
 		tput cnorm
+	else
+		return 1
 	fi
 	return 0
 }
 #
 # Function to hash input
 hash() {
-	# Hash the input
-	for ((i=0; i<hashRounds; i++)); do
-		local input=$(printf -- "%s" "$input" | sha512sum | awk '{print $1}')
-	done
-	#
-	# Return the hash
-	printf "$input"
-	return 0
+	printf -- "%s" "$input" | python3 -c "import hashlib, sys; h = sys.stdin.read().encode(); [h := hashlib.sha512(h).hexdigest().encode() for _ in range($hashRounds)]; print(h.decode())"
 }
 #
 # Function to pass into the real shell
@@ -117,7 +114,7 @@ passOff() {
 	counts=0
 	#
 	# Remove sig traps
-	trap - INT TERM TSTP QUIT
+	trap - INT TERM TSTP QUIT HUP EXIY
 	#
 	# Remove unecessary variables
 	unset userIP HOSTNAME counts fuckOff HISTFILE HISTSIZE
@@ -126,7 +123,7 @@ passOff() {
 	unset TMOUT
 	#
 	# If allowed, last layer.
-	if [ "$mfaLayer" -eq 3 ]; then
+	if [ "$mfaLayers" -eq 3 ]; then
 		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
 	else
 		builtin exec /usr/bin/bash -i
@@ -215,7 +212,7 @@ while true; do
 	[ "$mfaAt" -eq 1 ] && read -t "$readTimeout" -rep "$PS1" input || exit 0
 	#
 	# Check input
-	if inputCheck && [ "$mfaLayer" -gt 1 ]; then
+	if inputCheck && [ "$mfaLayers" -gt 1 ]; then
 		(( mfaAt++ ))
 		echo "This account is currently not available."
 		while true; do

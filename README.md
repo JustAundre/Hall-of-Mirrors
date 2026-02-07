@@ -98,8 +98,6 @@ gcc -fPIC -shared -o ./main/chaos-chaos.so ./main/chaos-chaos.c -ldl
 
 First, get the password you want to change to in plaintext. Hash your ideal plaintext password into [SHA512](https://qr.ae/pCmBQJ)<br>
 
-(Preferably using the [sha512sum](https://www.computerhope.com/unix/sha512sum.htm) command)
-
 Note: the default [hashing rounds](https://www.reddit.com/r/linuxquestions/comments/yvf994/what_is_meant_by_rounds_in_regards_to_secure/?rdt=60089) for BullSH is 250
 
 Go into `main/bull.sh` and change the `passHash` variable to your new hash<br>
