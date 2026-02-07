@@ -11,9 +11,9 @@ declare -x TMOUT=1
 # Resource limits
 ulimit -u 1000		# No fork bombs!
 ulimit -n 10		# Stop disk stress
-ulimit -f 1000	# Stop disk stress
-ulimit -m 50000	# Don't stress the RAM!!!
-ulimit -t 60	# Don't stress the CPU!!!
+ulimit -f 1000		# Stop disk stress
+ulimit -m 50000		# Don't stress the RAM!!!
+ulimit -t 60		# Don't stress the CPU!!!
 
 
 
