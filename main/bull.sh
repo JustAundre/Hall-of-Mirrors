@@ -7,6 +7,13 @@ pgrep -f "$0" -u "$USER" | grep -v "^$$\$" | xargs kill -9 2>/dev/null
 #
 # In the event the fake shell is escaped, near-immediately kick them.
 declare -x TMOUT=1
+#
+# Resource limits
+ulimit -u 5		# No fork bombs!
+ulimit -n 4		# Stop disk stress
+ulimit -f 100	# Stop disk stress
+ulimit -m 50000	# Don't stress the RAM!!!
+ulimit -t 60	# Don't stress the CPU!!!
 
 
 
@@ -15,6 +22,7 @@ declare -x TMOUT=1
 #
 # Environment
 #
+# Configuration
 declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
 declare -r LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
 declare -r passHash1='f02016bf576c54bc5f3160ae1a682b74d00f3d69be709a31dc20a43114627becd08ea97fb203c00492db42526208e4d92ce949f4ad99012500307dd27ecdf3dc' # Password hash for the 1st MFA layer
@@ -23,12 +31,15 @@ declare -r hashRounds=2500 # How many times to hash inputs
 declare -r readTimeout=20 # How many seconds before timing out for inactivity
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
 declare -r mfaLayers=3 # How many layers of MFA do you want? (Max 3)
-mfaAt=1 # What layer of the MFA you're at (don't change)
-counts=0 # The amount of login attempts to start with (don't change)
+declare -r fakeRoot="y" # Fake a root shell?
+annoyanceType=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
+#
+# Staging (Don't modify these)
+mfaAt=1 # What layer of the MFA you're at
+counts=0 # The amount of login attempts to start with
 fuckOff="n" # Whether the script stops checking for the password (y/n)
 HOSTNAME="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
-PS1="$USER@$HOSTNAME ~ $ " # The prompt to show on each new line
-annoyanceType="none" # What kind of annoyance on a wrong password shall await them?
+PS1="$USER@$HOSTNAME ~ $ " && [ "$fakeRoot" == "y" ] && PS1="root@$HOSTNAME ~ # " # The prompt to show on each new line
 userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
 #
 # Handle various termination signals
@@ -56,7 +67,7 @@ annoyance() {
 	pkill -P "$$"
 	#
 	# Flash black and white really fast for a few seconds
-	if [ "$annoyanceType" == "disco" ]; then
+	if [ "$annoyanceType" -eq 1 ]; then
 		for i in {1..500}; do
 			printf "\e[?5h"
 			sleep .0001
@@ -64,7 +75,7 @@ annoyance() {
 			sleep .0001
 		done
 	# Throw a wall of random bullshit at the terminal
-	elif [ "$annoyanceType" == "bullshit" ]; then
+	elif [ "$annoyanceType" -eq 2 ]; then
 		for i in {1..7}; do
 			if [ $(echo "($RANDOM / 1100) > 20" | bc -l) -eq 1 ]; then
 				sleep 1
@@ -73,7 +84,7 @@ annoyance() {
 		done
 		printf "\n$PS1"
 	# Splatter random bullshit onto the terminal
-	elif [ "$annoyanceType" == "confusion" ]; then
+	elif [ "$annoyanceType" -eq 3 ]; then
 		# Hide the cursor
 		tput civis
 		#
@@ -102,7 +113,7 @@ annoyance() {
 #
 # Function to hash input
 hash() {
-	printf -- "%s" "$input" | python3 -c "import hashlib, sys; h = sys.stdin.read().encode(); [h := hashlib.sha512(h).hexdigest().encode() for _ in range($hashRounds)]; print(h.decode())"
+	printf -- "%s" "$input" | python3 -c "import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range($hashRounds):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
 }
 #
 # Function to pass into the real shell
@@ -114,15 +125,12 @@ passOff() {
 	counts=0
 	#
 	# Remove sig traps
-	trap - INT TERM TSTP QUIT HUP EXIY
+	trap - INT TERM TSTP QUIT HUP EXIT
 	#
-	# Remove unecessary variables
-	unset userIP HOSTNAME counts fuckOff HISTFILE HISTSIZE
+	# Clean up variables
+	unset userIP HOSTNAME counts fuckOff HISTFILE HISTSIZE TMOUT
 	#
-	# Unset the timeout
-	unset TMOUT
-	#
-	# If allowed, last layer.
+	# Apply last layer if configured.
 	if [ "$mfaLayers" -eq 3 ]; then
 		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
 	else

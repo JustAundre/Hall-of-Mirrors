@@ -80,27 +80,32 @@ Match User SYS_ADMIN_USER
 4. Every wrong escape attempt in BullSH also issues a warning
 5. After escaping, some commands will instead issue an alert to sysadmins with
 * The username
+* The UID
 * The IP address
 * The full attempted input
 6. The sysadmins will be shown the past 4 alerts upon logging in
+
+## Roadmap
+
+1. More gaslighting!! :3
+* If input is a known bad password, exec unshare -rm --root=/path/to/fake/filesystem /usr/bin/bash (jail to fake filesystem)
 
 Default Password: 
 `0hMyL0()rDGETM3OUT.PLE@S3`
 
 ## Self-compiling (Encouraged)
 
-Compiling `chaos-chaos.so`
+Compile `chaos-chaos.so` with the below
 ```bash
 gcc -fPIC -shared -o ./main/chaos-chaos.so ./main/chaos-chaos.c -ldl
 ```
 
 ## Changing the Password
 
-First, get the password you want to change to in plaintext. Hash your ideal plaintext password into [SHA512](https://qr.ae/pCmBQJ)<br>
+Note: the default [hashing rounds](https://www.reddit.com/r/linuxquestions/comments/yvf994/what_is_meant_by_rounds_in_regards_to_secure/?rdt=60089) for BullSH is 2500
 
-Note: the default [hashing rounds](https://www.reddit.com/r/linuxquestions/comments/yvf994/what_is_meant_by_rounds_in_regards_to_secure/?rdt=60089) for BullSH is 250
+First, get the password you want to change to in plaintext. Hash your password into [SHA512](https://qr.ae/pCmBQJ) (with the hashing rounds accounted for.)
 
-Go into `main/bull.sh` and change the `passHash` variable to your new hash<br>
-
+Go into `main/bull.sh` and change the `passHash` variable(s) to your new hash
 
 Refer to the Compiling guide and then the Installation guide.
