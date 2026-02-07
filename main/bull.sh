@@ -36,18 +36,18 @@ declare -r fakeRoot="y" # Fake a root shell? (y/n)
 declare -r annoyanceType=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
 declare -r logAll="y" # Log every command ran even after escaping? (y/n)
 #
-# Staging (Don't modify these)
-declare -rx HISTCONTROL='' HISTIGNORE='' # Save everything to history.
+# Staging (Modification of these is ill-advised)
+declare -rx USER HISTCONTROL='' HISTIGNORE='' # Save everything to history.
+declare -rx HOSTNAME="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
+PS1="$USER@$HOSTNAME ~ $ " && [ "$fakeRoot" == "y" ] && PS1="root@$HOSTNAME ~ # " # The prompt to show on each new line
 [ "$logAll" == "y" ] && declare -rx PROMPT_COMMAND='printf "User $USER with UID $EUID coming from $userIP ran: $(history 1 | sed "s/^[ ]*[0-9]*[ ]*//")\n"  | systemd-cat -t "cmds" -p 5"' # Log all commands even after escaping (if configured)
-mfaAt=1 # What layer of the MFA you're at
+mfaAt=1 # What layer of the MFA to start at
 counts=0 # The amount of login attempts to start with
 fuckOff="n" # Whether the script stops checking for the password (y/n)
-HOSTNAME="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
-PS1="$USER@$HOSTNAME ~ $ " && [ "$fakeRoot" == "y" ] && PS1="root@$HOSTNAME ~ # " # The prompt to show on each new line
 userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
 #
 # Handle various termination signals
-trap 'pkill -P $$; exit 1' HUP INT TERM TSTP QUIT EXIT
+trap 'pkill -P $$; exit 1' HUP TERM TSTP QUIT EXIT
 
 
 
@@ -58,7 +58,7 @@ trap 'pkill -P $$; exit 1' HUP INT TERM TSTP QUIT EXIT
 #
 # Send identifiers to a log file
 warn() {
-	echo "⚠️ MFA layer 1 failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | systemd-cat -t "sshd-internal" -p 5
+	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | systemd-cat -t "sshd-internal" -p 5
 	return
 }
 #
@@ -68,7 +68,7 @@ annoyance() {
 	pkill -P "$$"
 	#
 	# Flash black and white really fast for a few seconds
-	if [ "$annoyanceType" -eq 1 ]; then
+	if [[ "$annoyanceType" -eq 1 ]]; then
 		for i in {1..500}; do
 			printf "\e[?5h"
 			sleep .0001
@@ -78,14 +78,14 @@ annoyance() {
 	# Throw a wall of random bullshit at the terminal
 	elif [ "$annoyanceType" -eq 2 ]; then
 		for i in {1..7}; do
-			if [ $(echo "($RANDOM / 1100) > 20" | bc -l) -eq 1 ]; then
+			if [[ $(echo "($RANDOM / 1100) > 20" | bc -l) -eq 1 ]]; then
 				sleep 1
 				head -c 512 /dev/urandom
 			fi
 		done
 		printf "\n$PS1"
 	# Splatter random bullshit onto the terminal
-	elif [ "$annoyanceType" -eq 3 ]; then
+	elif [[ "$annoyanceType" -eq 3 ]]; then
 		# Hide the cursor
 		tput civis
 		#
@@ -103,7 +103,7 @@ annoyance() {
 			printf "\e[%d;%dH%s" "$r" "$c" "$(head -c 2 /dev/urandom | tr -d '\0')"
 		done
 		#
-		# Move cursor to the bottom and show it again so your prompt is clean
+		# Move cursor to the bottom and show your cursor again
 		printf "\e[%d;1H$PS1" "$rows"
 		tput cnorm
 	else
@@ -126,13 +126,18 @@ passOff() {
 	trap - INT TERM TSTP QUIT HUP EXIT
 	#
 	# Clean up variables
-	unset userIP HOSTNAME counts fuckOff HISTFILE HISTSIZE TMOUT
+	unset userIP counts fuckOff HISTFILE HISTSIZE TMOUT
+	declare -x PS1='\u@\h:\w\$ '
 	#
 	# Apply secure cloak rc file if configured.
-	if [ "$secureCloak" == "y" ]; then
-		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
+	if [[ "$secureCloak" == "y" ]]; then
+		builtin exec /usr/bin/env -i\
+			HOME="$HOME" TERM="$TERM" PATH="$PATH" USER="$USER"\
+			/usr/bin/bash --rcfile "/opt/securecloak.sh" -i
 	else
-		builtin exec /usr/bin/bash -i
+		builtin exec /usr/bin/env -i\
+			HOME="$HOME" TERM="$TERM" PATH="$PATH" USER="$USER"\
+			/usr/bin/bash -i
 	fi
 }
 #
@@ -142,10 +147,13 @@ inputCheck() {
 	(( counts++ ))
 	#
 	# If failed attempts exceed 3, stop checking for the correct password.
-	[ "$counts" -gt 3 ] && [ "$fuckOff" != "y" ] && readonly fuckOff="y"
+	[[ "$counts" -gt 3 && "$fuckOff" != "y" ]] && readonly fuckOff="y"
+	#
+	# Parse the input into its base command
+	local cmd="${input%% *}"
 	#
 	# Check the input
-	if [ -z "$input" ]; then
+	if [[ -z "$input" ]]; then
 		return 1
 	elif [[ "$input" == *"/"* ]]; then
 		# Send a warning
@@ -156,7 +164,7 @@ inputCheck() {
 		for i in "$args"; do
 			if [[ "$i" == *"/"* ]]; then
 				echo "rbash: $i: cannot specify '/' in command names" 1>&2
-				return 1
+				break
 			fi
 		done
 		#
@@ -165,14 +173,13 @@ inputCheck() {
 		#
 		# Fail the attempt
 		return 1
-	elif [[ "$input" == "exit" || "$input" == "logout" ]]; then
+	elif [[ "$cmd" == "exit" || "$cmd" == "logout" ]]; then
 		exit 1
-	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null || builtin type $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
+	elif type -t "$cmd" &>/dev/null; then
 		# Send a warning
 		warn "$input"
 		#
 		# If the input is a builtin or command in the $PATH, give a permission denied error.
-		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
 		echo "rbash: $cmd: Permission denied" 1>&2
 		#
 		# Add command to history
@@ -180,11 +187,11 @@ inputCheck() {
 		#
 		# Fail the attempt
 		return 1
-	elif [ "$mfaAt" -eq 1 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash1" ]; then
+	elif [[ "$fuckOff" == "n" && "$mfaAt" -eq 1 && "$(hash)" == "$passHash1" ]]; then
 		# If the input is the password pass the attempt and reset the counter
 		counts=0
 		return 0
-	elif [ "$mfaAt" -eq 2 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash2" ]; then
+	elif [[ "$fuckOff" == "n" && "$mfaAt" -eq 2 && "$(hash)" == "$passHash2" ]]; then
 		# If the input is the password pass the attempt and reset the counter
 		counts=0
 		return 0
@@ -192,8 +199,7 @@ inputCheck() {
 		# Send a warning
 		warn "$input"
 		#
-		# If the input is not the password, a shell builtin or a command in the $PATH, give a not found error.
-		cmd=$(printf -- "%s" "$input" | awk '{ print $1 }')
+		# If the input is not the password, a recognizable keyword or command, give a not found error.
 		echo "rbash: $cmd: command not found" 1>&2
 		#
 		# Add command to history

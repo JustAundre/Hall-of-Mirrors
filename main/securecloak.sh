@@ -120,7 +120,7 @@ bash() {
 	su
 }
 declare -rfx chpasswd sudo su ssh history rm warn bash env
-declare -rx SSH_CONNECTION
+declare -rx SSH_CONNECTION USER
 #
 # Session logging logic
 function sessionLog() {
