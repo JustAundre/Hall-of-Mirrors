@@ -5,10 +5,13 @@ BullSH, the BullShit Shell for SSH.
 ## Requirements
 
 The target system for the installation must...
-- Be Linux (*not MacOS*)
-- Have the standard filesystem structure
-- Be using `SSH` as the main access point
-- Have the basic calculator (`bc`) binary installed
+- Be Linux (not MacOS)
+- Have...
+* Bash
+* BC (basic calculator)
+* Python3 or above
+* Use SystemD
+* PrintF / Echo
 
 Additionally, please note that this is only as effective as the system is secure;
 
@@ -37,6 +40,7 @@ cd "./Hall-of-Mirrors"
 Create the warning log file
 ```bash
 sudo install -m 766 -o root -g root /dev/null /var/tmp/install.log
+sudo chattr +a /var/tmp/install.log
 ```
 
 Install `main/bull.sh` to `/opt/bull.sh`
@@ -61,9 +65,9 @@ printf "\n# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | s
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.
 ```bash
-PKGLOG=$(awk -F'"' '/PKGLOG=/ {print $2}' /opt/bull.sh)
-tail -fn4 "$PKGLOG" &
-printf "Heya, BullSH is installed--you're now getting alerts for possible intrusions;\nYou may manually check the full log of likely intrusions by reading the log file below:\n$PKGLOG\n"
+echo -e "Heya, BullSH is installed--you're now getting alerts for possible intrusions;\nYou may manually check the full log of likely intrusions by reading the log file below:\n$PKGLOG\n\nHere are the first few alerts below:"
+journalctl -t sshd-internal -f &
+echo -e "You can run the below command to view all recently ran comands:\njournalctl -t sshd-internal -f"
 ```
 
 Append the below to the end of `/etc/ssh/sshd_config`, where SYS_ADMIN_USER is the user you would like to exclude; repeat as necessary (or not if you don't wish to exclude anyone.)

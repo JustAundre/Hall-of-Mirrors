@@ -1,5 +1,8 @@
 # Restore PS1 and TERM variable
-export PS1='\u@\h \w \$ ' TERM="xterm-256color"
+declare -x PS1="\u@\h \w \$ " TERM="xterm-256color"
+#
+# Define descrete log file
+declare -rx PKGLOG='/var/tmp/install.log'
 #
 # Helper function to warn sysadmins about intrusions
 warn() {

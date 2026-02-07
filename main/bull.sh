@@ -9,9 +9,9 @@ pgrep -f "$0" -u "$USER" | grep -v "^$$\$" | xargs kill -9 2>/dev/null
 declare -x TMOUT=1
 #
 # Resource limits
-ulimit -u 5		# No fork bombs!
-ulimit -n 4		# Stop disk stress
-ulimit -f 100	# Stop disk stress
+ulimit -u 1000		# No fork bombs!
+ulimit -n 10		# Stop disk stress
+ulimit -f 1000	# Stop disk stress
 ulimit -m 50000	# Don't stress the RAM!!!
 ulimit -t 60	# Don't stress the CPU!!!
 
@@ -30,11 +30,15 @@ declare -r passHash2='f02016bf576c54bc5f3160ae1a682b74d00f3d69be709a31dc20a43114
 declare -r hashRounds=2500 # How many times to hash inputs
 declare -r readTimeout=20 # How many seconds before timing out for inactivity
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
-declare -r mfaLayers=3 # How many layers of MFA do you want? (Max 3)
-declare -r fakeRoot="y" # Fake a root shell?
-annoyanceType=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
+declare -r mfaLayers=2 # How many layers of MFA do you want? (Max 2)
+declare -r secureCloak="y" # Use custom secure bashrc? (y/n)
+declare -r fakeRoot="y" # Fake a root shell? (y/n)
+declare -r annoyanceType=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
+declare -r logAll="y" # Log every command ran even after escaping? (y/n)
 #
 # Staging (Don't modify these)
+declare -rx HISTCONTROL='' HISTIGNORE='' # Save everything to history.
+[ "$logAll" == "y" ] && declare -rx PROMPT_COMMAND='printf "User $USER with UID $EUID coming from $userIP ran: $(history 1 | sed "s/^[ ]*[0-9]*[ ]*//")\n"  | systemd-cat -t "cmds" -p 5"' # Log all commands even after escaping (if configured)
 mfaAt=1 # What layer of the MFA you're at
 counts=0 # The amount of login attempts to start with
 fuckOff="n" # Whether the script stops checking for the password (y/n)
@@ -43,10 +47,7 @@ PS1="$USER@$HOSTNAME ~ $ " && [ "$fakeRoot" == "y" ] && PS1="root@$HOSTNAME ~ # 
 userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
 #
 # Handle various termination signals
-trap 'stty sane; printf "\n$PS1"' INT
-trap '' TERM TSTP QUIT
-trap 'pkill -P $$; exit 0' HUP
-trap 'pkill -P $$; exit 0' EXIT
+trap 'pkill -P $$; exit 1' HUP INT TERM TSTP QUIT EXIT
 
 
 
@@ -57,7 +58,7 @@ trap 'pkill -P $$; exit 0' EXIT
 #
 # Send identifiers to a log file
 warn() {
-	echo "⚠️ MFA layer 1 failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null
+	echo "⚠️ MFA layer 1 failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | systemd-cat -t "sshd-internal" -p 5
 	return
 }
 #
@@ -119,10 +120,7 @@ hash() {
 # Function to pass into the real shell
 passOff() {
 	# Log the successful attempt
-	echo "✅ MFA layer $mfaAt passed by $USER, UID $EUID -- originating from $userIP." | tee -a "$PKGLOG" &>/dev/null
-	#
-	# Reset the attempt counter
-	counts=0
+	echo "✅ MFA layer $mfaAt passed by $USER, UID $EUID -- originating from $userIP." | systemd-cat -t "sshd-internal" -p 5
 	#
 	# Remove sig traps
 	trap - INT TERM TSTP QUIT HUP EXIT
@@ -130,8 +128,8 @@ passOff() {
 	# Clean up variables
 	unset userIP HOSTNAME counts fuckOff HISTFILE HISTSIZE TMOUT
 	#
-	# Apply last layer if configured.
-	if [ "$mfaLayers" -eq 3 ]; then
+	# Apply secure cloak rc file if configured.
+	if [ "$secureCloak" == "y" ]; then
 		builtin exec /usr/bin/bash --rcfile "/opt/securecloak.sh" -i
 	else
 		builtin exec /usr/bin/bash -i
@@ -148,7 +146,7 @@ inputCheck() {
 	#
 	# Check the input
 	if [ -z "$input" ]; then
-		return 0
+		return 1
 	elif [[ "$input" == *"/"* ]]; then
 		# Send a warning
 		warn "$input"
@@ -168,7 +166,7 @@ inputCheck() {
 		# Fail the attempt
 		return 1
 	elif [[ "$input" == "exit" || "$input" == "logout" ]]; then
-		exit 0
+		exit 1
 	elif builtin which $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null || builtin type $(printf -- "%s" "$input" | awk '{ print $1 }') &>/dev/null; then
 		# Send a warning
 		warn "$input"
@@ -183,10 +181,12 @@ inputCheck() {
 		# Fail the attempt
 		return 1
 	elif [ "$mfaAt" -eq 1 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash1" ]; then
-		# If the input is the password pass the attempt
+		# If the input is the password pass the attempt and reset the counter
+		counts=0
 		return 0
 	elif [ "$mfaAt" -eq 2 ] && [ "$fuckOff" == "n" ] && [ "$(hash)" == "$passHash2" ]; then
-		# If the input is the password pass the attempt
+		# If the input is the password pass the attempt and reset the counter
+		counts=0
 		return 0
 	else
 		# Send a warning
@@ -217,19 +217,21 @@ inputCheck() {
 # Trap user in a while loop over a fake terminal
 while true; do
 	# Take user input
-	[ "$mfaAt" -eq 1 ] && read -t "$readTimeout" -rep "$PS1" input || exit 0
+	[ "$mfaAt" -eq 1 ] && read -t "$readTimeout" -rep "$PS1" input || exit 1
 	#
 	# Check input
-	if inputCheck && [ "$mfaLayers" -gt 1 ]; then
-		(( mfaAt++ ))
-		echo "This account is currently not available."
+	if [ "$mfaLayers" -gt 1 ]; then
+		if inputCheck; then
+			(( mfaAt++ ))
+		else
+			continue
+		fi
+		echo "This account is currently not available." 1>&2
 		while true; do
-			read -t "$readTimeout" -re input || exit 0
-			if inputCheck; then
-				passOff
-			fi
+			read -t "$readTimeout" -re input || exit 1
+			inputCheck && passOff
 		done
 	else
-		passOff
+		inputCheck && passOff
 	fi
 done
