@@ -65,15 +65,15 @@ uid_t geteuid(void) { return 0; }
 gid_t getgid(void) { return 0; }
 gid_t getegid(void) { return 0; }
 struct passwd *getpwuid(uid_t uid) {
-	struct passwd *fake = malloc(sizeof(struct passwd));
-	fake->pw_name = "root";
-	fake->pw_passwd = "x";
-	fake->pw_uid = 0;
-	fake->pw_gid = 0;
-	fake->pw_gecos = "root";
-	fake->pw_dir = "/root";
-	fake->pw_shell = "/bin/bash";
-	return fake;
+	static struct passwd fake;
+	fake.pw_name = "root";
+	fake.pw_passwd = "x";
+	fake.pw_uid = 0;
+	fake.pw_gid = 0;
+	fake.pw_gecos = "root";
+	fake.pw_dir = "/root";
+	fake.pw_shell = "/bin/bash";
+	return &fake;
 }
 //
 // Fake time

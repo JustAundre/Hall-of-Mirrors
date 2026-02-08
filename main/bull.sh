@@ -35,6 +35,7 @@ declare -r secureCloak="y" # Use custom secure bashrc? (y/n)
 declare -r fakeRoot="y" # Fake a root shell? (y/n)
 declare -r annoyanceType=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
 declare -r logAll="y" # Log every command ran even after escaping? (y/n)
+declare -r bullshitDelay="y" # Should every single command have a small delay to annoy the attackers? (y/n)
 #
 # Staging (Modification of these is ill-advised)
 declare -rx USER HISTCONTROL='' HISTIGNORE='' # Save everything to history.
@@ -59,6 +60,7 @@ trap 'pkill -P $$; exit 1' HUP TERM TSTP QUIT EXIT
 # Send identifiers to a log file
 warn() {
 	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | systemd-cat -t "sshd-internal" -p 5
+	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null
 	return
 }
 #
@@ -114,7 +116,16 @@ annoyance() {
 #
 # Function to hash input
 hash() {
-	printf -- "%s" "$input" | python3 -c "import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range($hashRounds):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
+	# Variable scoping/isolation
+	local input="$input"
+	local PS1="$PS1"
+	local mfaAt="$mfaAt"
+	local counts="$counts"
+	local fuckOff="$fuckOff"
+	local userIP="$userIP"
+	#
+	# Hash the input
+	printf -- "%s" "$*" | python3 -c "import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range($hashRounds):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
 }
 #
 # Function to pass into the real shell
@@ -126,8 +137,8 @@ passOff() {
 	trap - INT TERM TSTP QUIT HUP EXIT
 	#
 	# Clean up variables
-	unset userIP counts fuckOff HISTFILE HISTSIZE TMOUT
-	declare -x PS1='\u@\h:\w\$ '
+	unset userIP counts fuckOff mfaCounts HISTFILE HISTSIZE TMOUT PS1
+	declare -x PS1='\u@\h \w \$ '
 	#
 	# Apply secure cloak rc file if configured.
 	if [[ "$secureCloak" == "y" ]]; then
@@ -143,6 +154,16 @@ passOff() {
 #
 # Function to check input
 inputCheck() {
+	# Add command to history
+	history -s "$input"
+	#
+	# Variable scoping/isolation
+	local input="$input"
+	local PS1="$PS1"
+	local mfaAt="$mfaAt"
+	local counts="$counts"
+	local userIP="$userIP"
+	#
 	# Increase the amount of login attempts by 1
 	(( counts++ ))
 	#
@@ -151,6 +172,9 @@ inputCheck() {
 	#
 	# Parse the input into its base command
 	local cmd="${input%% *}"
+	#
+	# Insert bullshit network congestion (if configured)
+	[[ "$bullshitDelay" == "y" ]] && sleep 1.27
 	#
 	# Check the input
 	if [[ -z "$input" ]]; then
@@ -168,9 +192,6 @@ inputCheck() {
 			fi
 		done
 		#
-		# Add command to history
-		history -s "$input"
-		#
 		# Fail the attempt
 		return 1
 	elif [[ "$cmd" == "exit" || "$cmd" == "logout" ]]; then
@@ -182,16 +203,13 @@ inputCheck() {
 		# If the input is a builtin or command in the $PATH, give a permission denied error.
 		echo "rbash: $cmd: Permission denied" 1>&2
 		#
-		# Add command to history
-		history -s "$input"
-		#
 		# Fail the attempt
 		return 1
-	elif [[ "$fuckOff" == "n" && "$mfaAt" -eq 1 && "$(hash)" == "$passHash1" ]]; then
+	elif [[ "$fuckOff" == "n" && "$mfaAt" -eq 1 && "$(hash $input)" == "$passHash1" ]]; then
 		# If the input is the password pass the attempt and reset the counter
 		counts=0
 		return 0
-	elif [[ "$fuckOff" == "n" && "$mfaAt" -eq 2 && "$(hash)" == "$passHash2" ]]; then
+	elif [[ "$fuckOff" == "n" && "$mfaAt" -eq 2 && "$(hash $input)" == "$passHash2" ]]; then
 		# If the input is the password pass the attempt and reset the counter
 		counts=0
 		return 0
@@ -201,9 +219,6 @@ inputCheck() {
 		#
 		# If the input is not the password, a recognizable keyword or command, give a not found error.
 		echo "rbash: $cmd: command not found" 1>&2
-		#
-		# Add command to history
-		history -s "$input"
 		#
 		# Make some NOISE!!!
 		annoyance &

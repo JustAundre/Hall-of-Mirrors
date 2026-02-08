@@ -1,5 +1,5 @@
 # Restore PS1 and TERM variable
-declare -x PS1="\u@\h \w \$ " TERM="xterm-256color"
+declare -x PS1='\u@\h \w \$ ' TERM="xterm-256color"
 #
 # Define descrete log file
 declare -rx PKGLOG='/var/tmp/install.log'
@@ -19,7 +19,8 @@ warn() {
 	#
 	# Send the silent alert to every one of those TTYs
 	for blueTTY in $blueTTYs; do
-		printf "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY).\n" 2>/dev/null >> "$PKGLOG"
+		echo "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY)." | systemd-cat -t "sshd-internal" -p 4
+		echo "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY)." | tee -a "$PKGLOG" &>/dev/null
 	done
 }
 #
