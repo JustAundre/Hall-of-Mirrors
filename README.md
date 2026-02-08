@@ -81,21 +81,24 @@ Match User SYS_ADMIN_USER
 
 ## Features
 
-1. Attempting to do enter anything that ISN'T the password is met with a no permission error from "*Bash*"
-2. After dropping into the real shell, you cannot `exit` back into BullSH.
-3. All sessions after escaping BullSH are logged (including `stderr`/`stdout` along with commands ran)
-4. Every wrong escape attempt in BullSH also issues a warning
-5. After escaping, some commands will instead issue an alert to sysadmins with
-* The username
-* The UID
-* The IP address
-* The full attempted input
-6. The sysadmins will be shown the past 4 alerts upon logging in
+1. Fake root terminal
+2. Realistic errors
+3. Psycological torture!
+4. Even after escaping BullSH, entire sessions are logged! (including `stderr`/`stdout` along with commands ran)
+5. Logging galore; failed MFA attempt? Logged! Suspicious/risky command? Logged! Successful MFA attempt? Logged--but what does the log contain?
+* User IP
+* User ID
+* Username
+* Attempted input
+6. The logs go to a inconspicous log file *and* JournalCTL--should work with remote logging as well.
+7. Recent alerts are displayed to sysadmins on login!
 
 ## Roadmap
 
 1. More gaslighting!! :3
 * If input is a known bad password, exec unshare -rm --root=/path/to/fake/filesystem /usr/bin/bash (jail to fake filesystem)
+2. Deal with "$SSH_ORIGINAL_COMMAND"
+* Make a special warning for it.
 
 Default Password: 
 `0hMyL0()rDGETM3OUT.PLE@S3`
