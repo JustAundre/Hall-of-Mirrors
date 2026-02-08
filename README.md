@@ -93,6 +93,13 @@ Match User SYS_ADMIN_USER
 6. The logs go to a inconspicous log file *and* JournalCTL--should work with remote logging as well.
 7. Recent alerts are displayed to sysadmins on login!
 
+`journalctl -t sshd-internal -f -o cat` to view commands/input attempted in BullSH
+`journalctl -t sshd-all -f -o cat` to view all commands ran in a real shell
+`journalctl -t sshd-internal -f -p 5 -o cat` for successful MFA attempts
+`journalctl -t sshd-internal -f -p 4 -o cat` for failed ones.
+`journalctl -t sshd-internal -f -p 3 -o cat` for risky commands ran in a real shell
+Hidden log files are located at `/var/tmp/`
+
 ## Roadmap
 
 1. More gaslighting!! :3

@@ -1,8 +1,5 @@
-# Restore PS1 and TERM variable
-declare -x PS1='\u@\h \w \$ ' TERM="xterm-256color"
 #
-# Define descrete log file
-declare -rx PKGLOG='/var/tmp/install.log'
+# Functions
 #
 # Helper function to warn sysadmins about intrusions
 warn() {
@@ -12,16 +9,11 @@ warn() {
 	# Prevent the command from being canceled when the warning is being sent
 	trap '' INT TERM TSTP
 	#
-	# Silently gather the intruder's details
-	local IP="$(echo $SSH_CONNECTION | awk '{ print $1 }')"
-	local realUser="$(builtin command logname)"
-	local redTTY="$(tty | awk -F'/dev/' '{ print $2 }')"
+	# Send the silent alert
+	echo "⚠️⚠️⚠️: $USER ran a risky from $userIP on $TTY. Command was: $*" | tee -a "$PKGLOG" &>/dev/null | systemd-cat -t "sshd-internal" -p 3
 	#
-	# Send the silent alert to every one of those TTYs
-	for blueTTY in $blueTTYs; do
-		echo "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY)." | systemd-cat -t "sshd-internal" -p 4
-		echo "⚠️⚠️⚠️: $realUser ran ($@) via user $USER by remote connection ($IP) on TTY ($redTTY)." | tee -a "$PKGLOG" &>/dev/null
-	done
+	# Remove the trap
+	trap - INT TERM TSTP
 }
 #
 # Alert on suspicious commands
@@ -33,7 +25,7 @@ ssh() {
 	for i in "$@"; do
 		if [[ "$i" =~ ^.+\@([0123456789]{1,3}.){4,4}$ ]]; then
 			sleep $(( $RANDOM % 10 ))
-			printf "ssh: connect to host $i port 22: Connection timed out\n" 1>&2
+			echo "ssh: connect to host $i port 22: Connection timed out" 1>&2
 			return 255
 		fi
 	done
@@ -44,13 +36,9 @@ su() {
 	#
 	# Gaslight with a fake root terminal
 	export PS1="root@\h \w # "
-	whoami() {
-		echo "root"
-	}
-	logname() {
-		echo "root"
-	}
-	export -f whoami logname
+	whoami() { echo "root"; }
+	logname() { echo "root"; }
+	declare -rfx whoami logname
 }
 sudo() {
 	# Warn blue team
@@ -77,7 +65,7 @@ chpasswd() {
 	return 0
 }
 #
-# Your digital footprint is staying.
+# Prevent removal of traces
 rm() {
 	# Warn the blue team
 	warn "rm $*"
@@ -101,11 +89,11 @@ history() {
 	builtin command history $@
 }
 #
-# Harder escape
+# Slightly impede attempts to escape securecloak.
 command() {
 	if [ -z "$1" ]; then
 		local cmd=$(printf "$1" | awk '{ print $1 }')
-		printf "bash: $cmd: Permission denied\n"
+		echo "bash: $cmd: Permission denied"
 		return 127
 	fi
 	return 0
@@ -121,9 +109,15 @@ bash() {
 	su
 }
 declare -rfx chpasswd sudo su ssh history rm warn bash env
-declare -rx SSH_CONNECTION USER
+
+
+
+
+
 #
-# Session logging logic
+# Session Logging
+#
+# Log the entire session to a file.
 function sessionLog() {
 	if [ -z "$logging" ]; then
 		local logDir="/var/tmp"
@@ -149,6 +143,3 @@ function sessionLog() {
 }
 sessionLog
 unset sessionLog
-#
-# An extra surprise :3
-export LD_PRELOAD=/opt/chaos-chaos.so

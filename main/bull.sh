@@ -23,29 +23,33 @@ ulimit -t 60		# Don't stress the CPU!!!
 # Environment
 #
 # Configuration
-declare -rx PKGLOG="/var/tmp/install.log" # The location to send warnings to
-declare -r LD_PRELOAD='/opt/chaos-chaos.so' # Defensive library to use to deny permissions to files in the event BullSH is bypassed.
+declare -rx PKGLOG='/var/tmp/install.log' # The location to send warnings to
 declare -r passHash1='f02016bf576c54bc5f3160ae1a682b74d00f3d69be709a31dc20a43114627becd08ea97fb203c00492db42526208e4d92ce949f4ad99012500307dd27ecdf3dc' # Password hash for the 1st MFA layer
 declare -r passHash2='f02016bf576c54bc5f3160ae1a682b74d00f3d69be709a31dc20a43114627becd08ea97fb203c00492db42526208e4d92ce949f4ad99012500307dd27ecdf3dc' # Password hash for the 2nd MFA layer
 declare -r hashRounds=2500 # How many times to hash inputs
 declare -r readTimeout=20 # How many seconds before timing out for inactivity
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
 declare -r mfaLayers=2 # How many layers of MFA do you want? (Max 2)
-declare -r secureCloak="y" # Use custom secure bashrc? (y/n)
-declare -r fakeRoot="y" # Fake a root shell? (y/n)
+declare -r secureCloak='y' # Use custom secure bashrc? (y/n)
+declare -r fakeRoot='y' # Fake a root shell? (y/n)
 declare -r annoyanceType=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
-declare -r logAll="y" # Log every command ran even after escaping? (y/n)
-declare -r bullshitDelay="y" # Should every single command have a small delay to annoy the attackers? (y/n)
+declare -r bullshitDelay='y' # Should every single command have a small delay to annoy the attackers? (y/n)
+declare -r bullshitDelayTime='.15' # How long should the bullshit delay be? (in seconds)
+declare -r secureCloakPath='/opt/securecloak.sh' # Usually shouldn't need to change this unless you installed it to a custom location
+LD_PRELOAD='/opt/chaos-chaos.so' # Usually shouldn't need to change this unless you installed it to a custom location
 #
 # Staging (Modification of these is ill-advised)
-declare -rx USER HISTCONTROL='' HISTIGNORE='' # Save everything to history.
+declare -rx HISTCONTROL='' HISTIGNORE='' # By default some commands can be exempted from history with a leading space; this disables that.
+declare -rx USER # Anti-spoofing for the USER variable
 declare -rx HOSTNAME="$(hostname | awk -F'.' '{ print $1 }')" # Hostname of the machine up to the first dot (exclusive of first dot)
+declare -rx PROMPT_COMMAND='echo "User $USER with UID $UID coming from $userIP ran: $(history 1 | sed s/^[ ]*[0-9]*[ ]*//)" | tee -a "$PKGLOG" &>/dev/null | systemd-cat -t "sshd-internal" -p 3' # Log all commands
+declare -rx TTY="$(tty | awk -F'/dev/' '{ print $2 }')"
+[[ -f "$LD_PRELOAD" ]] && declare -rx LD_PRELOAD || LD_PRELOAD=''
 PS1="$USER@$HOSTNAME ~ $ " && [ "$fakeRoot" == "y" ] && PS1="root@$HOSTNAME ~ # " # The prompt to show on each new line
-[ "$logAll" == "y" ] && declare -rx PROMPT_COMMAND='printf "User $USER with UID $EUID coming from $userIP ran: $(history 1 | sed "s/^[ ]*[0-9]*[ ]*//")\n"  | systemd-cat -t "cmds" -p 5"' # Log all commands even after escaping (if configured)
 mfaAt=1 # What layer of the MFA to start at
 counts=0 # The amount of login attempts to start with
 fuckOff="n" # Whether the script stops checking for the password (y/n)
-userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') # Grab the SSH IP (with fallback)
+userIP="Local Console" ; [ -n "$SSH_CONNECTION" ] && userIP=$(printf "$SSH_CONNECTION" | awk '{ print $1 }') ; declare -rx userIP SSH_CONNECTION # Grab the SSH IP (with fallback)
 #
 # Handle various termination signals
 trap 'pkill -P $$; exit 1' HUP TERM TSTP QUIT EXIT
@@ -59,8 +63,7 @@ trap 'pkill -P $$; exit 1' HUP TERM TSTP QUIT EXIT
 #
 # Send identifiers to a log file
 warn() {
-	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | systemd-cat -t "sshd-internal" -p 5
-	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null
+	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null | systemd-cat -t "sshd-internal" -p 4
 	return
 }
 #
@@ -121,8 +124,6 @@ hash() {
 	local PS1="$PS1"
 	local mfaAt="$mfaAt"
 	local counts="$counts"
-	local fuckOff="$fuckOff"
-	local userIP="$userIP"
 	#
 	# Hash the input
 	printf -- "%s" "$*" | python3 -c "import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range($hashRounds):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
@@ -143,26 +144,25 @@ passOff() {
 	# Apply secure cloak rc file if configured.
 	if [[ "$secureCloak" == "y" ]]; then
 		builtin exec /usr/bin/env -i\
-			HOME="$HOME" TERM="$TERM" PATH="$PATH" USER="$USER"\
-			/usr/bin/bash --rcfile "/opt/securecloak.sh" -i
+			TTY="$TTY" PS1="$PS1" HOME="$HOME" TERM="xterm-256color" userIP="$userIP" SSH_CONNECTION="$SSH_CONNECTION" PATH="$PATH" USER="$USER" PKGLOG="$PKGLOG" PROMPT_COMMAND="$PROMPT_COMMAND" HISTCONTROL="$HISTCONTROL" HISTIGNORE="$HISTIGNORE" LD_PRELOAD="$LD_PRELOAD"\
+			/usr/bin/bash --rcfile "$secureCloakPath" -i
 	else
 		builtin exec /usr/bin/env -i\
-			HOME="$HOME" TERM="$TERM" PATH="$PATH" USER="$USER"\
+			TTY="$TTY" PS1="$PS1" HOME="$HOME" TERM="xterm-256color" userIP="$userIP" SSH_CONNECTION="$SSH_CONNECTION" PATH="$PATH" USER="$USER" PKGLOG="$PKGLOG" PROMPT_COMMAND="$PROMPT_COMMAND" HISTCONTROL="$HISTCONTROL" HISTIGNORE="$HISTIGNORE" LD_PRELOAD="$LD_PRELOAD"\
 			/usr/bin/bash -i
 	fi
 }
 #
 # Function to check input
 inputCheck() {
-	# Add command to history
-	history -s "$input"
-	#
 	# Variable scoping/isolation
 	local input="$input"
 	local PS1="$PS1"
 	local mfaAt="$mfaAt"
 	local counts="$counts"
-	local userIP="$userIP"
+	#
+	# Add command to history
+	history -s "$input"
 	#
 	# Increase the amount of login attempts by 1
 	(( counts++ ))
@@ -174,7 +174,7 @@ inputCheck() {
 	local cmd="${input%% *}"
 	#
 	# Insert bullshit network congestion (if configured)
-	[[ "$bullshitDelay" == "y" ]] && sleep 1.27
+	[[ "$bullshitDelay" == "y" ]] && sleep "$bullshitDelayTime"
 	#
 	# Check the input
 	if [[ -z "$input" ]]; then
