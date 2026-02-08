@@ -4,7 +4,7 @@
 # Helper function to warn sysadmins about intrusions
 warn() {
 	# Basic error handling
-	[ -z "$@" ] && return 1
+	[[ -z "$@" ]] && return 1
 	#
 	# Prevent the command from being canceled when the warning is being sent
 	trap '' INT TERM TSTP
@@ -109,7 +109,7 @@ bash() {
 	su
 }
 declare -rfx chpasswd sudo su ssh history rm warn bash env
-
+declare -rx HOME TTY userIP SSH_CONNECTION PATH PKGLOG PROMPT_COMMAND HISTCONTROL HISTIGNORE
 
 
 

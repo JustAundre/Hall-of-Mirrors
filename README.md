@@ -6,16 +6,13 @@ BullSH, the BullShit Shell for SSH.
 
 The target system for the installation must...
 - Be Linux (not MacOS)
-- Have...
-* Bash
+* Bash 5.0+
 * BC (basic calculator)
-* Python3 or above
-* Use SystemD
-* PrintF / Echo
+* Python 3.0+
+* SystemD
+* Have printf, echo and tee
 
-Additionally, please note that this is only as effective as the system is secure;
-
-Servers get hit by the weakest link more often than not.
+Additionally, please note that this is only as effective as the system is secure; servers get hit by the weakest link more often than not.
 
 ## Manual Installation
 
@@ -23,7 +20,6 @@ To install the this, you *should* preferably have, but are allowed to not have..
 - Have a shell, preferably `bash`.
 - Have `gcc`
 - Have `git`
-- Have `tee`
 
 Clone the repository/download its source code
 ```bash
@@ -44,24 +40,16 @@ sudo chattr +a /var/tmp/install.log
 ```
 
 Install `main/bull.sh` to `/opt/bull.sh`
-```bash
-sudo install -m 755 -o root -g root ./main/bull.sh /opt/bull.sh
-```
+`install -m 755 -o root -g root ./main/bull.sh /opt/bull.sh`
 
 Install `main/securecloak.sh` to `/opt/securecloak.sh`
-```bash
-sudo install -m 755 -o root -g root ./main/securecloak.sh /opt/securecloak.sh
-```
+`sudo install -m 755 -o root -g root ./main/securecloak.sh /opt/securecloak.sh`
 
 Install `main/chaos-chaos.so` to `/opt/chaos-chaos.so`
-```bash
-sudo install -m 744 -o root -g root ./main/chaos-chaos.so /opt/chaos-chaos.so
-```
+`sudo install -m 744 -o root -g root ./main/chaos-chaos.so /opt/chaos-chaos.so`
 
 Add the `ForceCommand /opt/bull.sh` directive to `/etc/ssh/sshd_config`
-```bash
-echo "# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | sudo tee -a /etc/ssh/sshd_config
-```
+`echo "# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | sudo tee -a /etc/ssh/sshd_config`
 
 Append the below to the end of each Sysadmin's `~/.bashrc` file.
 ```bash
@@ -93,12 +81,14 @@ Match User SYS_ADMIN_USER
 6. The logs go to a inconspicous log file *and* JournalCTL--should work with remote logging as well.
 7. Recent alerts are displayed to sysadmins on login!
 
-`journalctl -t sshd-internal -f -o cat` to view commands/input attempted in BullSH
-`journalctl -t sshd-all -f -o cat` to view all commands ran in a real shell
-`journalctl -t sshd-internal -f -p 5 -o cat` for successful MFA attempts
-`journalctl -t sshd-internal -f -p 4 -o cat` for failed ones.
-`journalctl -t sshd-internal -f -p 3 -o cat` for risky commands ran in a real shell
+`journalctl -t sshd-internal -f` to view commands/input attempted in BullSH
+`journalctl -t sshd-all -f` to view all commands ran in a real shell
+`journalctl -t sshd-internal -fp5` for successful MFA attempts
+`journalctl -t sshd-internal -fp4` for failed ones
+`journalctl -t sshd-internal -fp3` for risky commands ran in a real shell
 Hidden log files are located at `/var/tmp/`
+
+Default Password: `0hMyL0()rDGETM3OUT.PLE@S3`
 
 ## Roadmap
 
@@ -107,15 +97,10 @@ Hidden log files are located at `/var/tmp/`
 2. Deal with "$SSH_ORIGINAL_COMMAND"
 * Make a special warning for it.
 
-Default Password: 
-`0hMyL0()rDGETM3OUT.PLE@S3`
-
 ## Self-compiling (Encouraged)
 
 Compile `chaos-chaos.so` with the below
-```bash
-gcc -fPIC -shared -o ./main/chaos-chaos.so ./main/chaos-chaos.c -ldl
-```
+`gcc -fPIC -shared -o ./main/chaos-chaos.so ./main/chaos-chaos.c -ldl`
 
 ## Changing the Password
 

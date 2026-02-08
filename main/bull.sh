@@ -63,7 +63,7 @@ trap 'pkill -P $$; exit 1' HUP TERM TSTP QUIT EXIT
 #
 # Send identifiers to a log file
 warn() {
-	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $EUID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null | systemd-cat -t "sshd-internal" -p 4
+	echo "⚠️ MFA layer $mfaAt failed by $USER, UID $UID -- originating from $userIP. Input was: $*\n" | tee -a "$PKGLOG" &>/dev/null | systemd-cat -t "sshd-internal" -p 4
 	return
 }
 #
@@ -132,7 +132,7 @@ hash() {
 # Function to pass into the real shell
 passOff() {
 	# Log the successful attempt
-	echo "✅ MFA layer $mfaAt passed by $USER, UID $EUID -- originating from $userIP." | systemd-cat -t "sshd-internal" -p 5
+	echo "✅ MFA layer $mfaAt passed by $USER, UID $UID -- originating from $userIP." | systemd-cat -t "sshd-internal" -p 5
 	#
 	# Remove sig traps
 	trap - INT TERM TSTP QUIT HUP EXIT
