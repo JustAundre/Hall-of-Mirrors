@@ -75,8 +75,10 @@ Match User SYS_ADMIN_USER
 4. Even after escaping BullSH, entire sessions are logged! (including `stderr`/`stdout` along with commands ran)
 5. Logging galore; failed MFA attempt? Logged! Suspicious/risky command? Logged! Successful MFA attempt? Logged--but what does the log contain?
 * User IP
-* User ID
 * Username
+* UID
+* EUID
+* Source TTY
 * Attempted input
 6. The logs go to a inconspicous log file *and* JournalCTL--should work with remote logging as well.
 7. Recent alerts are displayed to sysadmins on login!

@@ -10,7 +10,7 @@ warn() {
 	trap '' INT TERM TSTP
 	#
 	# Send the silent alert
-	echo "⚠️⚠️⚠️: $USER ran a risky from $userIP on $TTY. Command was: $*" | tee -a "$PKGLOG" &>/dev/null | systemd-cat -t "sshd-internal" -p 3
+	echo "⚠️⚠️⚠️: $USER/$UID from $userIP on $TTY -- With, EUID $EUID ran: $*" | tee -a "$PKGLOG" | systemd-cat -t "sshd-internal" -p 3
 	#
 	# Remove the trap
 	trap - INT TERM TSTP
@@ -18,7 +18,7 @@ warn() {
 #
 # Alert on suspicious commands
 ssh() {
-	# Warn the blue team
+	# Send a warning
 	warn "ssh $*"
 	#
 	# Execute the real command
@@ -31,14 +31,37 @@ ssh() {
 	done
 }
 su() {
-	# Warn the blue team
+	# Send a warning
 	warn "su $*"
 	#
 	# Gaslight with a fake root terminal
-	export PS1="root@\h \w # "
-	whoami() { echo "root"; }
-	logname() { echo "root"; }
-	declare -rfx whoami logname
+	if [[ "$EUID" == 0 && -n "$*" || "$*" == *"root"* ]]; then
+		exec unshare -rm /bin/bash -c '
+			mount -t tmpfs tmpfs /etc
+			mount -t tmpfs tmpfs /home
+			mount -t tmpfs tmpfs /root
+			declare -x USER=root
+			declare -x PS1="root@\h \w \$ "
+			declare -x HOME="/root"
+			cd /root
+			whoami() {
+				echo "root"
+			}
+			logname() {
+				echo "root"
+			}
+			id() {
+				if [[ -z $* ]]; then
+					echo "uid=0(root) gid=0(root) groups=0(root)"
+				else
+					builtin command id $@
+				fi
+				return
+			}
+			declare -rfx whoami logname id
+			exec /bin/bash
+		'
+	fi
 }
 sudo() {
 	# Warn blue team
@@ -55,33 +78,28 @@ sudo() {
 	return 1
 }
 chpasswd() {
-	# Warn the blue team
+	# Send a warning
 	warn "chpasswd $@"
-	#
-	# Give a realistic processing delay and then return success
-	sleep $(echo "scale=1; $RANDOM / 10000" | bc)
-	#
-	# chpasswd never sends a non-zero exit for some reason so yeah
 	return 0
 }
 #
 # Prevent removal of traces
 rm() {
-	# Warn the blue team
+	# Send a warning
 	warn "rm $*"
 	#
 	# Use find to pretend like its actually deleting shit
 	for i in "$@"; do
-		find "$i" >/dev/null 2>/dev/null
+		find "$i" &>/dev/null
 	done
 }
 history() {
-	# Warn the blue team
+	# Send a warning
 	warn "history $*"
 	#
 	# Backup their history
 	for i in "$@"; do
-		if ! [ "$i" == "-c" ]; then
+		if [[ "$i" != "-c" ]]; then
 			cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist"
 			return 0
 		fi
@@ -91,9 +109,8 @@ history() {
 #
 # Slightly impede attempts to escape securecloak.
 command() {
-	if [ -z "$1" ]; then
-		local cmd=$(printf "$1" | awk '{ print $1 }')
-		echo "bash: $cmd: Permission denied"
+	if [[ -z "$*" ]]; then
+		echo "bash: $(printf -- "%s" "$*" | awk '{ print $1 }'): Permission denied" 1>&2
 		return 127
 	fi
 	return 0
@@ -105,7 +122,7 @@ set() {
 	return 0
 }
 bash() {
-	sleep .25
+	sleep .1
 	su
 }
 declare -rfx chpasswd sudo su ssh history rm warn bash env
@@ -119,25 +136,22 @@ declare -rx HOME TTY userIP SSH_CONNECTION PATH PKGLOG PROMPT_COMMAND HISTCONTRO
 #
 # Log the entire session to a file.
 function sessionLog() {
-	if [ -z "$logging" ]; then
+	if [[ -z "$logging" ]]; then
 		local logDir="/var/tmp"
 		local prefix="$USER-on-$(\logname)-"
 		local count=1
 		#
 		# Determine the final log file path
-		while [ -f "${logDir}/${prefix}${count}.raw" ]; do
-			count=$((count + 1))
+		while [[ -f "${logDir}/${prefix}${count}.raw" ]]; do
+			(( count++ ))
 		done
 		local log="${logDir}/${prefix}${count}.log"
 		#
 		# Cleanup the logs when shell exits
-		cleanupLog() {
-			sed -E 's/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g' "$log" 2>/dev/null | tee "$log" 
-		}
-		trap cleanupLog EXIT
+		trap 'sed -E "s/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g" "$log" 2>/dev/null | tee "$log"' EXIT
 		#
 		# Start logging
-		declare -rx logging=1
+		declare -rx logging='y'
 		exec script -qf "$log"
 	fi
 }
