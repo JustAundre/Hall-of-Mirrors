@@ -41,7 +41,7 @@ declare -r bsPassHashes=(
 )
 #
 # General configuration
-declare -r maxIn=128 # How big (in bytes) is a response allowed to be parsed
+declare -r maxIn=256 # How big (in bytes) is a response allowed to be parsed
 declare -r hashRounds=2500 # How many times to hash inputs
 declare -r readTimeout=30 # How many seconds before timing out for inactivity
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
