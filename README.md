@@ -69,7 +69,7 @@ Match User SYS_ADMIN_USER
 
 Restart SSHD to apply changes
 ```bash
-sudo systemctl restart ssh || sudo systemctl restart sshd || sudo service ssh restart
+sudo systemctl restart sshd
 ```
 
 Grab a decoy filesystem of your choice, configure it and deploy it to `/opt/bsfs`.
@@ -130,13 +130,6 @@ L2: `DGE3TM3oOU`
 
 L3: `T.PLE@$3!?`
 
-Default Password(s):
-
-L1: `*hMyL0(o)r`
-
-L2: `DGE3TM3oOU`
-
-L3: `T.PLE@$3!?`
 ## Changing the Password(s)
 
 First, get the password you want to change to in plaintext. Hash your password into [SHA512](https://qr.ae/pCmBQJ) (with the hashing rounds accounted for.)
