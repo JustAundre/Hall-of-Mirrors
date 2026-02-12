@@ -13,10 +13,10 @@
 // Helper to check if a path is a vital system path
 static int isAllowed(const char *path) {
 	if (!path) return 0;
-	if (strncmp(path, "/etc/bash.bashrc", 10) == 0) return 1;
-	if (strncmp(path, "/etc/bashrc", 10) == 0) return 1;
-	if (strncmp(path, "/opt/bull.sh", 10) == 0) return 1;
-	if (strncmp(path, "/dev/urandom", 10) == 0) return 1;
+	if (strcmp(path, "/etc/bash.bashrc") == 0) return 1;
+	if (strcmp(path, "/etc/bashrc") == 0) return 1;
+	if (strcmp(path, "/opt/bull.sh") == 0) return 1;
+	if (strcmp(path, "/dev/urandom") == 0) return 1;
 	return 0;
 }
 //
@@ -51,7 +51,7 @@ int chdir(const char *path) {
 // Obstruct file execution
 typedef int (*real_execve_t)(const char *, char *const[], char *const[]);
 int execve(const char *filename, char *const argv[], char *const envp[]) {
-	if (isAllowed(filename) || strstr(filename, "/bin/")) {
+	if (isAllowed(filename)) {
 		real_execve_t real_execve = (real_execve_t)dlsym(RTLD_NEXT, "execve");
 		return real_execve(filename, argv, envp);
 	}

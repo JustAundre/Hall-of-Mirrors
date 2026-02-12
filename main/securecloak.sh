@@ -10,7 +10,7 @@ warn() {
 	trap '' INT TERM TSTP
 	#
 	# Send the silent alert
-	echo "⚠️⚠️⚠️: $USER/$UID from $userIP on $TTY -- With, EUID $EUID ran: $*" | tee -a "$PKGLOG" | systemd-cat -t "sshd-internal" -p 3
+	echo "⚠️⚠️⚠️: $USER/$UID from $userIP on $TTY -- With, EUID $EUID ran: $*" | tee -a "$sessionLog" | systemd-cat -t "sshd-internal" -p 3
 	#
 	# Remove the trap
 	trap - INT TERM TSTP
@@ -29,39 +29,6 @@ ssh() {
 			return 255
 		fi
 	done
-}
-su() {
-	# Send a warning
-	warn "su $*"
-	#
-	# Gaslight with a fake root terminal
-	if [[ "$EUID" == 0 && -n "$*" || "$*" == *"root"* ]]; then
-		exec unshare -rm /bin/bash -c '
-			mount -t tmpfs tmpfs /etc
-			mount -t tmpfs tmpfs /home
-			mount -t tmpfs tmpfs /root
-			declare -x USER=root
-			declare -x PS1="root@\h \w \$ "
-			declare -x HOME="/root"
-			cd /root
-			whoami() {
-				echo "root"
-			}
-			logname() {
-				echo "root"
-			}
-			id() {
-				if [[ -z $* ]]; then
-					echo "uid=0(root) gid=0(root) groups=0(root)"
-				else
-					builtin command id $@
-				fi
-				return
-			}
-			declare -rfx whoami logname id
-			exec /bin/bash
-		'
-	fi
 }
 sudo() {
 	# Warn blue team
@@ -100,7 +67,7 @@ history() {
 	# Backup their history
 	for i in "$@"; do
 		if [[ "$i" != "-c" ]]; then
-			cp ~/.rbash_history "/var/tmp/$(whoami)-via-$(logname)-cmd-hist"
+			cp ~/.rbash_history "/var/tmp/$USER-via-$(logname)-cmd-hist"
 			return 0
 		fi
 	done
@@ -122,11 +89,11 @@ set() {
 	return 0
 }
 bash() {
-	sleep .1
-	su
+	sleep 0.1
 }
-declare -rfx chpasswd sudo su ssh history rm warn bash env
-declare -rx HOME TTY userIP SSH_CONNECTION PATH PKGLOG PROMPT_COMMAND HISTCONTROL HISTIGNORE
+declare -rfx chpasswd sudo ssh history rm warn bash env
+declare -rx mfaLog USER allLog HOME TTY userIP SSH_CONNECTION PATH PROMPT_COMMAND HISTCONTROL HISTIGNORE
+umask 0037
 
 
 
@@ -146,9 +113,6 @@ function sessionLog() {
 			(( count++ ))
 		done
 		local log="${logDir}/${prefix}${count}.log"
-		#
-		# Cleanup the logs when shell exits
-		trap 'sed -E "s/\x1B\[\??[0-9;]*[a-zA-Z]//g; s/\x1B\(B//g; s/\x08+//g; s/\r//g" "$log" 2>/dev/null | tee "$log"' EXIT
 		#
 		# Start logging
 		declare -rx logging='y'

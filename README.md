@@ -1,64 +1,56 @@
 # Hall of Mirrors
 
-BullSH, the BullShit Shell for SSH.
+[ Active Development Warning -- Unstable ]
+
+BullSH, the **b**ull**s**h..eet **s**hell for SSH.
+When passwords are dumpster fire; BullSH is here to save the day!
+Now it's 1 *bad* password and 3 multi-factor authentication passwords with complexity of *your* choosing.
 
 ## Requirements
 
-The target system for the installation must...
-- Be Linux (not MacOS)
-* Bash 5.0+
-* BC (basic calculator)
-* Python 3.0+
-* SystemD
-* Have printf, echo and tee
+The target system for the installation must have/use...
+- `Bash` 5.0+
+- `Python` 3.0+
+- `SystemD`
+- `printf` and `tee`
+- `gcc`
+- `GNU` coreutils
+- `SSH` server (duh)
 
 Additionally, please note that this is only as effective as the system is secure; servers get hit by the weakest link more often than not.
 
 ## Manual Installation
 
-To install the this, you *should* preferably have, but are allowed to not have...
-- Have a shell, preferably `bash`.
-- Have `gcc`
-- Have `git`
-
-Clone the repository/download its source code
+Clone the repository & cd into the repository
 ```bash
 git clone https://github.com/JustAundre/Hall-of-Mirrors.git
+cd ./Hall-of-Mirrors
 ```
 
-Change directory into the project
-```bash
-cd "./Hall-of-Mirrors"
-```
+PLEASE review, configure and edit `./main/bull.sh`, `./main/chaos-chaos.c` and `./main/securecloak.sh` to suit your needs best--**recompile `./main/chaos-chaos.so` as needed.**
 
-**PLEASE** review and edit `main/bull.sh`, `main/chaos-chaos.c` and `main/securecloak.sh` to your needs; recompile as needed.
-
-Create the warning log file
+Create the log file(s)
+Install `./main/bull.sh` to `/opt/bull.sh`
+Install `./main/securecloak.sh` to `/opt/securecloak.sh`
+Install `./main/chaos-chaos.so` to `/opt/chaos-chaos.so`
+Add the `ForceCommand /opt/bull.sh` directive to `/etc/ssh/sshd_config`
 ```bash
 sudo install -m 766 -o root -g root /dev/null /var/tmp/install.log
 sudo chattr +a /var/tmp/install.log
-```
 
-Install `main/bull.sh` to `/opt/bull.sh`
-`install -m 755 -o root -g root ./main/bull.sh /opt/bull.sh`
+sudo install -m 766 -o root -g root /dev/null /var/tmp/packages.log
+sudo chattr +a /var/tmp/packages.log
 
-Install `main/securecloak.sh` to `/opt/securecloak.sh`
-`sudo install -m 755 -o root -g root ./main/securecloak.sh /opt/securecloak.sh`
+sudo install -m 755 -o root -g root ./main/bull.sh /opt/bull.sh
 
-Install `main/chaos-chaos.so` to `/opt/chaos-chaos.so`
-`sudo install -m 744 -o root -g root ./main/chaos-chaos.so /opt/chaos-chaos.so`
+sudo install -m 755 -o root -g root ./main/securecloak.sh /opt/securecloak.sh
 
-Add the `ForceCommand /opt/bull.sh` directive to `/etc/ssh/sshd_config`
-`echo "# Drop everyone into BullSH by default\nForceCommand /opt/bull.sh" | sudo tee -a /etc/ssh/sshd_config`
+sudo install -m 744 -o root -g root ./main/chaos-chaos.so /opt/chaos-chaos.so
 
-Append the below to the end of each Sysadmin's `~/.bashrc` file.
-```bash
-PKGLOG=$(awk -F'"' '/PKGLOG=/ {print $2}' /opt/bull.sh)
-echo "Heya, BullSH is installed--you're now getting alerts for possible intrusions."
-echo "You can run the below command to view all recently failed logon attempts:"
-echo "journalctl -t sshd-internal -f"
-echo "Oh, also, you can find a backup log at $PKGLOG."
-journalctl -t sshd-internal -f &
+sudo tee -a /etc/ssh/sshd_config <<EOF
+# Drop everyone into BullSH
+ForceCommand /opt/bull.sh
+EOF
 ```
 
 Append the below to the end of `/etc/ssh/sshd_config`, where SYS_ADMIN_USER is the user you would like to exclude; repeat as necessary (or don't, if you don't wish to exclude anyone.)
@@ -67,37 +59,59 @@ Match User SYS_ADMIN_USER
     ForceCommand none
 ```
 
+Restart SSHD to apply changes
+```bash
+sudo systemctl restart ssh || sudo systemctl restart sshd || sudo service ssh restart
+```
+
+If you *don't* want to use the decoy filesystem redirection, make sure to disable it in the `bull.sh` configuration.
+
+Otherwise, go ahead and grab a decoy root filesystem of your choice, configure it and deploy it to `/opt/bsfs`.
+
+My choice is the Alpine Linux Mini-Root FS.
+```bash
+sudo mkdir -p /opt/bsfs
+wget https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.1-x86_64.tar.gz
+tar -xvf alpine-minirootfs-3.19.1-x86_64.tar.gz -C /opt/bsfs
+rm alpine-minirootfs-3.19.1-x86_64.tar.gz
+```
+
 ## Features
 
-1. Fake root terminal
-2. Realistic errors
-3. Psycological torture!
-4. Even after escaping BullSH, entire sessions are logged! (including `stderr`/`stdout` along with commands ran)
-5. Logging galore; failed MFA attempt? Logged! Suspicious/risky command? Logged! Successful MFA attempt? Logged--but what does the log contain?
-* User IP
-* Username
-* UID
-* EUID
-* Source TTY
-* Attempted input
-6. The logs go to a inconspicous log file *and* JournalCTL--should work with remote logging as well.
-7. Recent alerts are displayed to sysadmins on login!
+1. Fake root terminal, realistic errors and psycological torture!
+2. Send attackers using suspicious/flagged credentials to a decoy filesystem
+3. Logging galore; everything from individual commands, failed MFA attempts, *successful* MFA attempts, whole terminal sessions (including in the decoy filesystem)
+- User IP
+- Username
+- UID
+- EUID
+- Source TTY
+- Attempted input (when applicable)
+- MFA Layer (when applicable)
+4. Logs are duplicated and sent to a file
+5. Self-expandable--if you *really* need more than 3 MFA passwords for some reason
+6. Highly configurable, customizable and optimized.
 
-`journalctl -t sshd-internal -f` to view commands/input attempted in BullSH
-`journalctl -t sshd-all -f` to view all commands ran in a real shell
-`journalctl -t sshd-internal -fp5` for successful MFA attempts
-`journalctl -t sshd-internal -fp4` for failed ones
-`journalctl -t sshd-internal -fp3` for risky commands ran in a real shell
-Hidden log files are located at `/var/tmp/`
+`journalctl -t sshd-internal -fp5`	to view successful MFA attempts
+`journalctl -t sshd-internal -fp4`	to view failed ones
+`journalctl -t sshd-internal -fp3`	to view risky commands ran in a real shell
+`journalctl -t sshd-internal -f`	to view all of the above at once
+`journalctl -t sshd-all -f` 		to view all commands ran in a real shell
+`/var/tmp/`							Location of backup log files
+`less -R [LOG FILE PATH]`			to view log text file logs (to render control characters correctly)
 
-Default Password: `0hMyL0()rDGETM3OUT.PLE@S3`
+Default Password(s):
+
+L1: `*hMyL0(o)r`
+
+L2: `DGE3TM3oOU`
+
+L3: `T.PLE@$3!?`
 
 ## Roadmap
 
-1. More gaslighting!! :3
-* If input is a known bad password, exec unshare -rm --root=/path/to/fake/filesystem /usr/bin/bash (jail to fake filesystem)
-2. Deal with "$SSH_ORIGINAL_COMMAND"
-* Make a special warning for it.
+1. Deal with "$SSH_ORIGINAL_COMMAND"
+- Make a special warning for it.
 
 ## Self-compiling (Encouraged)
 
@@ -110,6 +124,8 @@ Note: the default [hashing rounds](https://www.reddit.com/r/linuxquestions/comme
 
 First, get the password you want to change to in plaintext. Hash your password into [SHA512](https://qr.ae/pCmBQJ) (with the hashing rounds accounted for.)
 
-Go into `main/bull.sh` and change the `passHash` variable(s) to your new hash
+Go into `main/bull.sh` and change the `passHash` variable(s) to your new hash 
+
+[ it is advised you move the default password hashes to the fake hashes after installing your new hashes. ]
 
 Refer to the Compiling guide and then the Installation guide.
