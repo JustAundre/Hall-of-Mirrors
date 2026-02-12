@@ -212,7 +212,7 @@ handover() {
 # Function to pass to filesystem overlay
 fakeSuccess() {
 	# Enter the decoy filesystem!
-	exec env -i unshare -rmupf /usr/bin/bash -c "
+	exec env -i unshare -rmupf --mount-proc /usr/bin/bash -c "
 		printf '$bsfsHeader' >> $bsfsLog
 		script -fqac \"
 			export\
