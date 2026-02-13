@@ -81,8 +81,8 @@ declare -rx mfaLog='sshd-internal'
 declare -rx allLog='sshd-all'
 #
 # The prompt to show on each new line
-declare -x PS1="$USER@$HOSTNAME ~ $ "
-[[ "$fakeRoot" == "y" ]] && declare -x PS1="root@$HOSTNAME ~ # "
+declare -x PS1="[$USER@$HOSTNAME ~]$ "
+[[ "$fakeRoot" == "y" ]] && declare -x PS1="[root@$HOSTNAME ~]# "
 #
 # Dynamic handling for SSH_CONNECTION/userIP
 userIP="Local Console"
@@ -195,7 +195,7 @@ handover() {
 	#
 	# Clean up environment
 	stty echo
-	declare -x PS1='\u@\h \w \$ '
+	declare -x PS1='[\u@\h \w]\$ '
 	#
 	# Apply secure cloak rc file if configured.
 	if [[ "$secureCloak" == "y" ]]; then

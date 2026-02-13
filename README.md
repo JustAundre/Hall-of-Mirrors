@@ -75,12 +75,8 @@ sudo systemctl restart sshd
 Grab a decoy filesystem of your choice, configure it and deploy it to `/opt/bsfs`.
 
 My choice is the [Alpine Linux Mini-Root filesystem](https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.1-x86_64.tar.gz).
-```bash
-sudo mkdir -p /opt/bsfs
-wget https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.1-x86_64.tar.gz
-tar -xvf alpine-minirootfs-3.19.1-x86_64.tar.gz -C /opt/bsfs
-rm alpine-minirootfs-3.19.1-x86_64.tar.gz
-```
+
+I can't provide exact instructions on how to set it up cause it's a pain and varies per-person and per-situation.
 
 ## Features
 
@@ -139,3 +135,7 @@ Go into `main/bull.sh` and change the `passHash` variable(s) to your new hash
 [ it is advised you move the default password hashes to the fake hashes after installing your new hashes. ]
 
 Refer to the Compiling guide and then the Installation guide.
+
+## Roadmap/Notes
+
+- I guess the fakeSuccess() function can be improved...
