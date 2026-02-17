@@ -43,11 +43,8 @@ Install `./main/chaos-chaos.so` to `/opt/chaos-chaos.so`
 Add the `ForceCommand /opt/bull.sh` directive to `/etc/ssh/sshd_config`
 
 ```bash
-sudo install -m 766 -o root -g root /dev/null /var/tmp/install.log
-sudo chattr +a /var/tmp/install.log
-
-sudo install -m 766 -o root -g root /dev/null /var/tmp/packages.log
-sudo chattr +a /var/tmp/packages.log
+sudo install -m 766 -o root -g root /dev/null /var/tmp/shell.log
+sudo chattr +a /var/tmp/shell.log
 
 sudo install -m 755 -o root -g root ./main/bull.sh /opt/bull.sh
 
@@ -64,7 +61,7 @@ EOF
 Append the below to the end of `/etc/ssh/sshd_config`, where SYS_ADMIN_USER is the user you would like to exclude; repeat as necessary (or don't, if you don't wish to exclude anyone.)
 ```bash
 Match User SYS_ADMIN_USER
-    ForceCommand none
+	ForceCommand none
 ```
 
 Restart SSHD to apply changes
@@ -78,36 +75,31 @@ My choice is the [Alpine Linux Mini-Root filesystem](https://dl-cdn.alpinelinux.
 
 I can't provide exact instructions on how to set it up cause it's a pain and varies per-person and per-situation.
 
-## Features
+## Feature List
 
 1. Fake root terminal, realistic errors and psycological torture!
-2. Send attackers using suspicious/flagged credentials to a decoy filesystem
-3. Logging galore; everything from individual commands, failed MFA attempts, *successful* MFA attempts, whole terminal sessions (including in the decoy filesystem)
-- User IP
-- Username
-- UID
-- EUID
-- Source TTY
-- Attempted input (when applicable)
-- MFA Layer (when applicable)
-4. Logs are duplicated and sent to a file
-5. Self-expandable--if you *really* need more than 3 MFA passwords for some reason
-6. Highly configurable, customizable and optimized.
+2. Logging galore; everything from individual commands, failed MFA attempts, *successful* MFA attempts, whole terminal sessions (including in the decoy filesystem)
+	- Source IP of SSH session
+	- Username
+	- UID
+	- EUID
+	- Source TTY
+	- Attempted input (when applicable)
+	- MFA Layer (when applicable)
+3. Logs are duplicated and sent to a file
+4. Self-expandable--if you *really* need more than 3 MFA passwords for some reason
+5. Highly configurable, customizable and optimized.
 
+## Log Viewing
 
-`journalctl -t sshd-internal -fp5`	to view successful MFA attempts
+`journalctl -fp5t sshd-internal` -- View successful MFA attempts
+`journalctl -fp4t sshd-internal` -- View failed ones
+`journalctl -fp3t sshd-internal` -- View risky commands ran in a real shell
+`journalctl -t sshd-internal -f` -- View all of the above at once
+`journalctl -t sshd-all -f` -- View all commands ran in a real shell
 
-`journalctl -t sshd-internal -fp4`	to view failed ones
-
-`journalctl -t sshd-internal -fp3`	to view risky commands ran in a real shell
-
-`journalctl -t sshd-internal -f`	to view all of the above at once
-
-`journalctl -t sshd-all -f` 		to view all commands ran in a real shell
-
-`/var/tmp/`							Location of backup log files
-
-`less -R [LOG FILE PATH]`			to view log text file logs (to render control characters correctly)
+`/var/tmp/` Location of backup log files--you'll know it when you see it.
+`less -R [LOG FILE PATH]` -- View log text file logs (to render control characters correctly)
 
 ## Compiling
 
@@ -138,4 +130,6 @@ Refer to the Compiling guide and then the Installation guide.
 
 ## Roadmap/Notes
 
-- I guess the fakeSuccess() function can be improved...
+- There is room to add some fake success logic to redirect the attacker to a whole 'nother system entirely;
+	- Use SSHpass to SSH into a sacrificial server where the attacker has full reign over a little crib
+	- Just gotta make sure to disable standalone outbound traffic

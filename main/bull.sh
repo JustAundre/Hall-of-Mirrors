@@ -7,8 +7,8 @@ pgrep -f "$0" -u "$USER" | grep -v "^$$\$" | xargs kill -9 2>/dev/null
 #
 # Resource limits
 ulimit -u 1000		# No fork bombs!
-ulimit -n 32		# Stop disk stress
-ulimit -f 1000		# Limit file descriptors
+ulimit -n 64		# Limit file descriptors
+ulimit -f 10000		# Stop disk stress
 ulimit -m 50000		# Don't stress the RAM!!!
 ulimit -t 30		# Don't stress the CPU!!!
 
@@ -19,33 +19,19 @@ ulimit -t 30		# Don't stress the CPU!!!
 #
 # The Way the Cog Spins (Configuration)
 #
-# Password hashes to pass their respective numbered layers
-declare -r passHash1='e5b98bb4f21fd6a3ab4fe9c6928734f960501ab9217f7f22905804d9a1c0e11a0575b9c79930e3f7ab818d98fcfa93dd4424560afbb8232c7a318689885513a0'
-declare -r passHash2='c9edc4de9de21784f2e86f2dd087fa8b1670a9442ce614eb2eb1b3358052dd3996b09c3262912fcec67d8ab2d9e4f2fa12e72acb0548cad63ec1af15f9951f17'
-declare -r passHash3='6899eb9d96ef8fb19d9c09efa879281b453ca4f7339b3a553111ab12a2c3dfcdd9be236712519894d0490032b047dcc49af050554e8037f9332262f362fdd786'
-#
-# Password hashes which when detected send the attacker to a decoy filesystem
-declare -r bsPassHashes=(
-	"f02016bf576c54bc5f3160ae1a682b74d00f3d69be709a31dc20a43114627becd08ea97fb203c00492db42526208e4d92ce949f4ad99012500307dd27ecdf3dc"
-	"4ed3c3ba1b45179440eb9ec524ac602849a149cf3507467b3fec3e52d1b0996ca901624aa77d4f4a415a198fdae918535a1a3b93bdcdfb221e0ea871e011aed3"
-	"1f569af70f69ab9bf7c7a7e50e4f1c8b9aadee5219df2c94178bf8d51165bd5477dca9f408b432a010b6543c4089f8f1a02d2e7adfde315b9ed8edd809855b58"
-	"1cbfaa8863fd8dede8ea414e01e6d5bca07b0689ac108f8a0a4f2d55cebe7eb22f5d5b9a8e0a83c1d622e7181a1767876641c8ab01d189808c7dffda9a6bfc7d"
-	"d7cba5ab5d376c8da23c2587efbbaa2ec608cd40e485afcaf8b6809697426c377024312ff038d3f5621f63228fe34045fd69f9f019ca676fa9922a215838c483"
-	"7ec22b1583a106812e814ac990af0f22965e4cd1db4950ae34c05bf2e279d68def8de3912e497e118d918baae2d7ee4811199b03ac81758ef01b0336f7592978"
-	"b6449342deb930ee5b4edd585fe6155326865a3a49cc926efe19deb9c1274bec67c7fcd9466e67950361b5666f49bbb3f86d0b6c5d73d876bf8c50b72c06699e"
-	"0560072c8e34cbc5be08edfa27a1a11053ee84e5c866aa9078aa49271488c5df0a88b715cf68722a84266ea0ec03cb6b3befe2ae2b9d7f3eb732ebe00208c597"
-	"23839b3e20163b9709de0bcc426ca33d9eadb9dd167ef147a3543f5ed8bc02d2ff6d2c61c4ca6d345240c45ec2bf9bf4dd93f2e6e68b5435012bdeb7b780eac1"
-	"aba9b9337b518fb709ad6083ed268b4f6dd839c61962a45cc12969a531e99330c64323c1917bdc982d21ec3b908d3f15eb09d8c2ecd4e3d8bada8e52c56019c4"
-	"ca3fc528d90081d76fc9f917470307ffbd1cf855cd47edfcd68cc486ae4dfbf6db1ba7230204b91b37299ff539f4d21e9fd3aeecf1e8359dc53faa4d49a9316e"
-	"8d52f79dc6bdc83ba45dd3877d1d27abfa56cc7101f1177c42a8658acb284a15191851f9c76a855642833af6cc49c30acc5f5746113df66456186427b67d07ca"
+# Password hashes to pass their respective numbered layers (up to 3 layers; only as many layers active as there are hashes)
+declare -r passHashes=(
+	'e5b98bb4f21fd6a3ab4fe9c6928734f960501ab9217f7f22905804d9a1c0e11a0575b9c79930e3f7ab818d98fcfa93dd4424560afbb8232c7a318689885513a0'
+	'c9edc4de9de21784f2e86f2dd087fa8b1670a9442ce614eb2eb1b3358052dd3996b09c3262912fcec67d8ab2d9e4f2fa12e72acb0548cad63ec1af15f9951f17'
+	'6899eb9d96ef8fb19d9c09efa879281b453ca4f7339b3a553111ab12a2c3dfcdd9be236712519894d0490032b047dcc49af050554e8037f9332262f362fdd786'
 )
+declare -r mfaLayers=${#passHashes[@]}
 #
 # General configuration
 declare -r maxIn=256 # How big (in bytes) is a response allowed to be parsed
 declare -r hashRounds=2500 # How many times to hash inputs
 declare -r readTimeout=30 # How many seconds before timing out for inactivity
 declare -r maxCounts=3 # The max amount of login attempts before all inputs silently fail
-declare -r mfaLayers=3 # How many layers of MFA do you want?
 declare -r secureCloak=y # Use custom secure bashrc? (y/n)
 declare -r fakeRoot=y # Fake a root shell? (y/n)
 declare -r fakeDelay=y # Should every single command have a small delay to annoy the attackers? (y/n)
@@ -70,7 +56,7 @@ declare -rx TTY="$(tty | awk -F'/dev/' '{ print $2 }')"
 declare -rx TMOUT=1
 #
 # Dependency location definition
-LD_PRELOAD='/opt/chaos-chaos.so'
+declare -r ldPreloadPath='/opt/chaos-chaos.so'
 declare -rx secureCloakPath='/opt/securecloak.sh'
 declare -rx bsfsDir='/opt/bsfs'
 #
@@ -91,10 +77,13 @@ declare -rx userIP SSH_CONNECTION
 #
 # Log everything
 PROMPT_COMMAND='
-	lastCmd=$(history 1)
-	lastCmd="${lastCmd#* }"
-	lastCmd=$(printf "%q" "$lastCmd")
-	printf "Command executed with EUID %s | User: %s/%s | IP: %s | TTY: %s | Command: %s\n" "$EUID" "$USER" "$UID" "$userIP" "$TTY" "$lastCmd" | tee -a "$logFile" | systemd-cat -t "$allLog" -p 5
+	lastHist=$(history 1)
+	lastCmd=$(echo "$lastHist" | sed "s/^[ ]*[0-9]*[ ]*//")
+	if [[ -n "$lastCmd" ]]; then
+		printf "EUID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n"\
+			"$EUID" "$USER" "$userIP" "$TTY" "$lastCmd"\
+			| tee -a "$logFile" | systemd-cat -t "$allLog" -p 5
+	fi
 '
 #
 # Return the user's terminal's echo if the connection drops
@@ -200,33 +189,13 @@ handover() {
 	# Apply secure cloak rc file if configured.
 	if [[ "$secureCloak" == "y" ]]; then
 		builtin exec /usr/bin/env -i\
-			logFile="$logFile" mfaLog="$mfaLog" allLog="$allLog" TTY="$TTY" PS1="$PS1" HOME="$HOME" TERM="xterm-256color" userIP="$userIP" SSH_CONNECTION="$SSH_CONNECTION" PATH="$PATH" USER="$USER" logFile="$logFile" PROMPT_COMMAND="$PROMPT_COMMAND" HISTCONTROL="$HISTCONTROL" HISTIGNORE="$HISTIGNORE" LD_PRELOAD="$LD_PRELOAD"\
+			logFile="$logFile" mfaLog="$mfaLog" allLog="$allLog" TTY="$TTY" PS1="$PS1" HOME="$HOME" TERM="xterm-256color" userIP="$userIP" SSH_CONNECTION="$SSH_CONNECTION" PATH="$PATH" USER="$USER" PROMPT_COMMAND="$PROMPT_COMMAND" HISTCONTROL="$HISTCONTROL" HISTIGNORE="$HISTIGNORE" LD_PRELOAD="$LD_PRELOAD"\
 			/usr/bin/bash --rcfile "$secureCloakPath" -i
 	else
 		builtin exec /usr/bin/env -i\
-			logFile="$logFile" mfaLog="$mfaLog" allLog="$allLog" TTY="$TTY" PS1="$PS1" HOME="$HOME" TERM="xterm-256color" userIP="$userIP" SSH_CONNECTION="$SSH_CONNECTION" PATH="$PATH" USER="$USER" logFile="$logFile" PROMPT_COMMAND="$PROMPT_COMMAND" HISTCONTROL="$HISTCONTROL" HISTIGNORE="$HISTIGNORE" LD_PRELOAD="$LD_PRELOAD"\
+			logFile="$logFile" mfaLog="$mfaLog" allLog="$allLog" TTY="$TTY" PS1="$PS1" HOME="$HOME" TERM="xterm-256color" userIP="$userIP" SSH_CONNECTION="$SSH_CONNECTION" PATH="$PATH" USER="$USER" PROMPT_COMMAND="$PROMPT_COMMAND" HISTCONTROL="$HISTCONTROL" HISTIGNORE="$HISTIGNORE" LD_PRELOAD="$LD_PRELOAD"\
 			/usr/bin/bash -i
 	fi
-}
-#
-# Function to pass to filesystem overlay
-fakeSuccess() {
-	# Enter the decoy filesystem!
-	exec env -i unshare -rmupf --mount-proc /usr/bin/bash -c "
-		printf '$bsfsHeader' >> $bsfsLog
-		script -fqac \"
-			export\
-				PS1='\u@\h \w \$ '\
-				PATH='/bin:/sbin:/usr/bin:/usr/sbin'\
-				USER='root'\
-				HOME='/root'
-				SSH_CONNECTION='$SSH_CONNECTION'
-			chroot '$bsfsDir' /bin/sh -c '
-				cd /root
-				exec /bin/sh
-			'
-		\" $bsfsLog
-	"
 }
 #
 # Function to hash input
@@ -246,6 +215,7 @@ pwdChk() {
 	(( counts++ ))
 	local input="$input"
 	local inputHashed=""
+	local targetHash="${passHashes[$((mfaAt - 1))]}"
 	local cmd="${input%% *}"
 	local currentTarget="passHash$mfaAt"
 	[[ "$mfaAt" -eq 1 ]] && history -s "$input" # Update history (L1 exclusive)
@@ -272,6 +242,8 @@ pwdChk() {
 			echo "rbash: $cmd: cannot specify '/' in command names" 1>&2
 		elif [[ "$cmd" == "exit" || "$cmd" == "logout" ]]; then
 			exit 1
+		elif [[ "$cmd" == "sudo" ]]; then
+			sudo echo "$USER is not in the sudoers file.  This incident will be reported." 1>&2
 		elif type -t "$cmd" &>/dev/null; then
 			echo "rbash: $cmd: Permission denied" 1>&2
 		else
@@ -280,13 +252,8 @@ pwdChk() {
 		annoyance &
 	fi
 	#
-	# Handle fake password hashes
-	for bsPassHash in "${bsPassHashes[@]}"; do
-		[[ "$inputHashed" == "$bsPassHash" ]] && fakeSuccess
-	done
-	#
 	# Check for current layers' password
-	if [[ "$goAway" == "n" && -n "$input" && "$inputHashed" == "${!currentTarget}" ]]; then
+	if [[ "$goAway" == "n" && -n "$input" && "$inputHashed" == "$targetHash" ]]; then
 		warn 2 # Log success for this layer
 		counts=0
 		return 0

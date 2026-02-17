@@ -41,7 +41,7 @@ sudo() {
 	sleep 2.5
 	#
 	# Fake error
-	echo "$USER is not in the sudoers file.  This incident will be reported." 1>&2
+	printf "\n$USER is not in the sudoers file.  This incident will be reported.\n" 1>&2
 	return 1
 }
 chpasswd() {
