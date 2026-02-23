@@ -1,0 +1,16 @@
+[Unit]
+Description=Real-time AuditD parser
+After=auditd.service
+
+[Service]
+Restart=always
+Type=simple
+ProtectSystem=full
+ReadOnlyPaths=/bin /sbin /usr /etc /boot /home
+ExecStart=/opt/auditdez.sh
+
+# Change to any value to interpret and print non-interactive commands
+Environment="INTERPRET_NONINTERACTIVE="
+
+[Install]
+WantedBy=multi-user.target

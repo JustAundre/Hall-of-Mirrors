@@ -1,4 +1,4 @@
-#!/usr/bin/env -S /usr/bin/bash --noprofile --norc
+#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
 #
 # The Height of the Ceiling (Limits/Anti-DDoS)
 #
@@ -42,8 +42,10 @@ counts=0 # The amount of login attempts to start with
 goAway="n" # Whether the script stops checking for the password (y/n)
 bsfsHeader="\n\n\e[1;33m$USER/$UID with EUID $EUID has entered the decoy filesystem at $(date +%s) from $userIP on $TTY\e[0m\n\n" # The header to print at the top of every bsfs log
 
-
-
+export PROMPT_COMMAND='{
+	EXIT=$?
+	logger -t all-cmds -p local6.debug "$LOGNAME/$UID on $(tty | awk -F/dev/ "{ print \$2 }") [$$]: $(history 1 | sed "s/^[ ]*[0-9]\+[ ]*//") [$EXIT]"
+}'
 
 #
 # Set the Stage! -- Error Handling & Configuration Interpretation
@@ -63,8 +65,8 @@ declare -rx bsfsDir='/opt/bsfs'
 # Logging locations/identifiers
 declare -rx bsfsLog="/var/tmp/$USER-$UID-bsfs-$(date +%s).log"
 declare -rx logFile='/var/tmp/shell.log'
-declare -rx mfaLog='sshd-internal'
-declare -rx allLog='sshd-all'
+declare -rx mfaLog='bullsh-mfa'
+declare -rx allLog='bullsh-cmds'
 #
 # The prompt to show on each new line
 declare -x PS1="[$USER@$HOSTNAME ~]$ "
@@ -77,6 +79,7 @@ declare -rx userIP SSH_CONNECTION
 #
 # Log everything
 PROMPT_COMMAND='
+	history -a
 	lastHist=$(history 1)
 	lastCmd=$(echo "$lastHist" | sed "s/^[ ]*[0-9]*[ ]*//")
 	if [[ -n "$lastCmd" ]]; then
@@ -102,7 +105,7 @@ warn() {
 	case "$1" in
 		1)
 			shift 1
-			local msg="⚠️ MFA layer $mfaAt failed | User: $USER/$UID | IP: $userIP | TTY: $TTY | Input with EUID $EUID: $input"
+			local msg="⚠ MFA layer $mfaAt failed | User: $USER/$UID | IP: $userIP | TTY: $TTY | Input with EUID $EUID: $input"
 			echo "$msg" | tee -a "$logFile" | systemd-cat -t "$mfaLog" -p 4
 		;;
 		2)

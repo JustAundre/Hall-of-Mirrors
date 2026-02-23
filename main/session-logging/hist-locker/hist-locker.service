@@ -1,0 +1,8 @@
+[Unit]
+Description=Locks bash history files
+
+[Service]
+Restart=always
+Type=simple
+ExecStart=/opt/hist-locker.sh
+ReadOnlyPaths=/bin /sbin /usr /etc /boot

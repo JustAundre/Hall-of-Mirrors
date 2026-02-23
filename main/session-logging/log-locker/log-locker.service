@@ -1,0 +1,12 @@
+[Unit]
+Description=Session log locker
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/log-locker.sh
+ProtectSystem=full
+ReadOnlyPaths=/bin /sbin /usr /etc /boot /home
+
+[Install]
+WantedBy=multi-user.target
