@@ -80,4 +80,11 @@ sudo bash -c 'ls -1t /var/log/sessions/* | xargs less -R'
 ## Type `:n` to go to the next log
 ## Type `:p` for the previous log
 ## Starts at the latest log, descends to oldest.
+
+# To view attempted non-interactive sessions/commands
+journalctl -p3 -t logger
 ```
+
+# Roadmap
+
+Hopefully will be able to add an easy way to review logs in a way where once reviewed, do not need to review again and is moved to a different directory.

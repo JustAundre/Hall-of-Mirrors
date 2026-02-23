@@ -32,9 +32,12 @@ declare -r logFile="$logFile.log"
 #
 # Main Logic
 #
-[[ ! -t 0 ]] && exit 255
+if [[ ! -t 0 ]]; then
+	[[ -n "$SSH_ORIGINAL_COMMAND" ]] && cmd="with command $SSH_ORIGINAL_COMMAND"
+	echo "$LOGNAME/$LUID from $SSH_CLIENT attempted to open non-interactive session $cmd" | systemd-cat -p3 -t logger
+	exit 255
+fi
 exec -c env -i\
-	HOME="$HOME"\
 	TERM="$TERM"\
 	USER="$LOGNAME"\
 	LOGNAME="$LOGNAME"\
