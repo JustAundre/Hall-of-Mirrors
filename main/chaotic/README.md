@@ -26,7 +26,7 @@ I'd argue one of the best strengths of this suite is the forensics and logging; 
 ## Installation
 
 ```bash
-# CD into the the chaotic directory
+# CD into the the chaotic sub-project
 cd ./Hall-of-Mirrors/main/chaotic
 
 # Create the log file(s)

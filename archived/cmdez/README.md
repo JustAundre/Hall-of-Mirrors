@@ -10,8 +10,8 @@ xxd -- To de-hexify arguments from AuditD
 ## Installation
 
 ```bash
-# CD into the CmDEZ directory
-cd ./Hall-of-Mirrors/main/cmdez
+# CD into the CmdEZ sub-project
+cd ./Hall-of-Mirrors/archived/cmdez
 
 # Install the service
 sudo install -m 600 -o root -g root ./cmdez.service /etc/systemd/system/log-locker.path

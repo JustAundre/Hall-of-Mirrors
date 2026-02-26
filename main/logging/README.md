@@ -11,8 +11,8 @@ Must have/use the below:
 
 Automatible installation
 ```bash
-# CD into the session-logging directory
-cd ./Hall-of-Mirrors/main/session-logging
+# CD into the logging sub-project
+cd ./Hall-of-Mirrors/main/logging
 
 # Install the logging directory
 sudo mkdir -p /var/log/sessions
@@ -22,11 +22,13 @@ sudo chmod 000 /var/log/sessions
 # Install ./logger.sh to /opt/logger.sh
 sudo install -m 755 -o root -g root ./logger.sh /opt/logger.sh
 sudo tee -a /etc/sudoers << 'EOF'
+
 ALL	ALL=(ALL)	SETENV: NOPASSWD: /opt/logger.sh
 EOF
 
 # Allow passing of necessary variables through sudo
 sudo tee -a /etc/sudoers << 'EOF'
+
 Defaults	env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"
 EOF
 
@@ -37,13 +39,16 @@ sudo install -m 700 -o root -g root ./log-locker/log-locker.sh /opt/log-locker.s
 sudo systemctl enable --now log-locker.path
 
 # Install the hist-locker service
-sudo install -m 600 -o root -g root ./hist-locker/hist-locker.service /etc/systemd/system/hist-locker.service
-sudo install -m 600 -o root -g root ./hist-locker/hist-locker.timer /etc/systemd/system/hist-locker.timer
-sudo install -m 700 -o root -g root ./hist-locker/hist-locker.sh /opt/hist-locker.sh
-sudo systemctl enable --now hist-locker.timer
+sudo install -m 600 -o root -g root ./hist-locker/file-locker.service /etc/systemd/system/file-locker.service
+sudo install -m 700 -o root -g root ./hist-locker/file-locker.sh /opt/file-locker.sh
+sudo systemctl enable --now hist-locker.service
 
 # Enable the session logger
-printf '\nForceCommand sudo /opt/logger.sh' | sudo tee -a /etc/ssh/sshd_config
+sudo tee -a /etc/ssh/sshd_config << 'EOF'
+
+# Force all users into terminal logger
+ForceCommand sudo /opt/logger.sh
+EOF
 sudo systemctl restart sshd
 ```
 
@@ -65,14 +70,14 @@ EOF
 - Logs are done by root not the user; the user can't kill the logging
 - If the logging dies, the shell dies; simple!
 2. Bash history files cannot be deleted; only new entries may be added!
-3. Username on the file stays consistent across commands such as `sudo -i`, `sudo su`, `sudo bash`, etc.
+3. Username on the file stays consistent, even across commands such as `sudo -i`, `sudo su` and `sudo bash`.
 
 ```bash
 # Directory where all full session logs are stored
 sudo ls /var/log/sessions/
 
 # To view individual session logs
-sudo less -R "[LOG FILE PATH]"
+sudo less -R '[LOG FILE PATH]'
 
 # Queue up all session logs.
 sudo bash -c 'ls -1t /var/log/sessions/* | xargs less -R'

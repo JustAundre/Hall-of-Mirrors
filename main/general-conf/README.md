@@ -4,7 +4,7 @@ A place for general secure configuration templates to go
 
 ## Installation
 
-CD into the general configurations directory
+CD into the general configurations sub-project
 ```bash
 cd ./Hall-of-Mirrors/main/general-conf
 ```

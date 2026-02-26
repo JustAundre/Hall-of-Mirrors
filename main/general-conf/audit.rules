@@ -1,0 +1,9 @@
+# Log all commands
+-a always,exit -F arch=b64 -S execve -F auid!=1000 -k exec
+-a always,exit -F arch=b32 -S execve -F auid!=1000 -k exec
+
+# Log all file operations
+-a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F auid!=1000 -k file_meta_mod
+-a always,exit -F arch=b64 -S open,openat -F auid!=1000 -k file_read
+-a always,exit -F arch=b64 -S creat -F auid!=1000 -k file_make
+-a always,exit -F arch=b64 -S truncate,ftruncate -F auid!=1000 -k file_trunc

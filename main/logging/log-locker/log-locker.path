@@ -1,5 +1,5 @@
 [Unit]
-Description=Monitor /var/tmp/sessions for changes in real-time
+Description=Monitor /var/log/sessions for changes in real-time
 
 [Path]
 PathChanged=/var/log/sessions

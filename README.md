@@ -10,6 +10,7 @@ git clone https://github.com/JustAundre/Hall-of-Mirrors.git
 ## Global Dependencies
 
 Must be running Linux
+- MacOS doesn't count.
 
 Must have
 - GNU Coreutils
