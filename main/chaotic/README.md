@@ -4,15 +4,8 @@ Welcome to the chaotic section--security through anything but patching vulnerabi
 
 ## Notices
 
-This is only as effective as the system is secure; this is a guard for the front door, which is useless if you forgot to fix that broken window.
-
-The default hashing rounds for passwords is `2500` and you're advised ***not*** to go lower. Should you need to change it, remember to change the configured hashing rounds in `./bull.sh` otherwise you're gonna lock yourself out.
-
-This script acts a "*Plan B*" in the event the password of a user is compromised, but doesn't mean you don't need to have good passwords (or just use GPG keys)
-
-I'd argue one of the best strengths of this suite is the forensics and logging; although that doesn't mean anything if you don't actually see the logs.
-
-**IMPORTANT:** Heya, you're gonna need to change some configurations in `./bull.sh` to get the most out of this suite--please review the code; I'd like to think I did good at commenting the code to make sure almost anyone and cut and chop the script to their needs.
+TLDR...
+- Default hashing rounds for passwords is `2500`, don't forget to change the password hashes and/or the hashing amount to your needs
 
 ## Dependencies
 
@@ -80,15 +73,20 @@ sudo systemctl restart sshd
 5. Highly configurable, customizable and optimized.
 
 ```bash
-journalctl -fp5t sshd-internal # View successful MFA attempts
-journalctl -fp4t sshd-internal # View failed ones
-journalctl -fp3t sshd-internal # View risky commands ran in a real shell
-journalctl -ft bullsh-mfa # View all of the above at once
-journalctl -ft bullsh-cmds # View all commands ran in a real shell
+# Commands ran while in BullSH (if unexpected commands are logged, MAKE A REPORT.)
+journalctl -ft bullsh-cmds
 
-/var/tmp/ # Location of backup log files--you'll know it when you see it.
-less -R "/var/tmp/*" # View log text file logs (to render control characters correctly)
+# Authentication logs
+journalctl -ft bullsh-mfa # Merged view of the below
+journalctl -fp4t bullsh-mfa # Failed authentication attempts
+journalctl -fp3t bullsh-mfa # Successful authentication attempts
+
+# Duplicate copy of the above logs
+less -R /var/tmp/shell.log
+
+
 ```
+Session log files are in `/var/tmp/`, unfortunately not `/var/log/` because the script runs in the userland and making it run as root would be walking on ice you don't know the thickness of.
 
 ## Compiling
 
