@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash --rcfile=/etc/profile.d/secure-env.sh
 #
 # The Height of the Ceiling (Limits/Anti-DDoS)
 #
@@ -43,13 +43,7 @@ stop_hash="n" # Whether the script stops checking for the password (y/n)
 # Set the Stage! -- Error Handling & Configuration Interpretation
 #
 # Integrity measures
-declare -rx\
-	HOSTNAME="${HOSTNAME%%.*}"\
-	TTY="${SSH_TTY##*/}"\
-	TMOUT=1
-#
-# Dependency location definition
-declare -r ld_preload_path='/opt/chaos-chaos.so'
+declare -rx TMOUT=1
 #
 # Logging locations/identifiers
 declare -r\
@@ -63,7 +57,6 @@ declare -x PS1="[$USER@$HOSTNAME ~]$ "
 #
 # Dynamic handling for SSH_CONNECTION/ip_from
 [[ -z "$SSH_CLIENT" ]] && SSH_CLIENT='Local'
-declare -rx SSH_CONNECTION SSH_CLIENT SSH_TTY="${SSH_TTY##*/}" SSH_ORIGINAL_COMMAND
 #
 # Log everything
 IFS='' read -rd '' PROMPT_COMMAND <<-'EOF'
@@ -160,6 +153,14 @@ annoyance() {
 			printf "\e[%d;1H$PS1" "$rows"
 			tput cnorm
 		;;
+		4)
+			# For ~1 minute, have a minor chance every 150 milliseconds to 'drop' their input briefly
+			while {1..400}; do
+				[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] && stty -echo
+				sleep 0.15
+				stty echo
+			done
+		;;
 		*)
 			return 1
 		;;
@@ -172,19 +173,26 @@ handover() {
 	# Log the successful attempt
 	warn 3
 	#
-	# Remove sig traps
-	trap - INT TERM TSTP QUIT HUP EXIT
-	#
 	# Clean up environment
-	declare -rx PS1='[\u@\h \w]\$ '
+	trap - INT TERM TSTP EXIT
 	stty echo
 	#
-	# Apply securecloak rc file if configured.
-	builtin exec /usr/bin/env -i\
-		log_file="$log_file"\
-		SSH_CONNECTION="$SSH_CONNECTION"\
-		PATH="$PATH"\
-		/usr/bin/bash -i
+	# Enter into logger script if exists
+	if [[ -f '/opt/logger.sh' ]]; then
+		builtin exec /usr/bin/env -i\
+			SSH_CONNECTION="$SSH_CONNECTION"\
+			SSH_CLIENT="$SSH_CLIENT"\
+			SSH_TTY="$SSH_TTY"\
+			SSH_ORIGINAL_COMMAND="$SSH_ORIGINAL_COMMAND"\
+			/usr/bin/bash -i
+	else
+		builtin exec /usr/bin/env -i\
+			SSH_CONNECTION="$SSH_CONNECTION"\
+			SSH_CLIENT="$SSH_CLIENT"\
+			SSH_TTY="$SSH_TTY"\
+			SSH_ORIGINAL_COMMAND="$SSH_ORIGINAL_COMMAND"\
+			/usr/bin/bash -ic 'sudo /opt/logger.sh'
+	fi
 }
 #
 # Function to hash input
@@ -206,7 +214,6 @@ passwd_check() {
 	local in_hashed=""
 	local target_hash="${passwd_hashes[$((layer_at - 1))]}"
 	local cmd="${input%% *}"
-	local currentTarget="passHash$layer_at"
 	#
 	# Update history (L1 exclusive)
 	[[ "$layer_at" -eq 1 ]] && history -s "$input"
@@ -254,7 +261,10 @@ passwd_check() {
 	#
 	# Check for current layers' password
 	if [[ "$stop_hash" == "n" && -n "$input" && "$in_hashed" == "$target_hash" ]]; then
-		warn 2 # Log success for this layer
+		# Log success
+		warn 2
+		#
+		# Return success & reset fail counter
 		counts=0
 		return 0
 	fi
@@ -310,7 +320,10 @@ while true; do
 		3)
 			# L3 -- Silence (The Sequel)
 			read -t "$read_tmout" -ren $(( $max_stdin + 1 )) input || exit 1
-			passwd_check && handover
+			if passwd_check; then
+				[[ "$auth_layers" -gt 3 ]] || handover
+				(( layer_at++ ))
+			fi
 		;;
 		*)
 			# Fallback for unexpected layer_at values
