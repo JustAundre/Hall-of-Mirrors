@@ -1,4 +1,4 @@
-#!/usr/bin/env -S /usr/bin/bash --noprofile --norc
+#!/bin/bash --rcfile=/etc/profile.d/secure-env.sh
 #
 # Environment Setup
 #
@@ -6,7 +6,7 @@
 stty -echo
 #
 # Environment variables/checks
-[[ -n "$LOG" ]] && exit 252
+[[ -n "$LOG" ]] && exit 253
 declare -rx LOGNAME="$(getent passwd $UID | cut -d: -f1)"
 declare -rx HOME="$(getent passwd $UID | cut -d: -f6)"
 declare -r LOGTIME="$(date +%Y-%m-%d-%H-%M-%S)"
@@ -20,15 +20,13 @@ logFile="/var/log/sessions/$LOGNAME-at-$LTIME"
 # Edge-case handling
 #
 # Handle unexpected/rare errors
-[[ -z "$LOGNAME" ]] && exit 253
-[[ -z "$LUID" ]] && exit 254
+[[ -z "$LOGNAME" ]] && exit 254
 #
 # Find an unused file name
 count=1
 while [[ -f "$logFile" ]]; do
 	logFile="$logFile-dupe-$count"
 done
-unset count
 declare -r logFile="$logFile.log"
 
 
