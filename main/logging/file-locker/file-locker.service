@@ -7,3 +7,5 @@ Type=simple
 ExecStart=/opt/hist-locker.sh
 ReadOnlyPaths=/bin /sbin /usr /etc /boot
 RefuseManualStop=yes
+MemoryMax=128MB
+TasksMax=128

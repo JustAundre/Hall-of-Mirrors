@@ -1,4 +1,4 @@
-# Session Logging
+# Logging
 
 Persistent, secure and readable full session logs; because logs aren't any good if you can bypass them, can change them, can't read them or don't get the full picture.
 

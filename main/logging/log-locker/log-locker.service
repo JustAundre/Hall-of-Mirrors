@@ -9,6 +9,8 @@ ProtectSystem=full
 ReadOnlyPaths=/bin /sbin /usr /etc /boot /home
 RefuseManualStart=yes
 RefuseManualStop=yes
+MemoryMax=64MB
+TasksMax=64
 
 [Install]
 WantedBy=multi-user.target
