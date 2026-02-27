@@ -1,16 +1,12 @@
-#!/usr/bin/env -S /usr/bin/bash --norc --noprofile
+#!/bin/bash
 #
 # The Height of the Ceiling (Limits/Anti-DDoS)
 #
-# Kill duplicate sessions from the same user
-pgrep -f "$0" -u "$USER" | grep -v "^$$\$" | xargs kill -9 2>/dev/null
+# Stop terminal feedback
+stty -echo
 #
-# Resource limits
-ulimit -u 1000		# No fork bombs!
-ulimit -n 64		# Limit file descriptors
-ulimit -f 10000		# Stop disk stress
-ulimit -m 50000		# Don't stress the RAM!!!
-ulimit -t 30		# Don't stress the CPU!!!
+# Kill duplicate sessions from the same user
+pgrep -f "$0" -u "$USER" | grep -v "^$$\$" | xargs kill -9
 
 
 
@@ -32,15 +28,13 @@ declare -r max_stdin=256 # How big (in bytes) is a response allowed to be parsed
 declare -r hash_rounds=2500 # How many times to hash inputs
 declare -r read_tmout=30 # How many seconds before timing out for inactivity
 declare -r max_tries=3 # The max amount of login attempts before all inputs silently fail
-declare -r fake_root=y # Fake a root shell? (y/n)
-declare -r fake_delay=y # Should every single command have a small delay to annoy the attackers? (y/n)
+declare -r fake_root='y' # Fake a root shell? (y/n)
+declare -r fake_delay='y' # Should every single command have a small delay to annoy the attackers? (y/n)
 declare -r fake_delay_amount="0.$((RANDOM % 3 + 1))" # How long should the delay be? (in seconds)
 declare -r annoy_type=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
 layer_at=1 # What layer of the MFA to start at
 counts=0 # The amount of login attempts to start with
 stop_hash="n" # Whether the script stops checking for the password (y/n)
-bsfs_header="\n\n\e[1;33m$USER/$UID with EUID $EUID has entered the decoy filesystem at $(date +%s) from $ip_from on $TTY\e[0m\n\n" # The header to print at the top of every bsfs log
-
 
 
 
@@ -49,43 +43,38 @@ bsfs_header="\n\n\e[1;33m$USER/$UID with EUID $EUID has entered the decoy filesy
 # Set the Stage! -- Error Handling & Configuration Interpretation
 #
 # Integrity measures
-declare -rx HISTCONTROL='' HISTIGNORE=''
-declare -rx USER
-declare -rx HOSTNAME="${HOSTNAME%%.*}"
-declare -rx TTY="$(tty | awk -F'/dev/' '{ print $2 }')"
-declare -rx TMOUT=1
+declare -rx\
+	HOSTNAME="${HOSTNAME%%.*}"\
+	TTY="${SSH_TTY##*/}"\
+	TMOUT=1
 #
 # Dependency location definition
 declare -r ld_preload_path='/opt/chaos-chaos.so'
-declare -rx secure_cloak_path='/opt/securecloak.sh'
-declare -rx bsfs_dir='/opt/bsfs'
 #
 # Logging locations/identifiers
-declare -rx bsfs_log="/var/tmp/$USER-$UID-bsfs-$(date +%s).log"
-declare -rx log_file='/var/tmp/shell.log'
-declare -rx bullsh_auth_log='bullsh-mfa'
-declare -rx bullsh_cmd_log='bullsh-cmds'
+declare -r\
+	log_file='/var/tmp/shell.log'\
+	bullsh_auth_log='bullsh-mfa'\
+	bullsh_cmd_log='bullsh-cmds'
 #
 # The prompt to show on each new line
 declare -x PS1="[$USER@$HOSTNAME ~]$ "
 [[ "$fake_root" == "y" ]] && declare -x PS1="[root@$HOSTNAME ~]# "
 #
 # Dynamic handling for SSH_CONNECTION/ip_from
-ip_from="Local Console"
-[[ -n "$SSH_CONNECTION" ]] && ip_from=${SSH_CONNECTION%% *}
-declare -rx ip_from SSH_CONNECTION SSH_CLIENT SSH_TTY SSH_ORIGINAL_COMMAND
+[[ -z "$SSH_CLIENT" ]] && SSH_CLIENT='Local'
+declare -rx SSH_CONNECTION SSH_CLIENT SSH_TTY="${SSH_TTY##*/}" SSH_ORIGINAL_COMMAND
 #
 # Log everything
-PROMPT_COMMAND='
+IFS='' read -rd '' PROMPT_COMMAND <<-'EOF'
 	history -a
-	lastHist=$(history 1)
-	lastCmd=$(echo "$lastHist" | sed "s/^[ ]*[0-9]*[ ]*//")
-	if [[ -n "$lastCmd" ]]; then
-		printf "EUID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n"\
-			"$EUID" "$USER" "$ip_from" "$TTY" "$lastCmd" |\
-			tee -a "$log_file" | systemd-cat -t "$bullsh_cmd_log" -p 5
+	last_cmd=$(echo "$(history 1)" | sed 's/^[ ]*[0-9]*[ ]*//')
+	if [[ -n "$last_cmd" ]]; then
+		printf 'EUID: %s | UID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n'\
+			"$EUID" "$UID" "$USER" "${SSH_CLIENT%% *}" "$SSH_TTY" "$last_cmd" |\
+			tee -a "$log_file" | systemd-cat -p5 -t "$bullsh_cmd_log"
 	fi
-'
+EOF
 #
 # Return the user's terminal's echo if the connection drops
 trap 'stty echo' EXIT
@@ -103,15 +92,15 @@ warn() {
 	case "$1" in
 		1)
 			shift 1
-			local msg="⚠ MFA layer $layer_at failed | User: $USER/$UID | IP: $ip_from | TTY: $TTY | Input with EUID $EUID: $input"
+			local msg="⚠ MFA layer $layer_at failed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | Input with EUID $EUID: $input"
 			printf -- '%s' "$msg" | tee -a "$log_file" | systemd-cat -p4t "$bullsh_auth_log"
 		;;
 		2)
-			local msg="✅ MFA layer $layer_at passed | User: $USER/$UID | IP: $ip_from | TTY: $TTY | EUID: $EUID"
+			local msg="✅ MFA layer $layer_at passed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
 			printf -- '%s' "$msg" | tee -a "$log_file" | systemd-cat -p5t "$bullsh_auth_log"
 		;;
 		3)
-			local msg="✅ Passed into the REAL SYSTEM TERMINAL | User: $USER/$UID | IP: $ip_from | TTY: $TTY | EUID: $EUID"
+			local msg="✅ Passed into the REAL SYSTEM TERMINAL | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
 			printf -- '%s' "$msg" | tee -a "$log_file" | systemd-cat -p3t "$bullsh_auth_log"
 		;;
 		*)
@@ -192,7 +181,9 @@ handover() {
 	#
 	# Apply securecloak rc file if configured.
 	builtin exec /usr/bin/env -i\
-		log_file="$log_file" bullsh_auth_log="$bullsh_auth_log" bullsh_cmd_log="$bullsh_cmd_log" TTY="$TTY" PS1="$PS1" HOME="$HOME" TERM="xterm-256color" ip_from="$ip_from" SSH_CONNECTION="$SSH_CONNECTION" PATH="$PATH" USER="$USER" PROMPT_COMMAND="$PROMPT_COMMAND" HISTCONTROL="$HISTCONTROL" HISTIGNORE="$HISTIGNORE" LD_PRELOAD="$LD_PRELOAD"\
+		log_file="$log_file"\
+		SSH_CONNECTION="$SSH_CONNECTION"\
+		PATH="$PATH"\
 		/usr/bin/bash -i
 }
 #
@@ -288,6 +279,9 @@ if [[ -n "$SSH_ORIGINAL_COMMAND" ]]; then
 	warn 1 "$SSH_ORIGINAL_COMMAND -- via non-interactive SSH execution"
 	exit 10
 fi
+#
+# Restore terminal feedback
+stty echo
 #
 # Fake terminal loop
 while true; do
