@@ -17,7 +17,7 @@ cd ./Hall-of-Mirrors/main/logging
 # Install the logging directory
 sudo mkdir -p /var/log/sessions
 sudo chown root:root /var/log/sessions
-sudo chmod 000 /var/log/sessions
+sudo chmod 700 /var/log/sessions
 
 # Install ./logger.sh to /opt/logger.sh
 sudo install -m 755 -o root -g root ./logger.sh /opt/logger.sh
