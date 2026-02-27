@@ -16,6 +16,9 @@ Must have
 - GNU Coreutils
 - inotify-tools
 
+*Basically* everything here will also depend on
+- `./main/general-conf/secure-env.sh`
+
 Required MAIN shell
 - Bash
 
@@ -29,6 +32,6 @@ Refer to the respective `README.md`s for each of the directories in `./main/`
 ## Notices
 
 TLDR...
-- Everything here depends on the integrity of your system, some stuff in `./main/general-conf/` might help with that.
+- Everything here depends on the integrity of your system.
 - Basically everything here should be manually reviewed and configured if you want it to work your way.
 - Don't come to me if you lose data--not gonna do anything about it except *try* to fix the issue that caused it, you've been warned.
