@@ -18,6 +18,7 @@ Must have
 
 *Basically* everything here will also depend on
 - `./main/general-conf/secure-env.sh`
+- `./main/general-conf/limits.conf`
 
 Required MAIN shell
 - Bash
