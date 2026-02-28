@@ -10,20 +10,19 @@
 #include <stdlib.h>
 #include <pwd.h>
 //
-// Helper to check if a path is a vital system path
-static int isAllowed(const char *path) {
+// Helper for checking blocked paths
+static int isDisallowed(const char *path) {
 	if (!path) return 0;
-	if (strcmp(path, "/etc/bash.bashrc") == 0) return 1;
-	if (strcmp(path, "/etc/bashrc") == 0) return 1;
-	if (strcmp(path, "/opt/bull.sh") == 0) return 1;
-	if (strcmp(path, "/dev/urandom") == 0) return 1;
-	return 0;
+	if (strncmp(path, "/proc", 5) == 0) return 0;
+	if (strncmp(path, "/etc", 4) == 0) return 0;
+	if (strncmp(path, "/root", 5) == 0) return 0;
+	return 1;
 }
 //
 // Obstruct file reading
 typedef int (*real_open_t)(const char *, int, ...);
 int open(const char *pathname, int flags, ...) {
-	if (isAllowed(pathname)) {
+	if (isDisallowed(pathname)) {
 		real_open_t real_open = (real_open_t)dlsym(RTLD_NEXT, "open");
 		return real_open(pathname, flags);
 	}
@@ -34,7 +33,7 @@ int open(const char *pathname, int flags, ...) {
 // Obstruct file enumeration
 typedef DIR* (*real_opendir_t)(const char *);
 DIR *opendir(const char *name) {
-	if (isAllowed(name)) {
+	if (isDisallowed(name)) {
 		real_opendir_t real_opendir = (real_opendir_t)dlsym(RTLD_NEXT, "opendir");
 		return real_opendir(name);
 	}
@@ -51,7 +50,7 @@ int chdir(const char *path) {
 // Obstruct file execution
 typedef int (*real_execve_t)(const char *, char *const[], char *const[]);
 int execve(const char *filename, char *const argv[], char *const envp[]) {
-	if (isAllowed(filename)) {
+	if (isDisallowed(filename)) {
 		real_execve_t real_execve = (real_execve_t)dlsym(RTLD_NEXT, "execve");
 		return real_execve(filename, argv, envp);
 	}
@@ -74,15 +73,4 @@ struct passwd *getpwuid(uid_t uid) {
 	fake.pw_dir = "/root";
 	fake.pw_shell = "/bin/bash";
 	return &fake;
-}
-//
-// Fake time
-int stat(const char *path, struct stat *buf) {
-	int (*original_stat)(const char *, struct stat *);
-	original_stat = dlsym(RTLD_NEXT, "stat");
-	int res = original_stat(path, buf);
-	//
-	// Set all modification times to a past date (May 12, 2024)
-	buf->st_mtime = 1715512200;
-	return res;
 }
