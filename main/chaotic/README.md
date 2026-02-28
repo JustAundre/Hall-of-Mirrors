@@ -83,9 +83,8 @@ journalctl -fp3t bullsh-mfa # Successful authentication attempts
 
 # Duplicate copy of the above logs
 less -R /var/tmp/shell.log
-
-
 ```
+
 Session log files are in `/var/tmp/`, unfortunately not `/var/log/` because the script runs in the userland and making it run as root would be walking on ice you don't know the thickness of.
 
 ## Compiling
