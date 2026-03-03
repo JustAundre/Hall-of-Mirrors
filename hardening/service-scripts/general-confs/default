@@ -1,0 +1,31 @@
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	root /var/www/html;
+	index index.html index.htm;
+
+	server_name _;
+
+	# 1. SECURITY HEADERS
+	include snippets/security-headers.conf;
+
+	# 2. DISABLE DIRECTORY LISTING
+	autoindex off;
+
+	# 3. BLOCK UNWANTED HTTP METHODS
+	if ($request_method !~ ^(GET|HEAD|POST)$ ) {
+		return 405;
+	}
+
+	# 4. BLOCK HIDDEN FILES (like .git or .htaccess)
+	location ~ /\. {
+		deny all;
+		access_log off;
+		log_not_found off;
+	}
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+}

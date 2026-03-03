@@ -1,0 +1,167 @@
+#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
+#
+# Variables & Functions (general.sh Exclusive)
+#
+# Define the settings to update
+login_def_configs=(
+	'PASS_MAX_DAYS 90'
+	'PASS_MIN_DAYS 7'
+	'PASS_WARN_AGE 14'
+	'ENCRYPT_METHOD YESCRYPT'
+	'UMASK 027'
+	'CREATE_HOME yes'
+	'USERGROUPS_ENAB yes'
+)
+#
+# Packages required to be install
+hard_deps=(
+	debconf
+	libpam-modules
+	bat
+	unattended-upgrades
+	sudo
+	ufw
+	systemd
+	libpam-pwquality
+	sed
+	bash
+	coreutils
+	ca-certificates
+	file
+)
+#
+# Packages heavily encouraged to have installed
+soft_deps=(
+	rsyslog
+	auditd
+	nano
+	vim
+	bat
+	needrestart
+	less
+)
+#
+# Packages used for recon/pen-testing which may not be needed
+reconissiance_pkgs=(
+	doona
+	xprobe
+	arp-scan
+	wireshark
+	wireshark-qt
+	tcpdump
+	ettercap
+	nikto
+	gvm
+	bettercap
+	macchanger
+	openvas
+	burpsuite
+	sqlmap
+	ffuf
+	dirb
+	dirbuster
+	feroxbuster
+	netdiscover
+	masscan
+	johntheripper
+	john
+	hashcat
+	hydra
+	cewl
+	crunch
+	metasploit-framework
+	armitage
+	beef-xss
+	beef-xss-framework
+	searchsploit
+	powersploit
+	powershell-empire
+	aircrack-ng
+	kismet
+	reaver
+	cmospwd
+	cupp3
+	fcrackzip
+)
+#
+# Packages which have been superceded and should be replaced/removed
+insecure_pkgs=(
+	telnetd-ssl
+	inetutils-telnetd
+	rlogind
+	rsh-server
+	rsh-client
+	rexecd
+	rbootd
+	rstatd
+	rusersd
+	rwalld
+	rexd
+	finger
+	netcat-openbsd
+	tftpd
+	tftpd-hpa
+	snmp
+	routed
+	pppd
+	identd
+	sendmail
+	inn
+	ypbind
+	ypserv
+)
+#
+# Services which have been superceded and should be disabled
+insecure_services=(
+	telnet
+	rlogind
+	rshd
+	rcmd
+	rexecd
+	rbootd
+	rquotad
+	rstatd
+	rusersd
+	rwalld
+	rexd
+	fingerd
+	tftpd
+	snmp
+	netcat
+	nc
+)
+#
+# The ID to count down from for each demoted/changed UID/GID
+temp_id='99999'
+#
+# The file to post kernel-hardening parameters to
+sysctl_conf='/etc/sysctl.d/99-security.conf'
+#
+# The modules needed for UFW to work
+firewall_kernel_modules=(
+	ip_tables
+	iptable_filter
+	iptable_nat
+)
+#
+# All the users on the system
+all_users=$(getent passwd | awk -F: '{ print $1 }')
+#
+# Groups *no one* should be in
+protected_groups=(
+	shadow
+)
+#
+# All services on the system
+services=($(TERM=dumb systemctl list-unit-files --type=service --no-legend --plain | awk '{ print $1 }'))
+#
+# Remove existing values for a configuration and add your own
+safe_add() {
+	key=$(echo "$1" | cut -d' ' -f1)
+	value=$(echo "$1" | cut -d' ' -f2)
+	file="$2"
+	#
+	# Remove any existing keys and then add the new entry
+	sed -i "/^$key\s/d" "$file"
+	echo -e "$key\t$value" >>"$file"
+}
