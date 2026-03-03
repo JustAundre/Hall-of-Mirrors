@@ -66,7 +66,7 @@
 		last_cmd=$(echo "$(history 1)" | sed 's/^[ ]*[0-9]*[ ]*//')
 		if [[ -n "$last_cmd" ]]; then
 			printf 'EUID: %s | UID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n'\
-				"$EUID" "$UID" "$USER" "${SSH_CLIENT%% *}" "$SSH_TTY" "$last_cmd" |\
+				"$EUID" "$UID" "$USER" "${SSH_CLIENT%% *}" "$SSH_TTY" "$last_cmd" |
 				tee -a "$log_file" | systemd-cat -p5 -t "$bullsh_cmd_log"
 		fi
 	EOF
