@@ -1,6 +1,6 @@
 # Chaotic
 
-Welcome to the chaotic section--security through anything but patching vulnerabilites.
+Security through literally anything except actually patching vulnerabilities by way of sprinkles of psychological horrors
 
 ## Notices
 
