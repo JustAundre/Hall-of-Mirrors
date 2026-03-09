@@ -1,0 +1,13 @@
+[Slice]
+# Total RAM allowed for ALL users combined
+MemoryMax=foo
+MemoryHigh=bar
+
+# CPU Priority
+CPUWeight=100
+
+# Can only use % of the entire CPU
+CPUQuota=80%
+
+# Max processes for the entire user-land
+TasksMax=2048
