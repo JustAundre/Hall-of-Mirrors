@@ -28,3 +28,6 @@ Install `./jail.local` to `/etc/fail2ban/jail.local`
 ```bash
 sudo install -m 600 -o root -g root ./jail.local /etc/fail2ban/jail.local
 ```
+
+./main-slice.override --> /etc/systemd/system/user.slice.d/override.conf
+./per-user-slice.override --> /etc/systemd/system/user-.slice
