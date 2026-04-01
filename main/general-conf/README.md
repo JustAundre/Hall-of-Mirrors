@@ -6,28 +6,24 @@ A place for general secure configuration templates to go
 
 CD into the general configurations sub-project
 ```bash
-cd ./Hall-of-Mirrors/main/general-conf
-```
-
-Tight enough to stop your system from crashing, loose enough to for medium loads.
-Don't be caught with your pants down by a `:(){ :|:& };:`...
-Install `./limits.conf` to `/etc/security/limits.conf`
-```bash
-sudo install -m 644 -o root -g root ./limits.conf /etc/security/limits.conf
+cd Hall-of-Mirrors/main/general-conf
 ```
 
 Restricting certain configurations of a shell usually should be fine; even for admins.
-Install `./secure-env.sh` to `/etc/profile.d/secure-env.sh`
+Install `secure-env.sh` to `/etc/profile.d/secure-env.sh`
 ```bash
-sudo install -m 733 -o root -g root ./secure-env.sh /etc/profile.d/secure-env.sh
+sudo install -m 733 -o root -g root secure-env.sh /etc/profile.d/secure-env.sh
 ```
 
 Fail2Ban's real nice; you don't want a million bruteforce attacks against your SSH port.
-Install `./jail.local` to `/etc/fail2ban/jail.local`
+Install `jail.local` to `/etc/fail2ban/jail.local`
 - Dependencies: SSH, Fail2Ban and FirewallD.
 ```bash
-sudo install -m 600 -o root -g root ./jail.local /etc/fail2ban/jail.local
+sudo install -m 600 -o root -g root jail.local /etc/fail2ban/jail.local
 ```
 
-./main-slice.override --> /etc/systemd/system/user.slice.d/override.conf
-./per-user-slice.override --> /etc/systemd/system/user-.slice
+## Roadmap
+
+1. I should try to make and integrate a custom script with F2B which will flag subnets based on suspicious activity of IPs
+	- A flagged subnet will **not** automatically ban the entire subnet, however...
+	- A flagged subnet will have IPs originating from that subnet reduced to 1 login attempt.

@@ -11,7 +11,7 @@ Must have/use the below:
 
 Change directory into this directory and run the installation script
 ```bash
-cd ./Hall-of-Mirrors/main/logging
+cd Hall-of-Mirrors/main/logging
 ./install.sh
 ```
 

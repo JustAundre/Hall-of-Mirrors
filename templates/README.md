@@ -6,7 +6,7 @@ Templates for user manual and administration documentation (better known as gree
 
 CD into the templates directory
 ```bash
-cd ./Hall-of-Mirrors/templates/
+cd Hall-of-Mirrors/templates/
 ```
 
 | File | Purpose |
