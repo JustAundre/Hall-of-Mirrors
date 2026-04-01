@@ -3,10 +3,10 @@
 # Environment Setup & Logging
 #
 # Source secure environment
-. ./.allrc
+. .allrc
 #
 # Source variables and functions exclusive to this general script
-. ./.generalrc
+. .generalrc
 
 
 
@@ -15,17 +15,6 @@
 #
 # Package Updates & Management
 #
-clear
-cat <<-'EOF'
-	Next up: Package Updates & Management
-
-	Help Pages:
-	https://www.reddit.com/r/debian/comments/ok13mj/comment/h552i6a/
-	https://docs.flatpak.org/en/latest/introduction.html
-	https://en.wikipedia.org/wiki/Snap_(software)
-EOF
-#
-# Update and force-reinstall critical packages
 if confirm "Reinstall/install ${pkgs[*]} and update all native binaries, flatpaks and snaps"; then
 	# Update all packages
 	apt-get update --error-on=any || exit 5
@@ -46,12 +35,14 @@ if confirm "Reinstall/install ${pkgs[*]} and update all native binaries, flatpak
 	done
 	#
 	# Update flatpaks and snap packages respectively
-	command -v flatpak >/dev/null || flatpak update -y
-	command -v snap >/dev/null || snap refresh
+	command -v flatpak >/dev/null ||
+		flatpak update -y
+	command -v snap >/dev/null ||
+		snap refresh
 fi
 #
 # Uninstall hacking packages
-if confirm 'Remove reconissance tools from the system (i.e. johntheripper, aircrack-ng, etc.)'; then
+if confirm 'Purge reconissance tools from the system (i.e. johntheripper, aircrack-ng, etc.)'; then
 	apt-get remove --purge "${reconissiance_pkgs[@]}"
 	apt-get autoremove --purge
 fi
@@ -71,11 +62,6 @@ fi
 #
 # Kernel Hardening
 #
-clear
-cat <<-'EOF'
-	Help Pages:
-	https://www.tecmint.com/sysctl-command-examples/
-EOF
 if confirm 'Apply hardened kernel configurations'; then
 	# Stage and apply generic and mostly non-breaking kernel parameters
 	(
@@ -202,69 +188,9 @@ fi
 
 
 #
-# PAM, Password Quality & Password Security
-#
-clear
-cat <<-'EOF'
-	Help Pages:
-	https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/managing_smart_cards/pam_configuration_files
-	https://unix.stackexchange.com/questions/461022/answer/461025
-EOF
-if confirm 'Configure PAM and password quality/age policies to secure defaults'; then
-	(
-		set -e
-		#
-		# Backup existing PAM pwquality template
-		mv /usr/share/pam-configs/pwquality{,.disabled}
-		#
-		# Insert our PAM pwquality template and pwquality configuration
-		install -m 0640 -o root -g root -D general-confs/pwquality /usr/share/pam-configs/pwquality
-		install -m 0640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
-		#
-		# Update PAM configurations
-		pam-auth-update --force --package
-	)
-	#
-	# Reject login requests for users with no password
-	sed -i 's/[[:space:]]*nullok//g' /usr/share/pam-configs/unix
-	#
-	# Enforce Password Age Policies (Applies exclusively to non-system users (UID >= 1000))
-	for user in "$(getent passwd | awk -F: '$3 >= 1000 { print $1 }')"; do
-		(
-			# Skips the iterated user if they're the user running the script
-			# Apply the password age restrictions to the user
-			# Sets the date they last changed their password to current date to avoid accidental lockouts
-			set -e
-			[[ "$user" != "$SUDO_USER" ]]
-			chage -m 7 -M 90 -W 14 "$user"
-			chage -d $(date +%Y-%m-%d) "$user"
-		)
-	done
-	#
-	# Apply global defaults via login.defs
-	for entry in "${login_def_configs[@]}"; do
-		safe_add "$entry" /etc/login.defs
-	done
-	#
-	# Migrate stray hashes from passwd to shadow
-	# Check for duplicate users on the system and prompt for rectification
-	pwconv
-	pwck -r
-fi
-
-
-
-
-
-#
 # Default Firewall Rules (UFW)
 #
-clear
-cat <<-'EOF'
-	Help Pages:
-	https://help.ubuntu.com/community/UFW
-EOF
-if confirm 'Configre default firewall rules via UFW (Uncomplicated Firewall)';
+if confirm 'Configure default firewall rules';
 	(
 		set -e
 		#
@@ -276,10 +202,24 @@ if confirm 'Configre default firewall rules via UFW (Uncomplicated Firewall)';
 		done
 		#
 		# Default Rules
-		ufw reset
-		ufw --force enable
-		ufw default deny incoming
-		ufw default allow outgoing
+		if confirm 'Are you using the UFW firewall'; then
+			systemctl unmask ufw
+			systemctl restart --now ufw
+			ufw reset
+			ufw --force enable
+			ufw default deny incoming
+			ufw default allow outgoing
+		elif confirm 'Are you using the FirewallD firewall'; then
+			systemctl unmask firewalld
+			systemctl restart --now firewalld
+			firewall-cmd --permanent --reset-to-defaults
+			firewall-cmd --permanent --set-default-zone public
+			firewall-cmd --permanent --load-zone-defaults public
+			firewall-cmd --permanent --add-icmp-block echo-request
+			firewall-cmd --permanent --add-icmp-block timestamp-reply
+			firewall-cmd --permanent --add-icmp-block timestamp-request
+			firewall-cmd --reload
+		fi
 	)
 fi
 
@@ -290,18 +230,8 @@ fi
 #
 # Service Management
 #
-# NOTE: CAN BE IMPROVED
-clear
-cat <<-'EOF'
-	Next up: Service Management
-
-	Help Pages:
-	https://serverfault.com/questions/840999
-EOF
-pause
-#
 # Uninstall insecure packages/services
-if confirm 'Remove insecure/legacy packages and services'; then
+if confirm 'Remove insecure/legacy packages & services'; then
 	(
 		set -e
 		apt-get remove --purge -y "${insecure_pkgs[@]}"
@@ -314,7 +244,7 @@ fi
 #
 # Ask for services which are to be removed
 if confirm 'Audit every service on the system'; then
-	removed_service=$(checklist 'Choose services to REMOVE' checklist "${services[@]}")
+	removed_service=$(checklist 'Select services to REMOVE' checklist "${services[@]}")
 	for service in "${services[@]}"; do
 		# Mark any service that was selected to be removed, to be removed.
 		is_del=
@@ -329,8 +259,8 @@ if confirm 'Audit every service on the system'; then
 		if [[ "$is_del" == 'true' ]]; then
 			service_file=$(systemctl show -p FragmentPath --value "$service")
 			if [[ -f "$service_file" ]]; then
-				service_pkg=$(dpkg -S "$service_file" | cut -d: -f1)
-				apt-get remove --purge -y "$service_pkg" || decommission "$service"
+				apt-get remove --purge -y "$(dpkg -S "$service_file" | cut -d: -f1)" ||
+					decommission "$service"
 			fi
 		else
 			# If not removed/disabled, configure some small patches if patches for the service exists.
@@ -348,7 +278,7 @@ if confirm 'Audit every service on the system'; then
 					(
 						set -e
 						sysdpatch apache2
-						install -m 0640 -o root -g root ./general-confs/apache2.conf /etc/apache2/conf-enabled/99-security.conf
+						install -m 0640 -o root -g root general-confs/apache2.conf /etc/apache2/conf-enabled/99-security.conf
 					)
 				;;
 			esac
@@ -369,16 +299,7 @@ systemctl daemon-reload
 
 
 #
-# Filesystem & Permission Tweaks
-#
-clear
-cat <<-'EOF'
-	Next up: Filesystem & Permission Tweaks
-
-	Help Pages:
-	https://www.redhat.com/en/blog/linux-file-permissions-explained
-EOF
-pause
+# Access Control Repair & Review
 #
 # Add Sticky Bit to world-writable directories
 find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod -f +t {} +
@@ -389,7 +310,7 @@ find / -xdev \( -nouser -o -nogroup \) -exec chown -h root:root {} +
 # Remove broken symlinks
 find / -xdev -xtype l -exec rm {} +
 #
-# Fix file permissions for identity management files
+# Fix file permissions for critical files regarding identity management
 chown root:root /etc/passwd /etc/group /etc/sudoers
 if grep -qE '^shadow:' /etc/group; then
 	chown root:shadow /etc/shadow /etc/gshadow
@@ -402,7 +323,7 @@ chmod -f 644 /etc/passwd /etc/group
 chmod -f 440 /etc/sudoers
 #
 # Ensure only root can read the bootloader config
-chown root:root /boot/grub/grub.cfg ||\
+chown root:root /boot/grub/grub.cfg ||
 	chown root:root /boot/grub2/grub.cfg
 chmod -f 700 /boot
 chmod -f 600 /boot/grub/grub.cfg ||
@@ -445,7 +366,8 @@ chown root:root /etc/audit/audit.rules /etc/audit/auditd.conf
 chmod -f 640 /etc/audit/audit.rules /etc/audit/auditd.conf
 #
 # Restrict dmesg access
-chmod -f 700 /bin/dmesg || chmod -f 700 /usr/bin/dmesg
+chmod -f 700 /bin/dmesg ||
+	chmod -f 700 /usr/bin/dmesg
 #
 # Secure existing home directories
 chown root:root /root
@@ -464,15 +386,7 @@ chmod -f +t /tmp /var/tmp /dev/shm
 #
 # Lockout Policies
 #
-clear
-cat <<-'EOF'
-	Next up: Lockout Policies
-
-	Help Pages:
-	https://linux.die.net/man/8/faillock
-EOF
-#
-# Lock out an account temporarily with 3 consecutive bad passwords
+# Lockout accounts temporarily with 3 consecutive failed login attempts
 if confirm 'Enable account lockout policies via faillock'; then
 	(
 		set -e
@@ -481,6 +395,47 @@ if confirm 'Enable account lockout policies via faillock'; then
 		install -m 0640 -o root -g root -D general-confs/faillock_notify /usr/share/pam-configs/faillock_notify
 		pam-auth-update --package
 	)
+fi
+#
+# Configure password quality configurations
+if confirm 'Configure secure defaults for PAM'; then
+	(
+		set -e
+		#
+		# Backup existing PAM pwquality template
+		mv /usr/share/pam-configs/pwquality{,.disabled}
+		#
+		# Insert our PAM pwquality template and pwquality configuration
+		install -m 0640 -o root -g root -D general-confs/pwquality /usr/share/pam-configs/pwquality
+		install -m 0640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
+		#
+		# Update PAM configurations
+		pam-auth-update --force --package
+	)
+	#
+	# Reject login requests for users with no password
+	sed -i 's/[[:space:]]*nullok//g' /usr/share/pam-configs/unix
+	#
+	# Enforce Password Age Policies (Applies exclusively to non-system users (UID >= 1000))
+	for user in "$(getent passwd | awk -F: '$3 >= 1000 { print $1 }')"; do
+		# Skips the iterated user if they're the user running the script
+		# Apply the password age restrictions to the user
+		# Sets the date they last changed their password to current date to avoid accidental lockouts
+		if [[ "$user" != "$SUDO_USER" ]]; then
+			chage -m 7 -M 90 -W 14 "$user" &&
+				chage -d $(date +%Y-%m-%d) "$user"
+		fi
+	done
+	#
+	# Apply global defaults via login.defs
+	for entry in "${login_def_configs[@]}"; do
+		safe_add "$entry" /etc/login.defs
+	done
+	#
+	# Migrate stray hashes from passwd to shadow
+	# Check for duplicate users on the system and prompt for rectification
+	pwconv
+	pwck -r
 fi
 #
 # Disable guest & automatic login in LightDM
@@ -492,13 +447,45 @@ fi
 #
 # Apply a strong MOTD
 if confirm 'Apply a strong MOTD'; then
-	(
-		set -e
-		install -m 0640 -o root -g root -D general-confs/motd /etc/motd
-		install -m 0640 -o root -g root -D general-confs/motd /etc/issue
-		install -m 0640 -o root -g root -D general-confs/motd /etc/issue.net
-	)
+	install -m 0640 -o root -g root -D general-confs/motd /etc/motd
+	install -m 0640 -o root -g root -D general-confs/motd /etc/issue
+	install -m 0640 -o root -g root -D general-confs/motd /etc/issue.net
 fi
+
+
+
+
+
+#
+# Resource Management
+#
+# Prompt for external information
+if confirm 'Limit system resources able to be used by used by users on an individual & collective level'; then
+	max_mem=$(free -m | awk '/^Mem:/{print $2}')
+	cat <<-EOF
+		ℹ️: You have $max_mem megabytes (MB) of max RAM.
+		ℹ️: Please give your response in a percentage, 1 through 100 as an integer without any decimals, prefixes or suffixes.
+		ℹ️: Individual requirements must be less than (non-inclusive) the collective requirements
+	EOF
+	read -rp -n3 'What % of the max memory would you like all users on the system to be able to COLLECTIVELY use?: ' collective_mem
+	read -rp -n3 'What % of the CPU would you like all users on the system to be able to COLLECTIVELY use?: ' collective_cpu
+	while [[ -z "$individual_mem" ]] || (( individual_mem >= collective_mem )); do
+		read -rp -n3 'What % of the max memory would you like an individual user to be able to use?: ' individual_mem
+	done
+	while [[ -z "$individual_cpu" ]] || (( individual_cpu >= collective_cpu )); do
+		read -rp -n3 'What % of the CPU would you like an individual user to be able to use?: ' individual_cpu
+	done
+	#
+	# Parse given information into configuration
+	sed -e "s/foo/$collective_mem/g" -e "s/bar/$collective_cpu/g" general-confs/slice-shared.override >/etc/systemd/system/user.slice.d/override.conf
+	sed -e "s/foo/$individual_mem/g" -e "s/bar/$individual_cpu/g" general-confs/slice-individual.override >/etc/systemd/system/user-.slice
+	#
+	# Prompt for "THE" administrative group
+	read -rp 'What is THE administrative group? (e.x. wheel, sudo, etc.): ' admin_group
+	[[ -n "$(getent group $admin_group)" ]] &&
+		sed "s/wheel/$admin_group/g" general-confs/limits.conf >/etc/security/limits.conf
+fi
+
 
 
 
