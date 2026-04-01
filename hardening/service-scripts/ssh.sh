@@ -149,6 +149,10 @@ else
 	echo '❌: No valid port number provided, exempting default SSH port (22/tcp)'
 	ufw allow in 22/tcp
 fi
+if confirm 'Use Fail2Ban with a secure default configuration'; then
+	apt-get install fail2ban &&
+		install -m 600 -o root -g root general-confs/jail.local /etc/fail2ban/jail.local
+fi
 
 
 
