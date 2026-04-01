@@ -12,7 +12,7 @@ Works best on a headless Linux servers--may break casual desktop users.
 - Review `forensic.sh`'s log file
 - Run `attr-mgr.sh` (select remove mode)
 - Run `general.sh`
-- Run scripts inside `./service-scripts` where applicable
+- Run scripts inside `service-scripts` where applicable
 - Run `attr-mgr.sh` (select restore mode)
 - Run `forensics.sh`
 - Review `forensic.sh`'s log file (again)
