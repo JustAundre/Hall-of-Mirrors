@@ -43,14 +43,14 @@ Rationale: Placed XYZ and ABC into the DMZ, DEF acts as a network filter to the 
 | --- | --- | --- | --- |
 | Certificate Validation | `Disabled` | `Verify CA Chain` | Prevents Man-in-the-Middle (MitM) attacks by ensuring the server certificate is signed by a trusted Authority. |
 
-### Software
+### Software Changes
 
 | Name | Action | Rationale |
 | --- | --- | --- |
-| Wazuh | + | A File Integrity Monitoring (FIM) service is a much needed piece of software which allows the aggregated monitoring of system security events and integrity. |
-| John the Ripper | - | A cracking tool known for being used to violate the integrity of files and systems should not/does not need to be on a production system. |
+| Wazuh | Add (+) | A File Integrity Monitoring (FIM) service is a much needed piece of software which allows the aggregated monitoring of system security events and integrity. |
+| John the Ripper | Remove (-) | A cracking tool known for being used to violate the integrity of files and systems should not/does not need to be on a production system. |
 
-### Codebase
+### Codebase Changes
 
 | Codebase Name | File Path | Description | Rationale |
 | --- | --- | --- | --- |
@@ -58,7 +58,7 @@ Rationale: Placed XYZ and ABC into the DMZ, DEF acts as a network filter to the 
 
 ### Firewall
 
-Firewall Software: FirewallD
+Firewall Software: `FirewallD`
 
 | Direction | Port | IP | Type | Allowed |
 | --- | --- | --- | --- | --- |
@@ -69,7 +69,7 @@ Firewall Software: FirewallD
 | In & Out | ALL | ALL | ALL | ICMP timestamp requests | No |
 | In & Out | ALL | ALL | ALL | ICMP ping packets | No |
 
-Rationale: Having the firewall use a whitelist approach while the outgoing use a blacklist is by far one of the most easiest firewall types to set up as having a whitelist for **outgoing** packets would lead to many levels of breakage if not configured with the utmost care and attention to *everything*. Additionally, a whitelist approach for **incoming** packets strikes a balance of ease of use, usability/availability as the range of packets that for a fact ***need*** to come in are much more scarce and specific. Touching on the ICMP timestamp request block, those specific type of ICMP pings grab the timestamp of the server which is a form of reconissaince, so it has been negated.
+Rationale: Having the firewall use a whitelist approach while the outgoing use a blacklist is by far one of the most easiest firewall types to set up as having a whitelist for **outgoing** packets would lead to many levels of breakage if not configured with the utmost care and attention to *everything*. Additionally, a whitelist approach for **incoming** packets strikes a balance of ease of use, usability/availability as the range of packets that for a fact ***need*** to come in are much more scarce and specific. Touching on the ICMP timestamp request block, that specific types of ICMP ping grabs the timestamp of the server which is a form of reconnaissance, so it has been negated.
 
 ## Server XYZ (Copy and fill out as needed)
 

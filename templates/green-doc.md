@@ -28,13 +28,12 @@ Press [ENTER] once the terminal app has been highlighted/selected, or simply cli
 
 1. Open a terminal.
 
-Once you have your terminal of choice open,
 2. Gather the necessary information for remote login
-You'll need the following:
-- Your username
-- Your password
-- The IP of the server you wish to remote into
-You can find a table of the server IPs and their corresponding hostnames in the (Server Info) section above
+	You'll need the following:
+	- Your username
+	- Your password
+	- The IP of the server you wish to remote into
+	You can find a table of the server IPs and their corresponding hostnames in the (Server Info) section above
 
 3. In your terminal, run the below--where `USERNAME` is your username, and `IP` is the server IP you have chosen.
 ```bash
@@ -53,14 +52,14 @@ USERNAME@IP's password:
 
 1. Open an RDP client
 	- For Windows, open your app menu (usually via the [Super] key), search for "Remote Desktop Connection", and click on the first result.
-	- For Linux, open your app menu (usually via the [Super] key), and search for Remmina, and click on the first result.
+	- For Linux, open your app menu (usually via the [Super] key), and search for Remmina (or your own choice of an RDP client) and click on it.
 
 2. Gather the necessary information for remote login
-You'll need the following:
-- Your username
-- Your password
-- The IP of the server you wish to remote into
-You can find a table of the server IPs and their corresponding hostnames in the (Server Info) section above
+	You'll need the following:
+	- Your username
+	- Your password
+	- The IP of the server you wish to remote into
+	You can find a table of the server IPs and their corresponding hostnames in the (Server Info) section above
 
 3. Enter your target IP in the horizontal text input bar which states something akin to "Computer" or "Remote IP".
 
