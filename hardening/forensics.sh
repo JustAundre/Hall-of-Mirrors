@@ -52,7 +52,7 @@ ss -tulpn |
 	tee -a "$log_dir/open-ports-$suffix"
 #
 # Scan for Malicious PAM Hooks
-grep -r pam_exec.so /etc/pam.d/ |
+grep -r 'pam_exec.so' /etc/pam.d/ |
 	tee -a "$log_dir/possible-pam-hooks-$suffix"
 
 
@@ -144,6 +144,7 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 	# Unidentified binary finder
 	if confirm 'Search for binaries unrecognized by DPKG'; then
 		(
+			set -e
 			read -ra PATHS <<< "$(printf "$PATH" | tr ',' ' ')"
 			for dir in "${PATHS[@]}"; do
 				binaries=($(find "$dir" -type f -executable -exec file --mime-type {} + | grep 'application/x' | cut -d: -f1))
