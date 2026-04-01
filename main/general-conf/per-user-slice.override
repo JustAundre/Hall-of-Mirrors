@@ -1,7 +1,0 @@
-[Slice]
-# No fork bombs!!!
-TasksMax=256
-
-# Ensures no single user occupies the entire main slice
-MemoryMax=1G
-MemoryHigh=.75GB
