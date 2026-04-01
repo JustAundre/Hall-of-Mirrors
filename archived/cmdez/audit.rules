@@ -1,3 +1,0 @@
-# Log all commands
--a always,exit -F arch=b64 -S execve -F auid!=0 -k exec
--a always,exit -F arch=b32 -S execve -F auid!=0 -k exec
