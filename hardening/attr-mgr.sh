@@ -23,25 +23,23 @@ if [[ "$response" == 'remove' ]]; then
 	# Finds and removes immutable (i) attributes
 	find / -xdev -type f -exec lsattr -d {} + |
 		awk '$1 ~ /i/ { print $2 }' |
-		xargs -r chattr -i\
+		xargs -r chattr -i \
 		>>"$log_dir/immutable-files.txt"
 	#
 	# Finds and removes append-only (a) attributes
 	find / -xdev -type f -exec lsattr -d {} + |
 		awk '$1 ~ /a/ { print $2 }' |
-		xargs -r chattr -a\
+		xargs -r chattr -a \
 		>>"$log_dir/append-only-files.txt"
 else
-	cat "$log_dir/immutable-files.txt" | while IFS= read -r file_path; do
-		if [[ -f "$file_path" ]]; then
-			chattr +i "$file_path" &&
-				echo "✅: Restored immutable for ($file_path)"
-		fi
+	cat "$log_dir/immutable-files.txt" |
+		while IFS= read -r file_path; do
+			[[ -f "$file_path" ]] &&
+				chattr +i "$file_path"
 	done
-	cat "$log_dir/append-only-files.txt" | while IFS= read -r file_path; do
-		if [[ -f "$file_path" ]]; then
-			chattr +a "$file_path" &&
-				echo "✅: Restored append-only for ($file_path)"
-		fi
+	cat "$log_dir/append-only-files.txt" |
+		while IFS= read -r file_path; do
+			[[ -f "$file_path" ]] &&
+				chattr +a "$file_path"
 	done
 fi
