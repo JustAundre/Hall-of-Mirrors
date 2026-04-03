@@ -1,4 +1,4 @@
-#!/bin/bash --rcfile=/etc/profile.d/secure-env.sh
+#!/bin/bash --rcfile /etc/profile.d/secure-env.sh
 # Curly brackets to stop output of staging commands
 {
 	#
@@ -36,9 +36,7 @@
 	declare -r fake_delay='y' # Should every single command have a small delay to annoy the attackers? (y/n)
 	declare -r fake_delay_amount="0.$((RANDOM % 3 + 1))" # How long should the delay be? (in seconds)
 	declare -r annoy_type=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
-	layer_at=1 # What layer of the MFA to start at
-	counts=0 # The amount of login attempts to start with
-	stop_hash="n" # Whether the script stops checking for the password (y/n)
+
 
 
 
@@ -50,10 +48,18 @@
 	declare -rx TMOUT=1
 	#
 	# Logging locations/identifiers
-	declare -r \
-		log_file='/var/tmp/shell.log' \
-		bullsh_auth_log='bullsh-mfa' \
-		bullsh_cmd_log='bullsh-cmds'
+	declare -r log_file='/var/tmp/shell.log'
+	declare -r bullsh_auth_log='bullsh-mfa'
+	declare -r bullsh_cmd_log='bullsh-cmds'
+	#
+	# What layer of the MFA to start at
+	layer_at=1
+	#
+	# The amount of login attempts to start with
+	counts=0
+	#
+	# Whether the script stops checking for the password (y/n)
+	stop_hash="n"
 	#
 	# The prompt to show on each new line
 	declare -x PS1="[$USER@$HOSTNAME ~]$ "
@@ -94,15 +100,21 @@
 			1)
 				shift 1
 				local msg="⚠ MFA layer $layer_at failed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | Input with EUID $EUID: $input"
-				printf -- '%s' "$msg" | tee -a "$log_file" | systemd-cat -p4t "$bullsh_auth_log"
+				printf -- '%s' "$msg" |
+					tee -a "$log_file" |
+					systemd-cat -p4t "$bullsh_auth_log"
 			;;
 			2)
 				local msg="✅ MFA layer $layer_at passed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
-				printf -- '%s' "$msg" | tee -a "$log_file" | systemd-cat -p5t "$bullsh_auth_log"
+				printf -- '%s' "$msg" |
+					tee -a "$log_file" |
+					systemd-cat -p5t "$bullsh_auth_log"
 			;;
 			3)
 				local msg="✅ Passed into the REAL SYSTEM TERMINAL | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
-				printf -- '%s' "$msg" | tee -a "$log_file" | systemd-cat -p3t "$bullsh_auth_log"
+				printf -- '%s' "$msg" |
+					tee -a "$log_file" |
+					systemd-cat -p3t "$bullsh_auth_log"
 			;;
 			*)
 				echo '❌: The warn function was called with a non-existent warning type.'
@@ -131,7 +143,9 @@
 				# Splat out 512 bytes from /dev/urandom onto the screen
 				for i in {1..7}; do
 					sleep 2
-					[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] && head -c 512 /dev/urandom
+					if [[ $(( RANDOM % 100 > 80 )) -eq 1 ]]; then
+						head -c 512 /dev/urandom
+					fi
 				done
 				printf "\n%s" "$PS1"
 			;;
@@ -151,7 +165,10 @@
 					c=$((RANDOM % cols + 1))
 					#
 					# Print a random character at the aforementioned position
-					printf "\e[%d;%dH%s" "$r" "$c" "$(head -c 1 /dev/urandom | tr -d '\0')"
+					printf "\e[%d;%dH%s" "$r" "$c" "$(
+						head -c 1 /dev/urandom |
+							tr -d '\0'
+					)"
 					#
 					# Trigger bell sound just as an extra (may not work on some systems/terminals)
 					printf '\a'
@@ -257,14 +274,14 @@
 			# Mimic rbash restrictions and errors (L1 exclusive)
 			if [[ "$cmd" == *"/"* ]]; then
 				echo "rbash: $cmd: cannot specify '/' in command names" 1>&2
-			elif [[ "$cmd" == "exit" || "$cmd" == "logout" ]]; then
+			elif [[ "$cmd" == 'exit' || "$cmd" == 'logout' ]]; then
 				exit 1
-			elif [[ "$cmd" == "sudo" ]]; then
+			elif [[ "$cmd" == 'sudo' ]]; then
 				sudo echo "$USER is not in the sudoers file.  This incident will be reported." 1>&2
-			elif [[ "$cmd" == "printf" ]]; then
+			elif [[ "$cmd" == 'printf' ]]; then
 				input="${$input/'printf '//}"
 				printf -- '%s' "$input"
-			elif [[ "$cmd" == "echo" ]]; then
+			elif [[ "$cmd" == 'echo' ]]; then
 				input="${$input/'echo '//}"
 				printf -- '%s' "$input\n"
 			elif [[ "$cmd" =~ ^([a-zA-Z0-9_-]+)= ]]; then
@@ -327,17 +344,21 @@ while true; do
 		;;
 		2)
 			# L2 -- Silence
-			read -t "$read_tmout" -ren $(( $max_stdin + 1 )) input || exit 1
+			read -t "$read_tmout" -ren $(( $max_stdin + 1 )) input ||
+				exit 1
 			if passwd_check; then
-				[[ "$auth_layers" -gt 2 ]] || handover
+				[[ "$auth_layers" -gt 2 ]] ||
+					handover
 				(( layer_at++ ))
 			fi
 		;;
 		3)
 			# L3 -- Silence (The Sequel)
-			read -t "$read_tmout" -ren $(( $max_stdin + 1 )) input || exit 1
+			read -t "$read_tmout" -ren $(( $max_stdin + 1 )) input ||
+				exit 1
 			if passwd_check; then
-				[[ "$auth_layers" -gt 3 ]] || handover
+				[[ "$auth_layers" -gt 3 ]] ||
+					handover
 				(( layer_at++ ))
 			fi
 		;;
