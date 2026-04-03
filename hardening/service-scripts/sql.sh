@@ -5,7 +5,7 @@
 # The actual "script" is not here, this is just a wrapper for it.
 # MySQL, MariaDB and others alike have their own "shell" to run their own configuration commands in.
 # Please see general-confs/database.sql for the actual script used to configure your SQL database.
-# 
+#
 
 
 
@@ -24,7 +24,7 @@
 #
 # Script Redirect
 #
-case $(checklist "Which type of database are we patching?" "radiolist" "MySQL" "MariaDB" "PostgreSQL") in
+case $(checklist 'Which type of database are we patching?' 'radiolist' 'MySQL' 'MariaDB' 'PostgreSQL') in
 	MySQL)
 		mysql_secure_installation
 		mysql -u root < general-confs/sql.txt
@@ -34,7 +34,7 @@ case $(checklist "Which type of database are we patching?" "radiolist" "MySQL" "
 		mariadb -u root -p < general-confs/sql.txt
 	;;
 	PostgreSQL)
-		# Postgre has no default password to crack, listens locally by default, etc; and has no securing script.
+		# PostgreSQL is made to be secure by default and has no secure installation script.
 		sudo -u postgres psql < general-confs/sql.txt
 	;;
 esac
