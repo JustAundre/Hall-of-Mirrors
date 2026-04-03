@@ -8,7 +8,9 @@
 	stty -echo
 	#
 	# Kill duplicate sessions from the same user
-	pgrep -f "$0" -u "$USER" | grep -v "^$$\$" | xargs kill -9
+	pgrep -f "$0" -u "$USER" |
+		grep -v "^$$\$" |
+		xargs kill -9
 
 
 
@@ -48,17 +50,21 @@
 	declare -rx TMOUT=1
 	#
 	# Logging locations/identifiers
-	declare -r\
-		log_file='/var/tmp/shell.log'\
-		bullsh_auth_log='bullsh-mfa'\
+	declare -r \
+		log_file='/var/tmp/shell.log' \
+		bullsh_auth_log='bullsh-mfa' \
 		bullsh_cmd_log='bullsh-cmds'
 	#
 	# The prompt to show on each new line
 	declare -x PS1="[$USER@$HOSTNAME ~]$ "
-	[[ "$fake_root" == "y" ]] && declare -x PS1="[root@$HOSTNAME ~]# "
+	if [[ "$fake_root" == "y" ]]; then
+		declare -x PS1="[root@$HOSTNAME ~]# "
+	fi
 	#
 	# Dynamic handling for SSH_CONNECTION/ip_from
-	[[ -z "$SSH_CLIENT" ]] && SSH_CLIENT='Local'
+	if [[ -z "$SSH_CLIENT" ]]; then
+		SSH_CLIENT='Local'
+	fi
 	#
 	# Log everything
 	IFS='' read -rd '' PROMPT_COMMAND <<-'EOF'
@@ -71,8 +77,8 @@
 		fi
 	EOF
 	#
-	# Return the user's terminal's echo if the connection drops
-	trap 'stty echo' EXIT
+	# Python logic to use for quick hashing
+	declare -r python_hashing_logic="import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range($hash_rounds):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
 
 
 
@@ -116,9 +122,9 @@
 				# Flash black and white really fast for a few seconds
 				for i in {1..250}; do
 					printf '\e[?5h'
-					sleep 0.01
+					sleep .01
 					printf '\e[?5l'
-					sleep 0.01
+					sleep .01
 				done
 			;;
 			2)
@@ -158,8 +164,10 @@
 			4)
 				# For ~1 minute, have a minor chance every 150 milliseconds to 'drop' their input briefly
 				while {1..400}; do
-					[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] && stty -echo
-					sleep 0.15
+					if [[ $(( RANDOM % 100 > 80 )) -eq 1 ]]; then
+						stty -echo
+					fi
+					sleep .15
 					stty echo
 				done
 			;;
@@ -206,7 +214,8 @@
 		local counts="$counts"
 		#
 		# Hash the input
-		printf -- '%s' "$input" | python3 -c "import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range($hash_rounds):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
+		printf -- '%s' "$input" |
+			python3 -c "$python_hashing_logic"
 	}
 	#
 	# Function to check input
@@ -218,16 +227,23 @@
 		local cmd="${input%% *}"
 		#
 		# Update history (L1 exclusive)
-		[[ "$layer_at" -eq 1 ]] && history -s "$input"
-		#
 		# Simulate a fake delay (if configured)
-		[[ "$fake_delay" == "y" ]] && sleep "$fake_delay_amount"
-		#
 		# Silently lock out after max_tries
-		[[ "$counts" -gt "$max_tries" && "$stop_hash" != "y" ]] && readonly stop_hash="y"
-		#
 		# Generate hash only if not locked out
-		[[ "$stop_hash" == "n" ]] && in_hashed="$(hash)" || in_hashed=""
+		if [[ "$layer_at" -eq 1 ]]; then
+			history -s "$input"
+		fi
+		if [[ "$fake_delay" == "y" ]]; then
+			sleep "$fake_delay_amount"
+		fi
+		if [[ "$counts" -gt "$max_tries" && "$stop_hash" != "y" ]]; then
+			readonly stop_hash="y"
+		fi
+		if [[ "$stop_hash" == "n" ]]; then
+			in_hashed="$(hash)"
+		else
+			in_hashed=
+		fi
 		#
 		# Handle common inputs
 		if [[ "${#input}" -gt $max_stdin ]]; then
