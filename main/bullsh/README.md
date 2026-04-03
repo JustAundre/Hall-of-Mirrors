@@ -27,12 +27,6 @@ sudo chattr +a /var/tmp/shell.log
 # Install bull.sh to /opt/bull.sh
 sudo install -m 755 -o root -g root bull.sh /opt/bull.sh
 
-# Install securecloak.sh to /opt/securecloak.sh
-sudo install -m 755 -o root -g root securecloak.sh /opt/securecloak.sh
-
-# Install chaos-chaos.so to /opt/chaos-chaos.so
-sudo install -m 744 -o root -g root chaos-chaos.so /opt/chaos-chaos.so
-
 # Enable usage of BullSH via /etc/ssh/sshd_config ForceCommand directive
 sudo tee -a /etc/ssh/sshd_config <<EOF
 # Drop everyone into BullSH
