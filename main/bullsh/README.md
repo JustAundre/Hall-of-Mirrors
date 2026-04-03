@@ -18,7 +18,7 @@ TLDR...
 
 ```bash
 # CD into the the chaotic sub-project
-cd Hall-of-Mirrors/main/chaotic
+cd Hall-of-Mirrors/main/bullsh/
 
 # Create the log file(s)
 sudo install -m 766 -o root -g root /dev/null /var/tmp/shell.log
@@ -28,9 +28,9 @@ sudo chattr +a /var/tmp/shell.log
 sudo install -m 755 -o root -g root bull.sh /opt/bull.sh
 
 # Enable usage of BullSH via /etc/ssh/sshd_config ForceCommand directive
-sudo tee -a /etc/ssh/sshd_config <<EOF
-# Drop everyone into BullSH
-ForceCommand /opt/bull.sh
+sudo tee -a /etc/ssh/sshd_config <<-EOF
+	# Drop everyone into BullSH
+	ForceCommand /opt/bull.sh
 EOF
 ```
 
