@@ -101,35 +101,36 @@ checklist() {
 	local items=("$@")
 	#
 	# Give the user their options
-	clear
-	echo "$title"
+	clear >&2
+	echo "$title" >&2
 	local i=0
 	for item in "${items[@]}"; do
-		echo "    $i) $item"
+		printf "\t$i) $item\n" >&2
 		i=$((i + 1))
 	done
 	#
 	# Prompt the user for their answer via the read command
 	if [[ "$type" == 'checklist' ]]; then
-		cat <<-'EOF'
+		cat >&2 <<-'EOF'
 			Type your selections in comma-seperated format—no spaces.
 			(i.e. "1,4,6,9")
 		EOF
 	elif [[ "$type" == 'radiolist' ]]; then
-		cat <<-'EOF'
-			Type your selection (1 INPUT ONLY)
+		cat >&2 <<-'EOF'
+			Type your selection (single-answer only)
 			(i.e. "5")
 		EOF
 	else
-		cat <<-EOF
+		cat >&2 <<-EOF
 			Incorrect usage of the checklist function;
 			($type) was given as the 2nd argument, but the only valid options are (checklist) OR (radiolist).
 		EOF
 		exit 8
 	fi
-	read -p 'Press [ENTER] to confirm your selection(s).'
-	[[ -z "$selections" ]] &&
+	read -rp 'Type your selection(s) then press [ENTER] to submit: ' selections >&2
+	if [[ -z "$selections" ]]; then
 		return 0
+	fi
 	#
 	# Replace commas with spaces
 	local selections="${selections//,/ }"
@@ -148,18 +149,17 @@ checklist() {
 # Force-reinstall/install "$@", preffering new configurations over local changes
 secure_install() {
 	for pkg in "$@"; do
-		env DEBIAN_FRONTEND=noninteractive\
-			apt-get install --fix-broken -yf --reinstall --no-install-recommends\
-			-o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef "$pkg"
+		env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef "$pkg"
 	done
-	dpkg --configure -a || exit 5
+	dpkg --configure -a ||
+		exit 5
 }
 #
 # Pause the execution of the script
 pause() {
 	cat <<-'EOF'
 		⏸️ ⏸️ ⏸️ ===> SCRIPT IS PAUSED <=== ⏸️ ⏸️ ⏸️
-		Press [ENTER] to resume the script.
+		    Press [ENTER] to resume the script.
 	EOF
 	read -r
 	echo '✅: Script was resumed.'
