@@ -12,19 +12,15 @@ git clone https://github.com/JustAundre/Hall-of-Mirrors.git
 Must be running Linux
 - MacOS doesn't count.
 
-Must have
-- GNU Coreutils
-- inotify-tools
+Must have/use
+- `GNU Coreutils`
+- `inotify-tools`
 
-*Basically* everything here will also depend on
-- `main/general-conf/secure-env.sh`
-- `main/general-conf/limits.conf`
+Required in-use shell: `Bash 5.0+`
 
-Required MAIN shell
-- Bash
+Required in-use Init. System: `SystemD`
 
-Required MAIN Initialization System
-- SystemD
+Basically everything here will also depend on the installation of `main/general-conf/secure-env.sh`
 
 ## Installation
 

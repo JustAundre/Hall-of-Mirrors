@@ -1,19 +1,17 @@
-# Chaotic
+# BullSH
 
-Security through literally anything except actually patching vulnerabilities by way of sprinkles of psychological horrors
+Security through psychological terror.
 
 ## Notices
 
 TLDR...
-- Default hashing rounds for passwords is `2500`, don't forget to change the password hashes and/or the hashing amount to your needs
+- Default hashing rounds for passwords is `2500`
+- Remember to change the password hashes and/or the hashing amount to your needs.
 
 ## Dependencies
 
-- `Bash` 5.0+
-- `Python` 3.0+
-- `SystemD`
+- `Python 3.0+`
 - `gcc`
-- `GNU` coreutils
 - `SSH` server
 
 ## Installation
