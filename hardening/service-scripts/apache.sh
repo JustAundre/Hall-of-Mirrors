@@ -91,7 +91,7 @@ fi
 # Firewall Configuration
 #
 # Whitelist the universal HTTP port
-echo 'ℹ️: Space-seperated inputs required (i.e. 80 8080 4320)'
+echo 'ℹ️: Space-separated inputs required (i.e. 80 8080 4320)'
 read -rp 'What port(s) does your webserver use? (Enter nothing for defaults): ' ports
 for port in "$ports"; do
 	if [[ "$port" =~ $numberCheck ]]; then

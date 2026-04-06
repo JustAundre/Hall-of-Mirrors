@@ -93,7 +93,7 @@ fi
 if confirm 'Configure user & authentication management'; then
 	# Get authorized users and administrator users
 	cat <<-'EOF'
-		ℹ️: Comma-seperated entries only (i.e. john,jane,chris)
+		ℹ️: Comma-separated entries only (i.e. john,jane,chris)
 		⚠️: Active Directory users not included!
 	EOF
 	read -rp 'Users allowed on the system: ' authorized
