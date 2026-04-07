@@ -212,8 +212,8 @@ if confirm 'Configure default firewall rules';
 		elif confirm 'Are you using the FirewallD firewall'; then
 			systemctl unmask firewalld
 			systemctl restart --now firewalld
-			firewall-cmd --permanent --reset-to-defaults
-			firewall-cmd --permanent --set-default-zone public
+			firewall-cmd --reset-to-defaults
+			firewall-cmd --set-default-zone public
 			firewall-cmd --permanent --load-zone-defaults public
 			firewall-cmd --permanent --add-icmp-block echo-request
 			firewall-cmd --permanent --add-icmp-block timestamp-reply
