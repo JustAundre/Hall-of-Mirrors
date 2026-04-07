@@ -5,7 +5,11 @@ chmod 700 /var/log/sessions
 #
 # Install logger.sh to /opt/logger.sh
 install -m 755 -o root -g root logger.sh /opt/logger.sh
-echo 'ALL ALL=(ALL) SETENV: NOPASSWD: /opt/logger.sh' >> /etc/sudoers
+cat >>/etc/sudoers <<-'EOF'
+
+# Run the logger script as root (needed to send log to secure locations, users are lowered to their original users/privileges)
+ALL ALL=(ALL) SETENV: NOPASSWD: /opt/logger.sh'
+EOF
 #
 # Allow passing of necessary variables through sudo
 echo 'Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"' >> /etc/sudoers

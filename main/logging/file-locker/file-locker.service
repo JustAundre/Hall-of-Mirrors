@@ -4,7 +4,7 @@ Description=Locks history files in home directories
 [Service]
 Restart=always
 Type=simple
-ExecStart=/opt/hist-locker.sh
+ExecStart=/opt/file-locker.sh
 ProtectSystem=strict
 ReadWritePaths=/home
 RefuseManualStop=yes
@@ -24,3 +24,6 @@ RestrictAddressFamilies=
 NoNewPrivileges=yes
 PrivateDevices=yes
 PrivateUsers=true
+
+[Install]
+WantedBy=multi-user.target

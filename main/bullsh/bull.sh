@@ -1,4 +1,4 @@
-#!/bin/bash --rcfile /etc/profile.d/secure-env.sh
+#!/usr/bin/env -v /bin/bash --rcfile /etc/profile.d/secure-env.sh
 # Curly brackets to stop output of staging commands
 {
 	#

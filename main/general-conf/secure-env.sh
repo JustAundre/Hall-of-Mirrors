@@ -45,5 +45,5 @@
 	done
 	#
 	# Remove usage of commands which allow bypasses or unauthorized forensics
-	builtin enable -n set shopt umask kill builtin command getopts unalias ulimit disown enable times alias echo printf
+	enable -n set shopt umask kill builtin command getopts unalias ulimit disown enable times alias echo printf
 } >/dev/null
