@@ -19,7 +19,6 @@
 	declare -rx LD_PRELOAD=
 	declare -rx HISTSIZE=-1
 	declare -rx HISTFILESIZE=-1
-	declare -rx HISTFILE="$HOME/.bash_history"
 	declare -rx PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 	TTY=$(tty)
 	declare -rx TTY="${TTY##*/}"
@@ -34,6 +33,8 @@
 			cut -d: -f1
 	)
 	declare -rx LOGNAME="$USER"
+	declare -rx HOME="$(getent passwd $USER | cut -f6)"
+	declare -rx HISTFILE="$HOME/.bash_history"
 	HOSTNAME=$(hostname)
 	declare -rx HOSTNAME="${HOSTNAME%%.*}"
 	for var in SSH_CONNECTION SSH_CLIENT; do
@@ -45,5 +46,5 @@
 	done
 	#
 	# Remove usage of commands which allow bypasses or unauthorized forensics
-	enable -n set shopt umask kill builtin command getopts unalias ulimit disown enable times alias echo printf
+	builtin enable -n set shopt umask kill builtin command getopts unalias ulimit disown enable times alias echo printf
 } >/dev/null
