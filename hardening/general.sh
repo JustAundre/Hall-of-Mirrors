@@ -49,7 +49,7 @@ fi
 #
 # Remove netcat and nc binaries manually
 if confirm 'Hide the netcat binaries'; then
-	for binary in '/usr/bin/nc /usr/bin/netcat'; do
+	for binary in '/usr/bin/nc' '/usr/bin/netcat'; do
 		dpkg-divert --add --rename --divert "/usr/bin/$binary.quarantine" "/usr/bin/$binary"
 	done
 	dpkg-divert --list
@@ -100,10 +100,15 @@ if confirm 'Configure user & authentication management'; then
 	read -rp 'Admins on the system: ' admins
 	read -rp 'Groups exclusive to admins: ' administrative_groups
 	#
-	# Parse provided user input into arrays
+	# Parse provided user information into arrays
 	IFS=, read -ra authorized <<< "$authorized"
 	IFS=, read -ra admins <<< "$admins"
 	IFS=, read -ra administrative_groups <<< "$administrative_groups"
+	#
+	# Remove whitespaces from provided user information
+	authorized=("${authorized[@]// /}")
+	admins=("${admins[@]// /}")
+	administrative_groups=("${administrative_groups[@]// /}")
 	#
 	# Audit users & their groups
 	clear
@@ -112,7 +117,12 @@ if confirm 'Configure user & authentication management'; then
 		[[ "$user" == "$(logname)" ]] && continue
 		#
 		# Break the loop if any of the required variables are missing
-		if [[ -z "$authorized" || -z "$admins" || -z "$administrative_groups" ]]; then
+		if [[
+				-z "$authorized" ||
+					-z "$admins" ||
+					-z "$administrative_groups"
+			]];
+		then
 			echo '⚠️: Missing input for one of the 3 prompts; skipping user management...'
 			break
 		fi
@@ -159,14 +169,22 @@ if confirm 'Configure user & authentication management'; then
 	# Purge Crontabs
 	clear
 	if confirm 'Delete crontabs for all users (to remove persistent backdoors)'; then
-		for user in $(getent passwd | cut -d: -f1); do
+		for user in "$(
+			getent passwd |
+				cut -d: -f1
+		)";
+		do
 			crontab -ru "$user"
 		done
 	fi
 	#
 	# Demote users found with UID 0 that isn't root
 	clear
-	for uid_zero_user in "$(getent passwd | awk -F: '($3 == 0 && $1 != "root") { print $1 }')"; do
+	for uid_zero_user in $(
+		getent passwd |
+			awk -F: '($3 == 0 && $1 != "root") { print $1 }'
+	);
+	do
 		if confirm "Should user ($uid_zero_user) have UID 0"; then
 			usermod -u "$temp_id" "$uid_zero_user"
 			(( temp_id-- ))
@@ -175,8 +193,12 @@ if confirm 'Configure user & authentication management'; then
 	#
 	# Demote groups with GID 0 that aren't named root
 	clear
-	for gid_zero_user in "$(getent group | awk -F: '($3 = 0 && $1 != "root") { print $1 }')"; do
-		if confirm "Should ($gid_zero_user) have GID 0 (less risk than UID 0--still risky)"; then
+	for gid_zero_user in $(
+		getent group |
+			awk -F: '($3 == 0 && $1 != "root") { print $1 }'
+	);
+	do
+		if confirm "Should ($gid_zero_user) have GID 0"; then
 			groupmod -g "$temp_id" "$gid_zero_user"
 			(( temp_id-- ))
 		fi
@@ -244,12 +266,12 @@ fi
 #
 # Ask for services which are to be removed
 if confirm 'Audit every service on the system'; then
-	removed_service=$(checklist 'Select services to REMOVE' checklist "${services[@]}")
+	removed_services=($(checklist 'Select services to REMOVE' checklist "${services[@]}"))
 	for service in "${services[@]}"; do
 		# Mark any service that was selected to be removed, to be removed.
 		is_del=
-		for kept_service in $removed_service; do
-			if [[ "$service" == "$kept_service" ]]; then
+		for kept_service in "${removed_services[@]}"; do
+			if [[ "$service" == "$removed_service" ]]; then
 				is_del=true
 				break
 			fi
@@ -257,9 +279,12 @@ if confirm 'Audit every service on the system'; then
 		#
 		# If service was marked to be removed, uninstall if possible; if not, fallback to disable and masking.
 		if [[ "$is_del" == 'true' ]]; then
-			service_file=$(systemctl show -p FragmentPath --value "$service")
+			service_file="$(systemctl show -p FragmentPath --value $service)"
 			if [[ -f "$service_file" ]]; then
-				apt-get remove --purge -y "$(dpkg -S "$service_file" | cut -d: -f1)" ||
+				apt-get remove --purge -y "$(
+					dpkg -S "$service_file" |
+						cut -d: -f1
+				)" ||
 					decommission "$service"
 			fi
 		else
@@ -417,13 +442,17 @@ if confirm 'Configure secure defaults for PAM'; then
 	sed -i 's/[[:space:]]*nullok//g' /usr/share/pam-configs/unix
 	#
 	# Enforce Password Age Policies (Applies exclusively to non-system users (UID >= 1000))
-	for user in "$(getent passwd | awk -F: '$3 >= 1000 { print $1 }')"; do
+	for user in $(
+		getent passwd |
+			awk -F: '$3 >= 1000 { print $1 }'
+		);
+	do
 		# Skips the iterated user if they're the user running the script
 		# Apply the password age restrictions to the user
 		# Sets the date they last changed their password to current date to avoid accidental lockouts
 		if [[ "$user" != "$SUDO_USER" ]]; then
 			chage -m 7 -M 90 -W 14 "$user" &&
-				chage -d $(date +%Y-%m-%d) "$user"
+				chage -d "$(date +%Y-%m-%d)" "$user"
 		fi
 	done
 	#
@@ -461,7 +490,10 @@ fi
 #
 # Prompt for external information
 if confirm 'Limit system resources able to be used by used by users on an individual & collective level'; then
-	max_mem=$(free -m | awk '/^Mem:/{print $2}')
+	max_mem="$(
+		free -m |
+			awk '/^Mem:/{print $2}'
+	)"
 	cat <<-EOF
 		ℹ️: You have $max_mem megabytes (MB) of max RAM.
 		ℹ️: Please give your response in a percentage, 1 through 100 as an integer without any decimals, prefixes or suffixes.
@@ -469,10 +501,14 @@ if confirm 'Limit system resources able to be used by used by users on an indivi
 	EOF
 	read -rp -n3 'What % of the max memory would you like all users on the system to be able to COLLECTIVELY use?: ' collective_mem
 	read -rp -n3 'What % of the CPU would you like all users on the system to be able to COLLECTIVELY use?: ' collective_cpu
-	while [[ -z "$individual_mem" ]] || (( individual_mem >= collective_mem )); do
+	while [[ -z "$individual_mem" ]] ||
+		(( individual_mem >= collective_mem ));
+	do
 		read -rp -n3 'What % of the max memory would you like an individual user to be able to use?: ' individual_mem
 	done
-	while [[ -z "$individual_cpu" ]] || (( individual_cpu >= collective_cpu )); do
+	while [[ -z "$individual_cpu" ]] ||
+		(( individual_cpu >= collective_cpu ));
+	do
 		read -rp -n3 'What % of the CPU would you like an individual user to be able to use?: ' individual_cpu
 	done
 	#
