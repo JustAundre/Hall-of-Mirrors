@@ -87,7 +87,7 @@ configure_ssh PrintMotd no
 # Access Audit
 #
 # SSH Group Check
-if getent group ssh >/dev/null; then
+if getent group ssh &>/dev/null; then
 	members=$(getent group ssh | awk -F: '{print $3, $4}')
 	if [[ -n "$members" ]]; then
 		cat <<-EOF

@@ -28,7 +28,7 @@
 		logFile="$logFile-dupe-$count"
 	done
 	declare -r logFile="$logFile.log"
-} >/dev/null
+} &>/dev/null
 
 
 

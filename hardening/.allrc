@@ -18,7 +18,11 @@ numberCheck='^[0-9]+$'
 #
 # Wrap the exit command to print the summary before exiting the script if the exit command is ran with code 0 or ran with no exit code
 exit() {
-	if [[ -z "$@" || "$@" == 0 ]]; then
+	if [[
+			-z "$@" ||
+				"$@" == 0
+		]];
+	then
 		cat <<-EOF
 			Script Succeeded
 			File checks:
@@ -140,7 +144,9 @@ checklist() {
 	#
 	# Validate user choices and return the choices
 	for choice in "${selections[@]}"; do 
-		if [[ "$choice" =~ $numberCheck ]] && (( choice >= 0 && choice <= ${#items[@]} )); then
+		if [[ "$choice" =~ $numberCheck ]] &&
+			(( choice >= 0 && choice <= ${#items[@]} ));
+		then
 			echo "${items[$choice]}"
 		fi
 	done
@@ -148,9 +154,7 @@ checklist() {
 #
 # Force-reinstall/install "$@", preffering new configurations over local changes
 secure_install() {
-	for pkg in "$@"; do
-		env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef "$pkg"
-	done
+	env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef $@
 	dpkg --configure -a ||
 		exit 5
 }
@@ -196,27 +200,19 @@ envCheck() {
 		echo '❌: Script must be ran by Bash intepreter and the script must NOT be sourced'
 		exit 1
 	elif [[ "$EUID" -ne 0 ]]; then
-		cat <<-EOF
-			❌: Must run as root. Try (sudo bash $0)
-		EOF
+		echo "❌: Must run as root. Try (sudo bash $0)"
 		exit 2
 	elif [[ "$(cat /proc/1/comm)" != 'systemd' ]]; then
 		echo '❌: System is not using SystemD which is the only system daemon supported by this script.'
 		exit 3
-	elif ! command -v apt apt-get dpkg >/dev/null; then
+	elif ! command -v apt apt-get dpkg &>/dev/null; then
 		echo '❌: This script only works with systems using the APT and DPKG package manager, which this system lacks.'
 		exit 4
-	elif apt-get update >/dev/null | grep -qEi 'W: Failed to fetch|failed to download'; then
+	elif apt-get update &>/dev/null |
+		grep -qEi 'W: Failed to fetch|failed to download';
+	then
 		echo '❌: You lack a proper connection to some APT repositories, ensure you have fully connectivity before running.'
 		exit 7
-	else
-		cat <<-'EOF'
-			✅: Script was ran with Bash shell
-			✅: Script has root permissions
-			✅: System is using the SystemD initialization system
-			✅: System has APT and DPKG package manager installed
-			✅: System can communicate with APT
-		EOF
 	fi
 }
 #

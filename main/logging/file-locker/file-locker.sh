@@ -33,7 +33,7 @@ filemon() {
 		fi
 		#
 		# Change its owners, permissions and attributes based on the given params
-		getent passwd "$3" >/dev/null &&
+		getent passwd "$3" &>/dev/null &&
 			chown "$3" "$path"
 		[[ "$4" =~ ^[0-9]{3,4}$ ]] &&
 			chmod "$4" "$path"

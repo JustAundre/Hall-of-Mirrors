@@ -35,9 +35,9 @@ if confirm "Reinstall/install ${pkgs[*]} and update all native binaries, flatpak
 	done
 	#
 	# Update flatpaks and snap packages respectively
-	command -v flatpak >/dev/null ||
+	command -v flatpak &>/dev/null ||
 		flatpak update -y
-	command -v snap >/dev/null ||
+	command -v snap &>/dev/null ||
 		snap refresh
 fi
 #
@@ -424,24 +424,34 @@ fi
 #
 # Configure password quality configurations
 if confirm 'Configure secure defaults for PAM'; then
-	(
-		set -e
-		#
-		# Backup existing PAM pwquality template
-		mv /usr/share/pam-configs/pwquality{,.disabled}
-		#
-		# Insert our PAM pwquality template and pwquality configuration
-		install -m 0640 -o root -g root -D general-confs/pwquality /usr/share/pam-configs/pwquality
-		install -m 0640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
-		#
-		# Update PAM configurations
-		pam-auth-update --force --package
-	)
+	if command -v authselect &>/dev/null; then
+		(
+			set -e
+			authselect select sssd with-faillock with-pamaccess with-pwhistory with-mkhomedir with-sudo without-nullok --force
+			authselect apply-changes
+		)
+	elif command -v pam-auth-update &>/dev/null; then
+		(
+			set -e
+			#
+			# Backup existing PAM pwquality template
+			mv /usr/share/pam-configs/pwquality{,.disabled}
+			#
+			# Insert our PAM pwquality template and pwquality configuration
+			install -m 0640 -o root -g root -D general-confs/pwquality /usr/share/pam-configs/pwquality
+			install -m 0640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
+			#
+			# Reject login requests for users with no password
+			sed -i 's/[[:space:]]*nullok//g' /usr/share/pam-configs/unix
+			#
+			# Update PAM configurations
+			pam-auth-update --force --package
+		)
+	else
+		echo 'Your PAM configuration setup is unsupported.'
+	fi
 	#
-	# Reject login requests for users with no password
-	sed -i 's/[[:space:]]*nullok//g' /usr/share/pam-configs/unix
-	#
-	# Enforce Password Age Policies (Applies exclusively to non-system users (UID >= 1000))
+	# Enforce password age policies (Applies exclusively to non-system users (UID >= 1000))
 	for user in $(
 		getent passwd |
 			awk -F: '$3 >= 1000 { print $1 }'
