@@ -1,4 +1,4 @@
-#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
+#!/bin/bash
 #
 # Variables & Functions (general.sh Exclusive)
 #
