@@ -17,26 +17,26 @@ install -m 700 -o root -g root log-locker/log-locker.sh /opt/log-locker.sh
 systemctl enable --now log-locker.path
 #
 # Install the hist-locker service
-install -m 600 -o root -g root hist-locker/file-locker.service /etc/systemd/system/file-locker.service
-install -m 700 -o root -g root hist-locker/file-locker.sh /opt/file-locker.sh
+install -m 600 -o root -g root file-locker/file-locker.service /etc/systemd/system/file-locker.service
+install -m 700 -o root -g root file-locker/file-locker.sh /opt/file-locker.sh
 systemctl enable --now hist-locker.service
 #
 # Enable the session logger
 tee -a /etc/ssh/sshd_config <<-'EOF'
 	# Force all users into terminal logger
-	ForceCommand /opt/logger.sh
+	ForceCommand /bin/sudo /opt/logger.sh
 EOF
 systemctl restart sshd
 #
 # Get excluded users
-read -rp 'Type the usernames of users you wish to exclude from the logger (CSV-formatted): ' exclusions
+read -rp 'Enter the usernames of users to exclude from logging (Can be in SSH format (user@1.1.1.1)) (CSV-formatted): ' exclusions
 IFS=, read -ra exclusions <<< "$exclusions"
 #
 # Set up user exclusions
 for user in "$exclusions"; do
 	tee -a /etc/ssh/sshd_config <<-EOF
 		# Exclude user from logger script
-		Match User $exclusion
+		Match User $user
 		    ForceCommand sudo /opt/logger.sh
 	EOF
 done
