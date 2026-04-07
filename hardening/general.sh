@@ -477,13 +477,15 @@ if confirm 'Limit system resources able to be used by used by users on an indivi
 	done
 	#
 	# Parse given information into configuration
-	sed -e "s/foo/$collective_mem/g" -e "s/bar/$collective_cpu/g" general-confs/slice-shared.override >/etc/systemd/system/user.slice.d/override.conf
-	sed -e "s/foo/$individual_mem/g" -e "s/bar/$individual_cpu/g" general-confs/slice-individual.override >/etc/systemd/system/user-.slice
+	sed -e "s/foo/$collective_mem/g" -e "s/bar/$collective_cpu/g" general-confs/slice-shared.conf >/etc/systemd/system/user.slice.d/override.conf
+	sed -e "s/foo/$individual_mem/g" -e "s/bar/$individual_cpu/g" general-confs/slice-individual.conf >/etc/systemd/system/user-.slice.d/override.conf
 	#
 	# Prompt for "THE" administrative group
 	read -rp 'What is THE administrative group? (e.x. wheel, sudo, etc.): ' admin_group
-	[[ -n "$(getent group $admin_group)" ]] &&
-		sed "s/wheel/$admin_group/g" general-confs/limits.conf >/etc/security/limits.conf
+	if [[ -n "$(getent group $admin_group)" ]]; then
+		sed "s/wheel/$admin_group/g" general-confs/limits.conf |
+			install -m 644 -o root -g root /dev/stdin /etc/security/limits.conf
+	fi
 fi
 
 

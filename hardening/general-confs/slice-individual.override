@@ -1,9 +1,0 @@
-[Slice]
-# No fork bombs!!!
-TasksMax=256
-
-# Ensures no single user occupies the entire main slice
-MemoryMax=foo
-
-# Can only use % of the entire CPU
-CPUQuota=bar
