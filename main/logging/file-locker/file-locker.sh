@@ -25,7 +25,7 @@ metamod() {
 	fi
 }
 #
-# Helper function to check filepaths
+# Helper function to check paths
 # path, pattern
 pathchk() {
 	# Match path with pattern given
@@ -53,28 +53,28 @@ pathchk() {
 	fi
 }
 #
-# Helper function to monitor files
-filemon() {
-	# Initial check
-	echo "Performing initial scan on $1 for files matching $2 -- on detection will set owner $3, mode $4 and attributes $5."
+# Helper function to check a directory
+dirchk() {
 	find "$1" -type f -print0 -maxdepth 2 |
 		while IFS= read -r -d '' path;
 	do
 		pathchk "$path" "$2" &&
 			metamod "$path" "$3" "$4" "$5"
 	done
+}
+#
+# Helper function to monitor files
+filemon() {
+	# Initial check
+	echo "Performing initial scan on $1 for files matching $2 -- on detection will set owner $3, mode $4 and attributes $5."
+	dirchk "$1" "$2" "$3" "$4" "$5"
 	#
 	# Setup the inotify watchers
 	echo "Attempting to setup inotifywait watch for $1 for files matching $2 -- on detection will set owner $3, mode $4 and attributes $5."
 	inotifywait -qmre attrib,create,moved_to,close_write "$1" |
 		while read -r i;
 	do
-		find "$1" -type f -print0 -maxdepth 2 |
-			while IFS= read -r -d '' path;
-		do
-			pathchk "$path" "$2" &&
-				metamod "$path" "$3" "$4" "$5"
-		done
+		dirchk "$1" "$2" "$3" "$4" "$5"
 	done
 }
 
@@ -87,12 +87,12 @@ filemon() {
 # Monitoring
 #
 # Monitor and revert changes to identity management
-filemon '/etc' 'passwd' root 644 ia &
-filemon '/etc' 'shadow' root none ia &
+filemon '/etc' '^passwd$' root 644 ia &
+filemon '/etc' '^g?shadow$' root none ia &
 #
 # Lockdown all history files
-filemon '/home/' 'history' root 620 a &
-filemon '/root/' 'history' root 620 a &
+filemon '/home' 'history' root 620 a &
+filemon '/root' 'history' root 620 a &
 #
 # Lockdown bash rc/logout/profile files
 filemon '/home' '^\..*(rc|logout|profile)$' root 640 ia &
