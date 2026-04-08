@@ -6,12 +6,12 @@ Restart=always
 Type=simple
 ExecStart=/opt/file-locker.sh
 ProtectSystem=strict
-ReadWritePaths=/home
+ReadWritePaths=/home /etc /root
 RefuseManualStop=yes
 MemoryMax=128MB
 TasksMax=128
 RestrictSUIDSGID=yes
-CapabilityBoundingSet=
+CapabilityBoundingSet=CAP_LINUX_IMMUTABLE CAP_CHOWN CAP_FOWNER CAP_FSETID
 ProtectKernelModules=yes
 ProtectKernelLogs=true
 ProtectKernelTunables=yes
@@ -23,7 +23,7 @@ SystemCallArchitectures=native
 RestrictAddressFamilies=
 NoNewPrivileges=yes
 PrivateDevices=yes
-PrivateUsers=true
+PrivateUsers=no
 
 [Install]
 WantedBy=multi-user.target

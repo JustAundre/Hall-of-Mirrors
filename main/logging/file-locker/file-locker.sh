@@ -2,43 +2,79 @@
 #
 # Environment Setup
 #
-# Secure PATH variable
-declare -rx PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+# Helper function to modify file metadata
+# path, owner, octal perm, attribute
+metamod() {
+	# Change its permissions and attributes based on the given options
+	# If given owner exists...
+	if getent passwd "$2" >/dev/null; then
+		# Owner exists, so execute the chown.
+		chown -- "$2" "$1"
+	fi
+	#
+	# If octal permission format is detected...
+	if [[ "$3" =~ ^[0-9]{3,4}$ ]]; then
+		# Command is valid, so execute.
+		chmod -- "$3" "$1"
+	fi
+	#
+	# If any combination of lowercase i/a (immutable/append-only)...
+	if [[ "$4" =~ ^[ia]{1,2}$ ]]; then
+		# Command is valid, so execute.
+		chattr +"$4" -- "$1"
+	fi
+}
 #
-# Helper function
+# Helper function to check filepaths
+# path, pattern
+pathchk() {
+	# Match path with pattern given
+	if [[ ! "$(basename -- "$1")" =~ $2 ]]; then
+		# If no match, fail.
+		echo "The basename of $1 ($(basename -- "$1")) didn't match pattern ($2); ignoring..." >&2
+		return 1
+	# Check if path is a directory
+	elif [[ -d "$1" ]]; then
+		# If is a directory, fail.
+		echo "$1 is a directory; ignoring..." >&2
+		return 2
+	# Check if path is symlink
+	elif [[ -h "$1" ]]; then
+		# If is symlink, fail.
+		echo "$1 is a symlink to $(readlink -f -- "$1"); ignoring..." >&2
+		return 3
+	# Check if path is a file
+	elif [[ ! -f "$1" ]]; then
+		# If is not a file, it doesn't exist.
+		echo "$1 doesn't exist anymore; ignoring..."
+		return 4
+	else
+		return 0
+	fi
+}
+#
+# Helper function to monitor files
 filemon() {
-	# Test the file path for a valid file/directory
-	[[
-		-f "$1" ||
-			-d "$1"
-	]] ||
-		return 255
+	# Initial check
+	echo "Performing initial scan on $1 for files matching $2 -- on detection will set owner $3, mode $4 and attributes $5."
+	find "$1" -type f -print0 -maxdepth 2 |
+		while IFS= read -r -d '' path;
+	do
+		pathchk "$path" "$2" &&
+			metamod "$path" "$3" "$4" "$5"
+	done
 	#
 	# Setup the inotify watchers
-	inotifywait -qmre attrib -e create "$1" |
-		while read -r dir event file;
+	echo "Attempting to setup inotifywait watch for $1 for files matching $2 -- on detection will set owner $3, mode $4 and attributes $5."
+	inotifywait -qmre attrib,create,moved_to,close_write "$1" |
+		while read -r i;
 	do
-		# Get full file path
-		path="${dir}${file}"
-		#
-		# Check the "file" for certain risky attributes
-		[[ "$file" =~ $2 ]] ||
-			continue
-		if [[ -h "$path" ]]; then
-			echo "Woah there, kiddo! That's ($path) a symlink to $(readlink -f $path)--I ain't touching that." >&2
-			continue
-		elif [[ -d "$path" ]]; then
-			echo "I ain't touchin' none of them 'directories' ($path), gimme a file!" >&2
-			continue
-		fi
-		#
-		# Change its owners, permissions and attributes based on the given params
-		getent passwd "$3" &>/dev/null &&
-			chown "$3" "$path"
-		[[ "$4" =~ ^[0-9]{3,4}$ ]] &&
-			chmod "$4" "$path"
-		[[ "$5" =~ ^[ia]{1,2}$ ]] &&
-			chattr +"$5" "$path"
+		find "$1" -type f -print0 -maxdepth 2 |
+			while IFS= read -r -d '' path;
+		do
+			pathchk "$path" "$2" &&
+				metamod "$path" "$3" "$4" "$5"
+		done
 	done
 }
 
@@ -50,17 +86,17 @@ filemon() {
 #
 # Monitoring
 #
-# Monitor history files and lock 'em down.
-filemon /home/ history root 620 a &
-filemon /root/ history root 620 a &
+# Monitor and revert changes to identity management
+filemon '/etc' 'passwd' root 644 ia &
+filemon '/etc' 'shadow' root none ia &
 #
-# Monitor and prevent changes to local users
-filemon /etc/passwd '*' root 644 i &
-filemon /etc/gshadow '*' root no a &
-filemon /etc/shadow '*' root no i &
+# Lockdown all history files
+filemon '/home/' 'history' root 620 a &
+filemon '/root/' 'history' root 620 a &
 #
-# Lock down the .bash_ files
-filemon /home/ '.bash_' root 620 a &
+# Lockdown bash rc/logout/profile files
+filemon '/home' '^\..*(rc|logout|profile)$' root 640 ia &
+filemon '/root' '^\..*(rc|logout|profile)$' root 640 ia &
 #
 # Keep the script active until all children processes exit
 wait
