@@ -311,7 +311,7 @@
 	#
 	# Prevent changing of core logic
 	declare -rf warn annoyance handover false_enter hash passwd_check
-} >/dev/null
+} &>/dev/null
 
 
 

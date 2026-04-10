@@ -48,7 +48,7 @@ fi
 #
 # Log open ports
 ss -tulpn |
-	grep -v '127.0.0.1' |
+	grep '0.0.0.0' |
 	tee -a "$log_dir/open-ports-$suffix"
 #
 # Scan for Malicious PAM Hooks
@@ -63,13 +63,13 @@ grep -r 'pam_exec.so' /etc/pam.d/ |
 #
 # Log world-writable files and directories which lack a sticky-bit and aren't one of the 3 usual directories
 if confirm 'Search for world-writable paths'; then
-	find / -xdev -perm ! -type l -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm/ |
+	find / -xdev -perm ! -type l -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm |
 		tee -a "$log_dir/world-writables-$suffix"
 fi
 #
 # Log world-readable files
 if confirm 'Search for world-readable paths'; then
-	find / -xdev -perm ! -type l -o+r -not -path /tmp/ -not -path /var/tmp/ -not -path /dev/shm/ |
+	find / -xdev -perm ! -type l -o+r -not -path /tmp/ -not -path /var/tmp -not -path /dev/shm |
 		tee -a "$log_dir/world-readables-$suffix"
 fi
 #

@@ -7,7 +7,7 @@
 metamod() {
 	# Change its permissions and attributes based on the given options
 	# If given owner exists...
-	if getent passwd "$2" >/dev/null; then
+	if getent passwd "$2" &>/dev/null; then
 		# Owner exists, so execute the chown.
 		chown -- "$2" "$1"
 	fi

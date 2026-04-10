@@ -4,8 +4,8 @@
 	# Set secure/safe shell configurations
 	set +o xtrace verbose monitor nolog ignoreeof
 	set -o functrace errtrace pipefail nounset noclobber
-	shopt -s histappend histverify cmdhist dotglob globstar
-	shopt -u cdable_vars cdspell dirspell interactive_comments extglob nocaseglob nocasematch expand_aliases
+	shopt -s histappend histverify cmdhist dotglob globstar interactive_comments
+	shopt -u cdable_vars cdspell dirspell extglob nocaseglob nocasematch expand_aliases progcomp
 	umask 0077
 	#
 	# Lock down variables
