@@ -17,11 +17,13 @@
 #
 if confirm "Reinstall/install ${pkgs[*]} and update all native binaries, flatpaks and snaps"; then
 	# Update all packages
-	apt-get update --error-on=any || exit 5
+	apt-get update --error-on=any ||
+		exit 5
 	apt-get full-upgrade --no-install-recommends -y
 	#
 	# Install script dependencies
-	secure_install "${hard_deps[@]}" || exit 6
+	secure_install "${hard_deps[@]}" ||
+		exit 6
 	#
 	# Install packages heavily encouraged to have installed
 	for pkg in "${soft_deps[@]}"; do
