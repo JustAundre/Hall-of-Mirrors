@@ -331,8 +331,8 @@ systemctl daemon-reload
 # Add Sticky Bit to world-writable directories
 find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod -f +t {} +
 #
-# For files with an invalid owner user/group, change the owner user/group to root
-find / -xdev \( -nouser -o -nogroup \) -exec chown -h root:root {} +
+# For files with an invalid owning user or group, change the owning user & group to root
+find / -xdev \( -nouser -o -nogroup \) -exec chmod 640 {} + -exec chown -h root:root {} +
 #
 # Remove broken symlinks
 find / -xdev -xtype l -exec rm {} +
@@ -347,7 +347,6 @@ else
 	chmod -f 600 /etc/shadow /etc/gshadow
 fi
 chmod -f 644 /etc/passwd /etc/group
-chmod -f 440 /etc/sudoers
 #
 # Ensure only root can read the bootloader config
 chown root:root /boot/grub/grub.cfg ||
@@ -366,7 +365,8 @@ chmod -f 700 /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly
 chmod -f 600 /boot/System.map-*
 #
 # Secure sudoers configuration
-chown -R root:root /etc/sudoers.d
+chown -R root:root /etc/sudoers.d /etc/sudoers
+chmod -f 440 /etc/sudoers
 chmod -f 750 /etc/sudoers.d
 chmod -f 440 /etc/sudoers.d/*
 #
@@ -406,6 +406,9 @@ chmod -f 644 /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
 #
 # Ensure sticky-bit on world-writable dirs
 chmod -f +t /tmp /var/tmp /dev/shm
+#
+# Ensure SystemD unit files are secure
+find /etc/systemd/system ! -type l -exec chmod -f 640 {} + -exec chown root:root {} +
 
 
 
