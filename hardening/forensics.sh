@@ -147,7 +147,11 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 			set -e
 			read -ra PATHS <<< "$(printf "$PATH" | tr ':' ' ')"
 			for dir in "${PATHS[@]}"; do
-				binaries=($(find "$dir" -type f -executable -exec file --mime-type {} + | grep 'application/x' | cut -d: -f1))
+				binaries=($(
+					find "$dir" -type f -executable -exec file --mime-type {} + |
+						grep 'application/x' |
+						cut -d: -f1)
+				)
 				for binary in "${binaries[@]}"; do
 					if [[ -f "$binary" ]]; then
 						dpkg-query -S "$binary" ||
