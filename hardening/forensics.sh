@@ -63,13 +63,13 @@ grep -r 'pam_exec.so' /etc/pam.d/ |
 #
 # Log world-writable files and directories which lack a sticky-bit and aren't one of the 3 usual directories
 if confirm 'Search for world-writable paths'; then
-	find / -xdev -perm ! -type l -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm |
+	find / -xdev ! -type l -perm -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm |
 		tee -a "$log_dir/world-writables-$suffix"
 fi
 #
 # Log world-readable files
 if confirm 'Search for world-readable paths'; then
-	find / -xdev -perm ! -type l -o+r -not -path /tmp/ -not -path /var/tmp -not -path /dev/shm |
+	find / -xdev ! -type l -perm -o+r -not -path /tmp/ -not -path /var/tmp -not -path /dev/shm |
 		tee -a "$log_dir/world-readables-$suffix"
 fi
 #
@@ -145,7 +145,7 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 	if confirm 'Search for binaries unrecognized by DPKG'; then
 		(
 			set -e
-			read -ra PATHS <<< "$(printf "$PATH" | tr ',' ' ')"
+			read -ra PATHS <<< "$(printf "$PATH" | tr ':' ' ')"
 			for dir in "${PATHS[@]}"; do
 				binaries=($(find "$dir" -type f -executable -exec file --mime-type {} + | grep 'application/x' | cut -d: -f1))
 				for binary in "${binaries[@]}"; do
