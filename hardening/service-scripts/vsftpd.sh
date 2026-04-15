@@ -25,7 +25,7 @@ set_vsftpd_config() {
 #
 # Backup existing configurations
 cp -p "$vsftpdConfig" "$backup"
-echo "✅: Backed up VSFTPD confugrations to $backup"
+echo "OK: Backed up VSFTPD confugrations to $backup"
 
 
 
@@ -117,9 +117,9 @@ set_vsftpd_config "require_ssl_reuse" "NO"
 echo "🚧: Validating VSFTPD configuration..."
 if vsftpd "$vsftpdConfig" &>/dev/null; then
 	systemctl restart vsftpd
-	echo "✅: VSFTPD started securely"
+	echo "OK: VSFTPD started securely"
 else
-	echo "❌: Configuration validation error; reverting to backup(s)..."
+	echo "E: Configuration validation error; reverting to backup(s)..."
 	cp -p "$backup" "$vsftpdConfig"
 	systemctl restart vsftpd
 	exit 1
