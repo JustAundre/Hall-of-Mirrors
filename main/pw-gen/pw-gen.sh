@@ -150,31 +150,31 @@ if [[
 		-z "$separator" &&
 			-t 0
 	]]; then
-	read -rp 'Enter a separator (Default is -): ' separator >&4
+	read -erp 'Enter a separator (Default is -): ' separator >&4
 fi
 if [[
 		-z "$min" &&
 			-t 0
 	]]; then
-	read -rp 'Minimum word length (Default is 4): ' min >&4
+	read -erp 'Minimum word length (Default is 4): ' min >&4
 fi
 if [[
 		-z "$max" &&
 			-t 0
 	]]; then
-	read -rp 'Max word length (Default is 8): ' max >&4
+	read -erp 'Max word length (Default is 8): ' max >&4
 fi
 if [[
 		-z "$capitals" &&
 			-t 0
 	]]; then
-	read -rp 'Capitalize first letters? [Y/n]: ' capitals >&4
+	read -erp 'Capitalize first letters? [Y/n]: ' capitals >&4
 fi
 if [[
 		-z "$password_amount" &&
 			-t 0
 	]]; then
-	read -rp 'Amount of passwords (Default is 1): ' password_amount >&4
+	read -erp 'Amount of passwords (Default is 1): ' password_amount >&4
 fi
 if [[
 		-z "$pattern" &&
@@ -185,7 +185,7 @@ if [[
 		n = Random number
 		s = Provided separator
 	EOF
-	read -rp 'Enter your generation pattern (Default is wnswnswn): ' pattern >&4
+	read -erp 'Enter your generation pattern (Default is wnswnswn): ' pattern >&4
 fi
 #
 # Validate inputs
@@ -206,7 +206,7 @@ if (( "$min" > "$max" )); then
 		W: Minimum ($min) is greater than maximum ($max) is an unfufilable condition;
 		i: Swapping the values of min/max from $min/$max to $max/$min to fix contradiction and proceeding...
 	EOF
-	read -r max min <<< "$(echo $min $max)"
+	read max min <<< "$(echo $min $max)"
 fi
 capitals="${capitals:0:1}"
 if [[ ! "$capitals" =~ ^[yYnN]$ ]]; then
@@ -234,7 +234,7 @@ if [[ ! -f "$dict_location" && ! -f 'en_US-dict.txt' ]]; then
 	echo "W: A pre-existing dictionary couldn't be located in '$dict_location'."
 	dict_location='en_US-dict.txt'
 	if [[ -t 0 ]]; then
-		read -rp "Download a dictionary from '$dict_url' to '$(pwd)/$dict_location? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
+		read -erp "Download a dictionary from '$dict_url' to '$(pwd)/$dict_location? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
 	else
 		cat >&4 <<-'EOF'
 			E: As this is non-interactive,
