@@ -99,25 +99,25 @@
 		case "$1" in
 			1)
 				shift 1
-				local msg="⚠ MFA layer $layer_at failed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | Input with EUID $EUID: $input"
+				local msg="W: MFA layer $layer_at failed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | Input with EUID $EUID: $input"
 				printf -- '%s' "$msg" |
 					tee -a "$log_file" |
 					systemd-cat -p4t "$bullsh_auth_log"
 			;;
 			2)
-				local msg="✅ MFA layer $layer_at passed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
+				local msg="OK: MFA layer $layer_at passed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
 				printf -- '%s' "$msg" |
 					tee -a "$log_file" |
 					systemd-cat -p5t "$bullsh_auth_log"
 			;;
 			3)
-				local msg="✅ Passed into the REAL SYSTEM TERMINAL | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
+				local msg="OK: Passed into the REAL SYSTEM TERMINAL | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
 				printf -- '%s' "$msg" |
 					tee -a "$log_file" |
 					systemd-cat -p3t "$bullsh_auth_log"
 			;;
 			*)
-				echo '❌: The warn function was called with a non-existent warning type.'
+				echo 'E: The warn function was called with a non-existent warning type.'
 				exit 9
 			;;
 		esac
@@ -331,9 +331,10 @@ while true; do
 	case "$layer_at" in
 		1)
 			# L1 -- False Terminal
-			read -t "$read_tmout" -rep "$PS1" -n $(( $max_stdin + 1 )) input || exit 1
+			read -t "$read_tmout" -erp "$PS1" -n $(( $max_stdin + 1 )) input || exit 1
 			if passwd_check; then
-				[[ "$auth_layers" -gt 1 ]] || handover
+				[[ "$auth_layers" -gt 1 ]] ||
+					handover
 				#
 				# L2 Setup -- Time to go mute!
 				stty -echo
@@ -344,7 +345,7 @@ while true; do
 		;;
 		2)
 			# L2 -- Silence
-			read -t "$read_tmout" -ren $(( $max_stdin + 1 )) input ||
+			read -t "$read_tmout" -ern $(( $max_stdin + 1 )) input ||
 				exit 1
 			if passwd_check; then
 				[[ "$auth_layers" -gt 2 ]] ||
@@ -354,7 +355,7 @@ while true; do
 		;;
 		3)
 			# L3 -- Silence (The Sequel)
-			read -t "$read_tmout" -ren $(( $max_stdin + 1 )) input ||
+			read -t "$read_tmout" -ern $(( $max_stdin + 1 )) input ||
 				exit 1
 			if passwd_check; then
 				[[ "$auth_layers" -gt 3 ]] ||
