@@ -41,10 +41,10 @@ systemctl stop nginx
 #
 # Add secure headers to outgoing requests
 mkdir -p /etc/nginx/snippets
-install -m 0640 -u root -g root general-confs/nginx-headers.conf "$hardening_snippets"
+install -m 640 -u root -g root general-confs/nginx-headers.conf "$hardening_snippets"
 #
 # General reduction of information leakage
-install -m 0640 -u root -g root general-confs/99-hardening.conf "$general_hardening"
+install -m 640 -u root -g root general-confs/99-hardening.conf "$general_hardening"
 #
 # Ensures it contains the conf.d include
 if ! grep -qE 'include\s+/etc/nginx/conf\.d/\*\.conf;' "$nginx_main_config"; then
@@ -76,13 +76,13 @@ sed -i '/ssl_session_cache/d' "$nginx_main_config"
 echo '🚧: Testing Nginx configuration...'
 if nginx -t; then
 	cat <<-'EOF'
-		✅: Nginx config is OK,
+		OK: Nginx config is OK,
 		🚧: Restarting Nginx...
 	EOF
 	systemctl restart nginx
 else
 	cat <<-'EOF'
-		❌: Nginx config test failed.
+		E: Nginx config test failed.
 		🚧: Reverting to backups...
 	EOF
 	cp -p "$backup_dir/nginx.conf" "$nginx_main_config"
@@ -99,8 +99,8 @@ fi
 #
 # Whitelist the universal HTTP port
 echo "🚧: Adding UFW exception for default HTTP port"
-read -rp "What port(s) does your webserver use? (Type nothing for default to 80): " ports
-if [[ "$ports" =~ $numberCheck ]]; then
+read -erp "What port(s) does your webserver use? (Type nothing for default to 80): " ports
+if [[ "$ports" =~ $num_chk ]]; then
 	for port in "$ports"; do
 		ufw allow in "$port/tcp"
 	done
