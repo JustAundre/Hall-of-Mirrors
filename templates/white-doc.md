@@ -25,7 +25,7 @@ Rationale: Placed XYZ and ABC into the DMZ, DEF acts as a network filter to the 
 | Hostname Prefix | IP (Local) | IP (Public) | OS | Purpose |
 | --- | --- | --- | --- |
 | rsyslog | `10.2.5.20` | `36.3.5.20` | Ubuntu Server 24.04 LTS | Remote logging to prevent deletion of evidence and to assist in ease of access to logs via a unified front. |
-| wazuh | `10.2.5.30` | `36.3.5.30` | Ubuntu Server 24.04 LTS | Wazuh (the software) is rather flexibile in parsing logs and easily is able to filter through logs while having a nice-looking dashboard--there is hardly ever a reason to not use it. |
+| wazuh | `10.2.5.30` | `36.3.5.30` | Ubuntu Server 24.04 LTS | Wazuh (the software) is rather flexibile in parsing logs and easily is able to filter through logs while having a nice-looking dashboard—there is hardly ever a reason to not use it. |
 
 ## Server ABC (Template)
 
@@ -54,7 +54,7 @@ Rationale: Placed XYZ and ABC into the DMZ, DEF acts as a network filter to the 
 
 | Codebase Name | File Path | Description | Rationale |
 | --- | --- | --- | --- |
-| Frontend 1 | /var/lib/www-data/login/success | Replaced visible error verboseness with generic error codes | A security via obscurity type move--reduces information leakage of edge-cases. |
+| Frontend 1 | /var/lib/www-data/login/success | Replaced visible error verboseness with generic error codes | A security via obscurity type move—reduces information leakage of edge-cases. |
 
 ### Firewall
 

@@ -35,7 +35,7 @@ Press [ENTER] once the terminal app has been highlighted/selected, or simply cli
 	- The IP of the server you wish to remote into
 	You can find a table of the server IPs and their corresponding hostnames in the (Server Info) section above
 
-3. In your terminal, run the below--where `USERNAME` is your username, and `IP` is the server IP you have chosen.
+3. In your terminal, run the below—where `USERNAME` is your username, and `IP` is the server IP you have chosen.
 ```bash
 ssh USERNAME@IP
 ```
