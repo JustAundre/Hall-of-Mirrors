@@ -48,7 +48,7 @@ secure_install openssh-server
 	set -e
 	ssh-keygen -A
 	ssh-keygen -f /root/.ssh/known_hosts -R localhost
-	systemctl restart ssh
+	systemctl restart sshd
 ) || exit 8
 
 
@@ -114,7 +114,7 @@ echo '🚧: Validating configuration(s)...'
 if sshd -t; then
 	# Pass
 	cat <<-'EOF'
-		✅: SSH configuration is OK.
+		OK: SSH configuration is OK.
 		🚧: Restarting SSHD...
 	EOF
 	#
@@ -123,7 +123,7 @@ if sshd -t; then
 else
 	# Fail
 	cat <<-'EOF'
-		❌: Configuration validation failed.
+		E: Configuration validation failed.
 		🚧: Reverting to backup_configs...
 	EOF
 	#
@@ -142,11 +142,11 @@ fi
 #
 # Firewall Configuration
 #
-read -rp 'What is the port for SSH? (Enter nothing for default port): ' port
-if [[ "$port" =~ $numberCheck ]]; then
+read -erp 'What is the port for SSH? (Enter nothing for default port): ' port
+if [[ "$port" =~ $num_chk ]]; then
 	ufw allow in "$port/tcp"
 else
-	echo '❌: No valid port number provided, exempting default SSH port (22/tcp)'
+	echo 'E: No valid port number provided, exempting default SSH port (22/tcp)'
 	ufw allow in 22/tcp
 fi
 if confirm 'Use Fail2Ban with a secure default configuration'; then
