@@ -61,7 +61,7 @@ sudo systemctl restart sshd
 	- Attempted input (when applicable)
 	- MFA Layer (when applicable)
 3. Logs are duplicated and sent to a file
-4. Self-expandable--if you *really* need more than 3 MFA passwords for some reason
+4. Self-expandable—if you *really* need more than 3 MFA passwords for some reason
 5. Highly configurable, customizable and optimized.
 
 ```bash
