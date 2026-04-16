@@ -6,7 +6,7 @@ Security through psychological terror.
 
 TLDR...
 - Default hashing rounds for passwords is `2500`
-- Remember to change the password hashes and/or the hashing amount to your needs.
+- Remember to change the password hashes &/or the hashing amount to your needs.
 
 ## Dependencies
 
@@ -36,7 +36,7 @@ EOF
 
 Installation step requires manual intervention.
 ```bash
-# To exclude a user, replace PLACEHOLDER with user you would like to exclude and run;
+# To exclude a user, replace PLACEHOLDER with user you would like to exclude & run;
 # ...repeat as necessary for more than 1 user.
 sudo tee -a /etc/ssh/sshd_config <<EOF
 Match User PLACEHOLDER
@@ -51,7 +51,7 @@ sudo systemctl restart sshd
 
 ## Feature List
 
-1. Fake root terminal, realistic errors and psycological torture!
+1. Fake root terminal, realistic errors & psycological torture!
 2. Logging galore; everything from individual commands, failed MFA attempts, *successful* MFA attempts, whole terminal sessions (including in the decoy filesystem)
 	- Source IP of SSH session
 	- Username
@@ -60,9 +60,9 @@ sudo systemctl restart sshd
 	- Source TTY
 	- Attempted input (when applicable)
 	- MFA Layer (when applicable)
-3. Logs are duplicated and sent to a file
+3. Logs are duplicated & sent to a file
 4. Self-expandable—if you *really* need more than 3 MFA passwords for some reason
-5. Highly configurable, customizable and optimized.
+5. Highly configurable, customizable & optimized.
 
 ```bash
 # Commands ran while in BullSH (if unexpected commands are logged, MAKE A REPORT.)
@@ -77,7 +77,7 @@ journalctl -fp3t bullsh-mfa # Successful authentication attempts
 less -R /var/tmp/shell.log
 ```
 
-Session log files are in `/var/tmp/`, unfortunately not `/var/log/` because the script runs in the userland and making it run as root would be walking on ice you don't know the thickness of.
+Session log files are in `/var/tmp/`, unfortunately not `/var/log/` because the script runs in the userland & making it run as root would be walking on ice you don't know the thickness of.
 
 ## Compiling
 
@@ -100,11 +100,11 @@ L3: `T.PLE@$3!?`
 
 First, get the password you want to change to in plaintext. Hash your password into [SHA512](https://qr.ae/pCmBQJ) (with the hashing rounds accounted for.)
 
-Go into `./bull.sh` and change the `passHash` variable(s) to your new hash 
+Go into `./bull.sh` & change the `passHash` variable(s) to your new hash 
 
 [ it is advised you move the default password hashes to the fake hashes after installing your new hashes. ]
 
-Refer to the Compiling guide and then the Installation guide.
+Refer to the Compiling guide & then the Installation guide.
 
 ## Roadmap/Notes
 
