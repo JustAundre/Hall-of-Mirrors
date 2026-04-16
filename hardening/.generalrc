@@ -17,8 +17,6 @@ login_def_configs=(
 hard_deps=(
 	debconf
 	libpam-modules
-	bat
-	unattended-upgrades
 	sudo
 	ufw
 	systemd
@@ -28,17 +26,9 @@ hard_deps=(
 	coreutils
 	ca-certificates
 	file
-)
-#
-# Packages heavily encouraged to have installed
-soft_deps=(
-	rsyslog
 	auditd
 	nano
-	vim
-	bat
 	needrestart
-	less
 )
 #
 # Packages used for recon/pen-testing which may not be needed
@@ -84,8 +74,8 @@ reconissiance_pkgs=(
 	fcrackzip
 )
 #
-# Packages which have been superceded and should be replaced/removed
-insecure_pkgs=(
+# Packages which have been superceded & should be replaced/removed
+risky_pkgs=(
 	telnetd-ssl
 	inetutils-telnetd
 	rlogind
@@ -111,8 +101,8 @@ insecure_pkgs=(
 	ypserv
 )
 #
-# Services which have been superceded and should be disabled
-insecure_services=(
+# Services which have been superceded & should be disabled
+risky_svcs=(
 	telnet
 	rlogind
 	rshd
@@ -153,15 +143,32 @@ protected_groups=(
 )
 #
 # All services on the system
-services=($(TERM=dumb systemctl list-unit-files --type=service --no-legend --plain | awk '{ print $1 }'))
+services=(
+	$(
+		TERM=dumb systemctl list-unit-files --type=service --no-legend --plain |
+			awk '{ print $1 }'
+	)
+)
 #
-# Remove existing values for a configuration and add your own
+# Firewall software accounted for by the script
+firewall_options=(
+	UFW
+	FirewallD
+)
+#
+# Remove existing values for a configuration & add your own
 safe_add() {
-	key=$(echo "$1" | cut -d' ' -f1)
-	value=$(echo "$1" | cut -d' ' -f2)
+	key="$(
+		echo "$1" |
+			cut -d' ' -f1
+	)"
+	value="$(
+		echo "$1" |
+			cut -d' ' -f2
+	)"
 	file="$2"
 	#
-	# Remove any existing keys and then add the new entry
+	# Remove any existing keys & then add the new entry
 	sed -i "/^$key\s/d" "$file"
 	echo -e "$key\t$value" >>"$file"
 }

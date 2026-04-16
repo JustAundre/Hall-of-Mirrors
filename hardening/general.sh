@@ -1,12 +1,183 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Environment Setup & Logging
 #
 # Source secure environment
 . .allrc
 #
-# Source variables and functions exclusive to this general script
+# Source variables & functions exclusive to this general script
 . .generalrc
+
+
+
+
+#
+# Questionaire
+#
+# Explain how y/n priority works
+echo '[y/n] prompts have either the Y or N capitalized to indicate which is the default; but never both.'
+#
+# Install script dependencies
+confirm 'This script has dependencies; install' &&
+	deps=y
+#
+# Install updates
+confirm 'Update system packages, flatpaks & snaps' &&
+	upd=y
+#
+# Remove reconissiance packages
+confirm 'Remove reconissiance packages' "${reconissiance_pkgs[*]}\n(See above for aforementioned 'packages')" &&
+	del_recon_pkgs=y
+#
+# Remove risky packages
+confirm 'Remove legacy/risky *packages*' "${risky_svcs[*]}\n(See above for aforementioned 'services')" &&
+	del_bad_pkgs=y
+#
+# Remove risky services
+confirm 'Remove legacy/risky *services*' "${risky_pkgs[*]}\n(See above for aforementioned 'packages')" &&
+	del_bad_svcs=y
+#
+# Audit SystemD services
+if confirm 'Audit SystemD services'; then
+	service_review=y
+	mapfile -t flagged_services <(checklist 'Select services to REMOVE' checklist "${services[@]}")
+fi
+#
+# Whether to mask vi/vim, netcat/nc or chpasswd
+confirm 'Mask vi/vim' &&
+	to_be_masked+=(
+		/usr/bin/vim
+		/usr/bin/vi
+		/bin/vi
+		/usr/local/bin/vim
+		/usr/local/bin/vi
+		/usr/sbin/vim
+	)
+confirm 'Mask netcat/nc' &&
+	to_be_masked+=(
+		/usr/bin/nc
+		/usr/bin/netcat
+		/bin/nc
+		/usr/local/bin/nc
+		/usr/local/bin/netcat
+	)
+confirm 'Mask chpasswd' &&
+	to_be_masked+=(
+		/usr/bin/chpasswd
+		/usr/sbin/chpasswd
+		/sbin/chpasswd
+	)
+#
+# Whether to preconfigure SysCTL with non-destructive values
+confirm 'Configure kernel /w SysCTL' &&
+	sysctl=y
+#
+# Whether to disable IPv6 via SysCTL
+[[ -n "$sysctl" ]] &&
+	confirm 'Disable IPv6 via SysCTL' &&
+	no_ipv6=y
+#
+# Whether to apply general fixes to filesystem ownership & modes
+confirm 'Apply non-destructive file permission fixes' &&
+	fix_perms=y
+#
+# Catch logical fallacies in /etc/passwd, /etc/shadow, /etc/gshadow & /etc/groups.
+# - i.e. Group specified in gshadow but not groups
+# - i.e. User doesn't exist in passwd but is referenced as a member of a group in groups
+confirm 'Check shadow files for technical inconsistencies' &&
+	pwck=y
+confirm 'Move possible hashes from /etc/passwd to /etc/shadow' &&
+	mv_hash=y
+#
+# Whether to audit users
+confirm 'Audit local users' &&
+	audit_users=y
+[[ -n "$audit_users" ]] &&
+	confirm 'Lock & remove password for user (root)' &&
+	lock_root=y
+confirm 'Reconfigure PAM & /etc/login.defs' &&
+	pam_reconfig=y
+#
+# Whether to audit scheduled tasks
+if
+	[[ -n "$audit_users" ]] &&
+	confirm 'Review & delete scheduled tasks' '(This prompt is unique in that your responses here take effect immediately unlike the others)';
+then
+	# Alert for manual review
+	printf "\nYou'll be manually reviewing these scheduled tasks:\nCron files\nCrontabs\nSystemD timers\nYou'll then be asked whether the source file should be deleted after reviewing.\n"
+	pause
+	#
+	# Cron files
+	find /etc/cron* -maxdepth 1 -type f -exec nano {} \; -exec rm -i {} \;
+	#
+	# Crontabs
+	mapfile -t all_usernames <(
+		cat /etc/passwd |
+			cut -d: -f1
+	)
+	for u in "${all_usernames[@]}"; do
+		crontab -eu "$u"
+		crontab -eri "$u"
+	done
+	#
+	# SystemD timers
+	find /etc/systemd/system -maxdepth 1 -name "*.timer" -type f -exec nano {} \; -exec rm -i {} \; -exec systemctl disable --now {} \;
+fi
+#
+# Whether to configure firewall rules
+if confirm 'Configure firewall'; then
+	firewall_config=y
+	firewall="$(checklist 'Which firewall are we using?' radiolist "${firewall_options[@]}")"
+fi
+#
+# Whether to configure resource limitations for users
+if confirm 'Configure resource limitations for users'; then
+	resource_cap=y
+	#
+	# Grab the system's memory capacity
+	max_mem="$(
+		free -m |
+			awk '/^Mem:/{print $2}'
+	)"
+	#
+	# Alert the user of their system memory capacity
+	# ...& of the limitations of the input
+	cat <<-EOF
+		i: You have $max_mem megabytes (MB) of max RAM.
+		i: Please give your response in a percentage, 1 through 100 as an integer without any decimals, prefixes or suffixes.
+		i: Individual requirements must be less than (non-inclusive) the collective requirements
+	EOF
+	#
+	# Prompt for collective (all/group) limitations
+	read -n3 -erp 'Enter % of memory would you like all users on the system to be able to COLLECTIVELY use: ' collective_mem
+	read -n3 -erp 'Enter % of CPU would you like all users on the system to be able to COLLECTIVELY use: ' collective_cpu
+	#
+	# Prompt for individual (per-person) limitations
+	while [[
+			-z "$individual_mem" ||
+			(( 100 >= individual_mem && individual_mem >= collective_mem ))
+		]];
+	do
+		read -n3 -erp 'Enter % of the max memory would you like an individual user to be able to use?: ' individual_mem
+	done
+	while [[
+			-z "$individual_cpu" ||
+			(( 100 >= individual_cpu && individual_cpu >= collective_cpu ))
+		]];
+	do
+		read -n3 -erp 'Enter % of the CPU would you like an individual user to be able to use?: ' individual_cpu
+	done
+	#
+	# Prompt for "THE" administrative group
+	admin_group=lorem_ipsum
+	while [[ -z "$(getent group "$admin_group")" ]]; do
+		read -erp 'What is THE administrative group? (e.x. wheel, sudo, etc.): ' admin_group
+	done
+fi
+#
+# Whether to install a well-formatted & extensive but brief MOTD file
+confirm 'Install a well-formated & extensive but brief MOTD file' &&
+	motd=y
 
 
 
@@ -15,237 +186,40 @@
 #
 # Package Updates & Management
 #
-if confirm "Reinstall/install ${pkgs[*]} and update all native binaries, flatpaks and snaps"; then
-	# Update all packages
-	apt-get update --error-on=any ||
-		exit 5
+# Install script dependencies
+[[ -n "$deps" ]] &&
+	secure_install "${hard_deps[@]}" ||
+	exit 1
+#
+# Run updates
+if [[ -n "$upd" ]]; then
+	# Update APT updates
+	apt-get update
 	apt-get full-upgrade --no-install-recommends -y
 	#
-	# Install script dependencies
-	secure_install "${hard_deps[@]}" ||
-		exit 6
-	#
-	# Install packages heavily encouraged to have installed
-	for pkg in "${soft_deps[@]}"; do
-		secure_install "$pkg"
-		#
-		# Start auditd logging
-		systemctl restart auditd
-		#
-		# Enable unattended upgrades
-		dpkg-reconfigure --priority=low unattended-upgrades
-	done
-	#
-	# Update flatpaks and snap packages respectively
-	command -v flatpak &>/dev/null ||
+	# Update flatpaks (if present)
+	hash flatpak &&
 		flatpak update -y
-	command -v snap &>/dev/null ||
+	#
+	# Update snaps (if present)
+	hash snap &&
 		snap refresh
 fi
 #
-# Uninstall hacking packages
-if confirm 'Purge reconissance tools from the system (i.e. johntheripper, aircrack-ng, etc.)'; then
-	apt-get remove --purge "${reconissiance_pkgs[@]}"
-	apt-get autoremove --purge
-fi
+# Uninstall reconissiance packages
+[[ -n "$del_recon_pkgs" ]] &&
+	apt-get autoremove --purge "${reconissiance_pkgs[@]}"
 #
-# Remove netcat and nc binaries manually
-if confirm 'Hide the netcat binaries'; then
-	for binary in '/usr/bin/nc' '/usr/bin/netcat'; do
-		dpkg-divert --add --rename --divert "/usr/bin/$binary.quarantine" "/usr/bin/$binary"
-	done
-	dpkg-divert --list
-fi
-
-
-
-
-
-#
-# Kernel Hardening
-#
-if confirm 'Apply hardened kernel configurations'; then
-	# Stage and apply generic and mostly non-breaking kernel parameters
-	(
-		set -e
-		install -m 0640 -o root -g root -D general-confs/kernel.conf /etc/sysctl.d/99-security.conf
-		sysctl -p /etc/sysctl.d/99-security.conf
-		sysctl --system
-	)
-	#
-	# Is IPv6 networking needed?
-	if confirm 'Disable IPv6 networking'; then
-		# If not, disable.
+# Mask selected risky
+[[ -n "${to_be_masked[*]}" ]] &&
+	for binary in "${to_be_masked[@]}"; do
 		(
 			set -e
-			install -m 0640 -o root -g root -D general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
-			sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
-			sysctl --system
+			stat "$binary"
+			update-alternatives --install "$binary" "$(basename "$binary")" /bin/false 1
+			update-alternatives --set "$(basename "$binary")" /bin/false
 		)
-	fi
-fi
-
-
-
-
-
-#
-# User & Group Auditing
-#
-if confirm 'Configure user & authentication management'; then
-	# Get authorized users and administrator users
-	cat <<-'EOF'
-		ℹ️: Comma-separated entries only (i.e. john,jane,chris)
-		⚠️: Active Directory users not included!
-	EOF
-	read -rp 'Users allowed on the system: ' authorized
-	read -rp 'Admins on the system: ' admins
-	read -rp 'Groups exclusive to admins: ' administrative_groups
-	#
-	# Parse provided user information into arrays
-	IFS=, read -ra authorized <<< "$authorized"
-	IFS=, read -ra admins <<< "$admins"
-	IFS=, read -ra administrative_groups <<< "$administrative_groups"
-	#
-	# Remove whitespaces from provided user information
-	authorized=("${authorized[@]// /}")
-	admins=("${admins[@]// /}")
-	administrative_groups=("${administrative_groups[@]// /}")
-	#
-	# Audit users & their groups
-	clear
-	for user in $(getent passwd | awk -F: '($1 != "root") && ($7 !~ /(nologin|false)$/) { print $1 }'); do
-		# Skip user if user is the user running the script
-		[[ "$user" == "$(logname)" ]] && continue
-		#
-		# Break the loop if any of the required variables are missing
-		if [[
-				-z "$authorized" ||
-					-z "$admins" ||
-					-z "$administrative_groups"
-			]];
-		then
-			echo '⚠️: Missing input for one of the 3 prompts; skipping user management...'
-			break
-		fi
-		#
-		# Check if user is authorized or an admin
-		found='false'
-		for authUser in "${authorized[@]}" "${admins[@]}"; do
-			if [[ "$user" == "$authUser" ]]; then
-				found='true'
-				break
-			fi
-		done
-		#
-		# Delete unauthorized users
-		if [[ "$found" == 'false' ]]; then
-			if confirm "Delete local user ($user)"; then
-				userdel "$user"
-			fi
-			continue
-		fi
-		#
-		# Remove admin groups from non-admin authorized users
-		is_admin='false'
-		for admin in "${admins[@]}"; do
-			if [[ "$user" == "$admin" ]]; then
-				is_admin='true'
-				break
-			fi
-		done
-		#
-		# Cleanly iterate through administrative_groups to remove user
-		if [[ "$is_admin" == 'false' ]]; then
-			for group in "${administrative_groups[@]}"; do
-				gpasswd -d "$user" "$group"
-			done
-		fi
-		#
-		# No one should be in these groups
-		for group in "${protected_groups[@]}"; do
-			gpasswd -d "$user" "$group"
-		done
 	done
-	#
-	# Purge Crontabs
-	clear
-	if confirm 'Delete crontabs for all users (to remove persistent backdoors)'; then
-		for user in "$(
-			getent passwd |
-				cut -d: -f1
-		)";
-		do
-			crontab -ru "$user"
-		done
-	fi
-	#
-	# Demote users found with UID 0 that isn't root
-	clear
-	for uid_zero_user in $(
-		getent passwd |
-			awk -F: '($3 == 0 && $1 != "root") { print $1 }'
-	);
-	do
-		if confirm "Should user ($uid_zero_user) have UID 0"; then
-			usermod -u "$temp_id" "$uid_zero_user"
-			(( temp_id-- ))
-		fi
-	done
-	#
-	# Demote groups with GID 0 that aren't named root
-	clear
-	for gid_zero_user in $(
-		getent group |
-			awk -F: '($3 == 0 && $1 != "root") { print $1 }'
-	);
-	do
-		if confirm "Should ($gid_zero_user) have GID 0"; then
-			groupmod -g "$temp_id" "$gid_zero_user"
-			(( temp_id-- ))
-		fi
-	done
-fi
-
-
-
-
-
-#
-# Default Firewall Rules (UFW)
-#
-if confirm 'Configure default firewall rules';
-	(
-		set -e
-		#
-		# Ensures necessary kernel modules are loaded
-		for module in "${firewall_kernel_modules[@]}"; do
-			lsmod |
-				grep -q "^${module}" ||
-				modprobe "$module"
-		done
-		#
-		# Default Rules
-		if confirm 'Are you using the UFW firewall'; then
-			systemctl unmask ufw
-			systemctl restart --now ufw
-			ufw reset
-			ufw --force enable
-			ufw default deny incoming
-			ufw default allow outgoing
-		elif confirm 'Are you using the FirewallD firewall'; then
-			systemctl unmask firewalld
-			systemctl restart --now firewalld
-			firewall-cmd --reset-to-defaults
-			firewall-cmd --set-default-zone public
-			firewall-cmd --permanent --load-zone-defaults public
-			firewall-cmd --permanent --add-icmp-block echo-request
-			firewall-cmd --permanent --add-icmp-block timestamp-reply
-			firewall-cmd --permanent --add-icmp-block timestamp-request
-			firewall-cmd --reload
-		fi
-	)
-fi
 
 
 
@@ -254,69 +228,42 @@ fi
 #
 # Service Management
 #
-# Uninstall insecure packages/services
-if confirm 'Remove insecure/legacy packages & services'; then
-	(
-		set -e
-		apt-get remove --purge -y "${insecure_pkgs[@]}"
-		apt-get autoremove --purge
-	)
-	for service in "${insecure_services[@]}"; do
+# Uninstalls risky packages
+[[ -n "$del_bad_pkgs" ]] &&
+	apt-get autoremove --purge -y "${risky_pkgs[@]}"
+#
+# Disables & masks risky services
+[[ -n "$del_bad_svcs" ]] &&
+	for service in "${risky_svcs[@]}"; do
 		decommission "$service"
 	done
-fi
 #
 # Ask for services which are to be removed
-if confirm 'Audit every service on the system'; then
-	removed_services=($(checklist 'Select services to REMOVE' checklist "${services[@]}"))
+if [[ -n "$service_review" ]]; then
 	for service in "${services[@]}"; do
 		# Mark any service that was selected to be removed, to be removed.
-		is_del=
-		for kept_service in "${removed_services[@]}"; do
-			if [[ "$service" == "$removed_service" ]]; then
-				is_del=true
-				break
-			fi
-		done
-		#
-		# If service was marked to be removed, uninstall if possible; if not, fallback to disable and masking.
-		if [[ "$is_del" == 'true' ]]; then
-			service_file="$(systemctl show -p FragmentPath --value $service)"
-			if [[ -f "$service_file" ]]; then
+		for flagged_service in "${flagged_services[@]}"; do
+			if [[ "$service" == "$flagged_service" ]]; then
+				# Attempt to remove package behind service
+				# Will just decommission service file if cannot locate resposible package.
 				apt-get remove --purge -y "$(
-					dpkg -S "$service_file" |
+					dpkg -S "/etc/systemd/system/$flagged_service.service" |
 						cut -d: -f1
 				)" ||
-					decommission "$service"
+					decommission "$flagged_service"
+			elif [[ -z "$is_del" ]]; then
+				# If not removed, patch service with a secure SystemD override.
+				svc_patch "$service"
 			fi
-		else
-			# If not removed/disabled, configure some small patches if patches for the service exists.
-			case "$service" in
-				mysql)
-					sysdpatch mysql
-				;;
-				mariadb)
-					sysdpatch mariadb
-				;;
-				postgresql)
-					sysdpatch postgresql
-				;;
-				apache2)
-					(
-						set -e
-						sysdpatch apache2
-						install -m 0640 -o root -g root general-confs/apache2.conf /etc/apache2/conf-enabled/99-security.conf
-					)
-				;;
-			esac
-		fi
+		done
 	done
 fi
+#install -m 640 -o root -g root general-confs/apache2.conf /etc/apache2/conf-enabled/99-security.conf
 #
 # Apply SystemD drop-ins for misc. services
-sysdpatch cron
-sysdpatch mosquitto
-sysdpatch systemd-udevd
+svc_patch cron
+svc_patch mosquitto
+svc_patch systemd-udevd
 #
 # Reload SystemD
 systemctl daemon-reload
@@ -326,89 +273,257 @@ systemctl daemon-reload
 
 
 #
-# Access Control Repair & Review
+# Kernel Hardening
 #
-# Add Sticky Bit to world-writable directories
-find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod -f +t {} +
-#
-# For files with an invalid owning user or group, change the owning user & group to root
-find / -xdev \( -nouser -o -nogroup \) -exec chmod 640 {} + -exec chown -h root:root {} +
-#
-# Remove broken symlinks
-find / -xdev -xtype l -exec rm {} +
-#
-# Fix file permissions for critical files regarding identity management
-chown root:root /etc/passwd /etc/group /etc/sudoers
-if grep -qE '^shadow:' /etc/group; then
-	chown root:shadow /etc/shadow /etc/gshadow
-	chmod -f 640 /etc/shadow /etc/gshadow
-else
-	chown root:root /etc/shadow /etc/gshadow
-	chmod -f 600 /etc/shadow /etc/gshadow
+if [[ -n "$sysctl" ]]; then
+	# Stage & apply generic & mostly non-breaking kernel parameters
+	install -m 640 -o root -g root -D general-confs/kernel.conf /etc/sysctl.d/99-security.conf
+	sysctl -p /etc/sysctl.d/99-security.conf
+	sysctl --system
+	#
+	# Is IPv6 networking needed?
+	if [[ -n "$no_ipv6" ]]; then
+		# If not, disable.
+		install -m 640 -o root -g root -D general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
+		sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
+		sysctl --system
+	fi
 fi
-chmod -f 644 /etc/passwd /etc/group
+
+
+
+
+
 #
-# Ensure only root can read the bootloader config
-chown root:root /boot/grub/grub.cfg ||
-	chown root:root /boot/grub2/grub.cfg
-chmod -f 700 /boot
-chmod -f 600 /boot/grub/grub.cfg ||
-	chmod -f 600 /boot/grub2/grub.cfg
-chmod -f o-rx /boot
+# Access Control Repair
 #
-# Secure cron tabs and directories
-chown root:root /etc/crontab /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly /etc/cron.d /etc/cron.allow /etc/at.allow
-chmod -f 600 /etc/crontab
-chmod -f 700 /etc/cron.hourly /etc/cron.daily /etc/cron.weekly /etc/cron.monthly /etc/cron.d
+# Repair filesystem ownership & modes
+if [[ -n "$fix_perms" ]]; then
+	# Add Sticky Bit to world-writable directories
+	find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod -h +t {} +
+	#
+	# For files with an invalid owning user or group, change the owning user & group to root
+	find / -xdev \( -nouser -o -nogroup \) -exec chmod 640 {} + -exec chown -h root:root {} +
+	#
+	# Remove broken symlinks
+	find / -xdev -xtype l -exec rm {} +
+	#
+	# Ensure sticky-bit on world-writable dirs
+	chmod -h +t /tmp /var/tmp /dev/shm
+	#
+	# Fix permissions for files regarding identity management
+	chown root:root /etc/passwd /etc/group /etc/sudoers
+	if grep -qE '^shadow:' /etc/group; then
+		chown root:shadow /etc/shadow /etc/gshadow
+		chmod -h 640 /etc/shadow /etc/gshadow
+	else
+		chown root:root /etc/shadow /etc/gshadow
+		chmod -h 600 /etc/shadow /etc/gshadow
+	fi
+	chmod -h 644 /etc/passwd /etc/group
+	#
+	# Ensure only root can read the bootloader config
+	find /boot -type f -exec chown root:root {} + -exec chmod 640 {} +
+	find /boot -type d -exec chown root:root {} + -exec chmod 750 {} +
+	#
+	# Ensure SystemD unit files are secure
+	find /etc/systemd/system -type f -exec chown root:root {} + -exec chmod -h 640 {} +
+	find /etc/systemd/system -type d -exec chown root:root {} + -exec chmod -h 750 {} +
+	#
+	# Secure cron tabs & directories
+	chown root:root /etc/cron* /etc/at.allow
+	chmod -h 750 /etc/cron.* /etc/at.allow
+	chmod -h 640 /etc/crontab
+	#
+	# Secure sudoers configuration
+	chown -R root:root /etc/sudoers /etc/sudoers.d
+	chmod -h 640 /etc/sudoers
+	chmod -h 750 /etc/sudoers.d
+	chmod -Rh 640 /etc/sudoers.d
+	#
+	# Restrict dmesg access
+	chown root:root /bin/dmesg /usr/bin/dmesg
+	chmod -h 700 /bin/dmesg /usr/bin/dmesg
+	#
+	# Secure SSH configurations
+	find /etc/ssh -type f -exec chown root:root {} + -exec chmod -h 600 {} +
+	find /etc/ssh -type d -exec chown root:root {} + -exec chmod -h 700 {} +
+	chmod -h 644 /etc/ssh/*.pub
+	#
+	# Secure MOTD/banners are secured
+	chown root:root /etc/issue /etc/issue.net /etc/motd
+	chmod -h 644 /etc/issue /etc/issue.net /etc/motd
+	#
+	# Ensure log files are secured
+	chown root:root /var/log
+	chmod -h 750 /var/log
+	#
+	# Secure rsyslog or syslog-ng configs
+	chown root:root /etc/rsyslog.conf /etc/rsyslog.d/*
+	chmod -h 640 /etc/rsyslog.conf /etc/rsyslog.d/*
+	#
+	# Secure Auditd logs & configs
+	find /etc/audit -type f -exec chown root:root {} + -exec chmod -h 640 {} +
+	find /etc/audit -type d -exec chown root:root {} + -exec chmod -h 750 {} +
+	#
+	# Secure global shell profiles
+	chown root:root /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
+	chmod -h 644 /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
+	#
+	# Secure existing home directories
+	chown root:root /root
+	chmod -h 700 /home/* /root
+fi
+
+
+
+
+
 #
-# Prevent non-root users from viewing kernel symbol maps
-chmod -f 600 /boot/System.map-*
+# User & Group Auditing
 #
-# Secure sudoers configuration
-chown -R root:root /etc/sudoers.d /etc/sudoers
-chmod -f 440 /etc/sudoers
-chmod -f 750 /etc/sudoers.d
-chmod -f 440 /etc/sudoers.d/*
+if [[ -n "$audit_users" ]]; then
+	# Audit users
+	# Delete users flagged as to be deleted
+	for u in "${users_del[@]}"; do
+		userdel -rf "$u"
+	done
+	#
+	# Delete passwords of users flagged to have their password removed
+	for u in "${users_nullpass[@]}"; do
+		passwd "$u" -d
+	done
+	#
+	# Lock users flagged to be locked
+	for u in "${users_lock[@]}"; do
+		passwd "$u" -l
+	done
+	#
+	# Prompt to change the shell for users flagged to be reshelled
+	for u in "${users_reshell[@]}"; do
+		while [[ ! -x "$shell" ]]; do
+			read -erp 'Enter the path to the new shell: ' shell
+		done
+		usermod -s "$shell" "$u"
+	done
+	#
+	# Prompt to change the UID of users flagged to be reUIDed
+	for u in "${users_reuid[@]}"; do
+		while [[
+				"$uid" =~ ^[0-9]+$ &&
+				-n "$(getent passwd "$uid")"
+			]];
+		do
+			read -erp 'Enter the new UID: ' uid
+		done
+		usermod -s "$uid" "$u"
+	done
+	#
+	# Prompt to change the primary & supplemental groups of users flagged to be regrouped
+	for u in "${users_regroup[@]}"; do
+		while [[ -z "$(getent passwd "$primary_group")" ]]; do
+			read -erp 'Enter new primary group: ' primary_group
+		done
+		i='start'
+		while [[ -n "$i" ]]; do
+			read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
+			for group in "${supplemental_groups[@]}"; do
+				[[ -n "$(getent passwd "$group")" ]] ||
+					i='bad'
+			done
+		done
+		usermod -g "$primary_group" "$u"
+		usermod -G "${supplemental_groups[*]// /,}" "$u"
+	done
+fi
 #
-# Secure SSH configurations
-chown -R root:root /etc/ssh /etc/ssh/sshd_config /etc/ssh/sshd_config.d
-chmod -f 700 /etc/ssh /etc/ssh/sshd_config.d
-chmod -f 600 /etc/ssh/*_key /etc/ssh/sshd_config /etc/cron.allow /etc/at.allow /etc/ssh/sshd_config.d/*.conf
-chmod -f 644 /etc/ssh/*.pub
+# Secures root user
+if [[ -n "$lock_root" ]]; then
+	# (L)ocks user (root) & (d)eletes their password
+	passwd root -l
+	passwd root -d
+fi
+
+
+
+
 #
-# Secure MOTD/banners are secured
-chown root:root /etc/issue /etc/issue.net /etc/motd
-chmod -f 644 /etc/issue /etc/issue.net /etc/motd
+# Firewall Rules
 #
-# Ensure log files are secured
-chown root:root /var/log
-chmod -f 750 /var/log
-#
-# Secure rsyslog or syslog-ng configs
-chown root:root /etc/rsyslog.conf /etc/rsyslog.d/*
-chmod -f 640 /etc/rsyslog.conf /etc/rsyslog.d/*
-#
-# Secure Auditd logs and configs
-chown root:root /etc/audit/audit.rules /etc/audit/auditd.conf
-chmod -f 640 /etc/audit/audit.rules /etc/audit/auditd.conf
-#
-# Restrict dmesg access
-chmod -f 700 /bin/dmesg ||
-	chmod -f 700 /usr/bin/dmesg
-#
-# Secure existing home directories
-chown root:root /root
-chmod -f 700 /home/* /root
-#
-# Secure global shell profiles
-chown root:root /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
-chmod -f 644 /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
-#
-# Ensure sticky-bit on world-writable dirs
-chmod -f +t /tmp /var/tmp /dev/shm
-#
-# Ensure SystemD unit files are secure
-find /etc/systemd/system ! -type l -exec chmod -f 640 {} + -exec chown root:root {} +
+if [[ -n "$firewall_config" ]]; then
+	# Ensures necessary kernel modules are loaded
+	for module in "${firewall_kernel_modules[@]}"; do
+		lsmod |
+			grep -q "^${module}" ||
+			modprobe "$module"
+	done
+	#
+	# Configure baseline ruleset
+	# Uncomplicated Firewall/ufw
+	if [[ "$firewall" == 'UFW' ]]; then
+		# (Unfortunately UFW isn't flexible enough to block certain ICMP ping types.)
+		# Start the firewall
+		systemctl unmask ufw
+		systemctl restart --now ufw
+		ufw --force enable
+		#
+		# Reset the firewall
+		ufw reset
+		#
+		# Deny all incoming, allow all outgoing.
+		ufw default deny incoming
+		ufw default allow outgoing
+	# FirewallD/firewall-cmd
+	elif [[ "$firewall" == 'FirewallD' ]]; then
+		# Start the firewall
+		systemctl unmask firewalld
+		systemctl restart --now firewalld
+		#
+		# Reset the firewall
+		firewall-cmd --reset-to-defaults
+		firewall-cmd --set-default-zone public
+		#
+		# Deny all incoming, allow all outgoing.
+		firewall-cmd --permanent --load-zone-defaults public
+		#
+		# Block ICMP echo requests & timestamp requests/replies
+		firewall-cmd --permanent --add-icmp-block echo-request
+		firewall-cmd --permanent --add-icmp-block timestamp-reply
+		firewall-cmd --permanent --add-icmp-block timestamp-request
+	else
+		echo 'E: Unsupported firewall software.'
+	fi
+	#
+	# Prompt to whitelist any remaining ports/services
+	ports=(lorem_ipsum)
+	while [[
+			-n "$(
+				for port in "${ports[@]}"; do
+					[[ ! "$port" =~ ^[0-9]{1,5}(-[0-9]{1,5})?$ ]] &&
+						echo 'bad'
+				done
+			)" ||
+			-z "${ports[*]}"
+		]];
+	do
+		read -erp 'Enter any remaining port numbers to allow in: ' -a ports
+	done
+	for port in "${ports[@]}"; do
+		# Whitelist ports
+		if [[ "$firewall" == 'UFW' ]]; then
+			ufw allow in "$port/tcp"
+		elif [[ "$firewall" == 'FirewallD' ]]; then
+			firewall-cmd --permanent --add-port "$port/tcp"
+		else
+			echo 'E: Unsupported firewall software.'
+		fi
+	done
+	#
+	# Apply changes (FirewallD exclusive)
+	[[ "$firewall" == 'FirewallD' ]] &&
+		firewall-cmd --reload
+fi
+
 
 
 
@@ -416,37 +531,34 @@ find /etc/systemd/system ! -type l -exec chmod -f 640 {} + -exec chown root:root
 #
 # Lockout Policies
 #
-# Lockout accounts temporarily with 3 consecutive failed login attempts
-if confirm 'Enable account lockout policies via faillock'; then
-	(
-		set -e
-		install -m 0640 -o root -g root -D/general-confs/faillock /usr/share/pam-configs/faillock
-		install -m 0640 -o root -g root -D general-confs/faillock_reset /usr/share/pam-configs/faillock_reset
-		install -m 0640 -o root -g root -D general-confs/faillock_notify /usr/share/pam-configs/faillock_notify
-		pam-auth-update --package
-	)
-fi
-#
-# Configure password quality configurations
-if confirm 'Configure secure defaults for PAM'; then
-	if command -v authselect &>/dev/null; then
-		(
-			set -e
-			authselect select sssd with-faillock with-pamaccess with-pwhistory with-mkhomedir with-sudo without-nullok --force
-			authselect apply-changes
-		)
-	elif command -v pam-auth-update &>/dev/null; then
+# Configure PAM with secure defaults
+if [[ -n "$pam_reconfig" ]]; then
+	# RHEL-like distros
+	if hash authselect; then
+		# Configure PAM /w secure defaults
+		authselect select sssd with-faillock with-pamaccess with-pwhistory with-pwquality with-mkhomedir with-sudo without-nullok --force
+		#
+		# Configure password QA
+		install -m 640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
+		#
+		# Regenerate PAM configurations /w previous configuration
+		authselect apply-changes
+	# Debian-like distros
+	elif hash pam-auth-update; then
 		(
 			set -e
 			#
-			# Backup existing PAM pwquality template
-			mv /usr/share/pam-configs/pwquality{,.disabled}
+			# Insert password QA configuration
+			install -m 640 -o root -g root -D general-confs/pwquality /usr/share/pam-configs/pwquality
+			install -m 640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
 			#
-			# Insert our PAM pwquality template and pwquality configuration
-			install -m 0640 -o root -g root -D general-confs/pwquality /usr/share/pam-configs/pwquality
-			install -m 0640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
+			# Insert faillock configuration
+			install -m 640 -o root -g root -D/general-confs/faillock /usr/share/pam-configs/faillock
+			install -m 640 -o root -g root -D general-confs/faillock_reset /usr/share/pam-configs/faillock_reset
+			install -m 640 -o root -g root -D general-confs/faillock_notify /usr/share/pam-configs/faillock_notify
+			pam-auth-update --package
 			#
-			# Reject login requests for users with no password
+			# Reject logins for users with no password
 			sed -i 's/[[:space:]]*nullok//g' /usr/share/pam-configs/unix
 			#
 			# Update PAM configurations
@@ -457,18 +569,17 @@ if confirm 'Configure secure defaults for PAM'; then
 	fi
 	#
 	# Enforce password age policies (Applies exclusively to non-system users (UID >= 1000))
-	for user in $(
+	mapfile -t nonsys_users < <(
 		getent passwd |
 			awk -F: '$3 >= 1000 { print $1 }'
-		);
-	do
+	)
+	for u in "${nonsys_users[@]}"; do
 		# Skips the iterated user if they're the user running the script
 		# Apply the password age restrictions to the user
 		# Sets the date they last changed their password to current date to avoid accidental lockouts
-		if [[ "$user" != "$SUDO_USER" ]]; then
-			chage -m 7 -M 90 -W 14 "$user" &&
-				chage -d "$(date +%Y-%m-%d)" "$user"
-		fi
+		[[ "$u" != "$SUDO_USER" ]] &&
+			chage -m 7 -M 90 -W 14 "$u" &&
+			chage -d "$(date +%Y-%m-%d)" "$u"
 	done
 	#
 	# Apply global defaults via login.defs
@@ -477,23 +588,17 @@ if confirm 'Configure secure defaults for PAM'; then
 	done
 	#
 	# Migrate stray hashes from passwd to shadow
-	# Check for duplicate users on the system and prompt for rectification
-	pwconv
-	pwck -r
-fi
-#
-# Disable guest & automatic login in LightDM
-if [[ -d /etc/lightdm ]]; then
-	echo '🚧: LightDM found--disabling guest & automatic login...'
-	sed -Ei 's/^# allow-guest.*/allow-guest=false/' /etc/lightdm/lightdm.conf
-	sed -Ei 's/^# AutomaticLogin.*/AutomaticLogin=false/' /etc/lightdm/lightdm.conf
-fi
-#
-# Apply a strong MOTD
-if confirm 'Apply a strong MOTD'; then
-	install -m 0640 -o root -g root -D general-confs/motd /etc/motd
-	install -m 0640 -o root -g root -D general-confs/motd /etc/issue
-	install -m 0640 -o root -g root -D general-confs/motd /etc/issue.net
+	# Check for duplicate users on the system & prompt for rectification
+	[[ -n "$mv_hash" ]] &&
+		pwconv
+	[[ -n "$pwck" ]] &&
+		pwck -r
+	#
+	# Disable guest & automatic login in LightDM
+	if [[ -f /etc/lightdm/lightdm.conf ]]; then
+		safe_add 'allow-guest false' /etc/lightdm/lightdm.conf
+		safe_add 'AutomaticLogin false' /etc/lightdm/lightdm.conf
+	fi
 fi
 
 
@@ -504,39 +609,31 @@ fi
 # Resource Management
 #
 # Prompt for external information
-if confirm 'Limit system resources able to be used by used by users on an individual & collective level'; then
-	max_mem="$(
-		free -m |
-			awk '/^Mem:/{print $2}'
-	)"
-	cat <<-EOF
-		ℹ️: You have $max_mem megabytes (MB) of max RAM.
-		ℹ️: Please give your response in a percentage, 1 through 100 as an integer without any decimals, prefixes or suffixes.
-		ℹ️: Individual requirements must be less than (non-inclusive) the collective requirements
-	EOF
-	read -rp -n3 'What % of the max memory would you like all users on the system to be able to COLLECTIVELY use?: ' collective_mem
-	read -rp -n3 'What % of the CPU would you like all users on the system to be able to COLLECTIVELY use?: ' collective_cpu
-	while [[ -z "$individual_mem" ]] ||
-		(( individual_mem >= collective_mem ));
-	do
-		read -rp -n3 'What % of the max memory would you like an individual user to be able to use?: ' individual_mem
-	done
-	while [[ -z "$individual_cpu" ]] ||
-		(( individual_cpu >= collective_cpu ));
-	do
-		read -rp -n3 'What % of the CPU would you like an individual user to be able to use?: ' individual_cpu
-	done
-	#
+if [[ -n "$resource_cap" ]]; then
 	# Parse given information into configuration
-	sed -e "s/foo/$collective_mem/g" -e "s/bar/$collective_cpu/g" general-confs/slice-shared.conf >/etc/systemd/system/user.slice.d/override.conf
-	sed -e "s/foo/$individual_mem/g" -e "s/bar/$individual_cpu/g" general-confs/slice-individual.conf >/etc/systemd/system/user-.slice.d/override.conf
+	# ...& install configuration into the system
+	sed -e "s/foo/$collective_mem/g" -e "s/bar/$collective_cpu/g" general-confs/slice-shared.conf |
+		install -m 640 -o root -g root /dev/stdin /etc/systemd/system/user.slice.d/override.conf
+	sed -e "s/foo/$individual_mem/g" -e "s/bar/$individual_cpu/g" general-confs/slice-individual.conf |
+		install -m 640 -o root -g root /dev/stdin /etc/systemd/system/user-.slice.d/override.conf
+	sed "s/wheel/$admin_group/g" general-confs/limits.conf |
+		install -m 644 -o root -g root /dev/stdin /etc/security/limits.conf
 	#
-	# Prompt for "THE" administrative group
-	read -rp 'What is THE administrative group? (e.x. wheel, sudo, etc.): ' admin_group
-	if [[ -n "$(getent group $admin_group)" ]]; then
-		sed "s/wheel/$admin_group/g" general-confs/limits.conf |
-			install -m 644 -o root -g root /dev/stdin /etc/security/limits.conf
-	fi
+	# Reload SystemD
+	systemctl daemon-reload
+fi
+
+
+
+
+
+#
+# Message of the Day
+#
+if [[ -n "$motd" ]]; then
+	for banner_file in "${banner_files[@]}"; do
+		install -m 640 -o root -g root -D general-confs/motd "$banner_file"
+	done
 fi
 
 

@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Environment Setup
 #
 # Helper function to modify file metadata
 # path, owner, octal perm, attribute
 metamod() {
-	# Change its permissions and attributes based on the given options
+	# Change its permissions & attributes based on the given options
 	# If given owner exists...
 	if getent passwd "$2" &>/dev/null; then
 		# Owner exists, so execute the chown.
@@ -66,11 +66,11 @@ dirchk() {
 # Helper function to monitor files
 filemon() {
 	# Initial check
-	echo "Performing initial scan on $1 for files matching $2 -- on detection will set owner $3, mode $4 and attributes $5."
+	echo "Performing initial scan on $1 for files matching $2 -- on detection will set owner $3, mode $4 & attributes $5."
 	dirchk "$1" "$2" "$3" "$4" "$5"
 	#
 	# Setup the inotify watchers
-	echo "Attempting to setup inotifywait watch for $1 for files matching $2 -- on detection will set owner $3, mode $4 and attributes $5."
+	echo "Attempting to setup inotifywait watch for $1 for files matching $2 -- on detection will set owner $3, mode $4 & attributes $5."
 	inotifywait -qmre attrib,create,moved_to,close_write "$1" |
 		while read -r i;
 	do
@@ -86,7 +86,7 @@ filemon() {
 #
 # Monitoring
 #
-# Monitor and revert changes to identity management
+# Monitor & revert changes to identity management
 filemon '/etc' '^passwd$' root 644 ia &
 filemon '/etc' '^g?shadow$' root none ia &
 #

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Environment Setup
 #
@@ -34,9 +34,9 @@ if confirm 'Is there a webserver which uses Wordpress'; then
 		#
 		# Run the scan
 		read -rp 'What port is the webserver with Wordpress on (port number only)?: ' port
-		if [[ "$port" =~ $numberCheck ]]; then
+		if [[ "$port" =~ $num_chk ]]; then
 			wpscan --url "http://127.0.0.1:$port" --enumerate p |
-				tee -a "$log_dir/wordpress-vulns-$suffix"
+				tee -a "wordpress-vulns-$suffix.log"
 		fi
 	)
 	#
@@ -49,11 +49,11 @@ fi
 # Log open ports
 ss -tulpn |
 	grep '0.0.0.0' |
-	tee -a "$log_dir/open-ports-$suffix"
+	tee -a "open-ports-$suffix.log"
 #
 # Scan for Malicious PAM Hooks
 grep -r 'pam_exec.so' /etc/pam.d/ |
-	tee -a "$log_dir/possible-pam-hooks-$suffix"
+	tee -a "possible-pam-hooks-$suffix.log"
 
 
 
@@ -61,35 +61,35 @@ grep -r 'pam_exec.so' /etc/pam.d/ |
 #
 # File Permission & Content Auditing
 #
-# Log world-writable files and directories which lack a sticky-bit and aren't one of the 3 usual directories
+# Log world-writable files & directories which lack a sticky-bit & aren't one of the 3 usual directories
 if confirm 'Search for world-writable paths'; then
 	find / -xdev ! -type l -perm -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm |
-		tee -a "$log_dir/world-writables-$suffix"
+		tee -a "world-writables-$suffix.log"
 fi
 #
 # Log world-readable files
 if confirm 'Search for world-readable paths'; then
 	find / -xdev ! -type l -perm -o+r -not -path /tmp/ -not -path /var/tmp -not -path /dev/shm |
-		tee -a "$log_dir/world-readables-$suffix"
+		tee -a "world-readables-$suffix.log"
 fi
 #
 # Scan for media files in home directories
 if confirm 'Search for media in home directories'; then
 	find /home -xdev -type f -exec file --mime-type {} + |
 		grep -iE '(audio|video|image)/' |
-		tee -a "$log_dir/found-media-$suffix"
+		tee -a "found-media-$suffix.log"
 fi
 #
 # Log SUID binaries
 if confirm 'Search for SUID binaries'; then
 	find / -xdev -type f -perm -4000 -ls |
-		tee -a "$log_dir/suid-binaries-$suffix"
+		tee -a "suid-binaries-$suffix.log"
 fi
 #
 # Log SGID binaries
 if confirm 'Scan for SGID binaries'; then
 	find / -xdev -type f -perm -2000 -ls |
-		tee -a "$log_dir/sgid-binaries-$suffix"
+		tee -a "sgid-binaries-$suffix.log"
 fi
 #
 # Scans files for keywords indicative of exfiltration or malicious intent
@@ -99,7 +99,7 @@ if confirm 'Scan for suspicious scripts'; then
 		grep -E '(shell script|python)' |
 		cut -d: -f1 |
 		xargs grep -lE "$suspicious_filter" |
-		tee -a "$log_dir/flagged-scripts-$suffix"
+		tee -a "flagged-scripts-$suffix.log"
 fi
 
 
@@ -109,7 +109,7 @@ fi
 #
 # Filesystem Integrity Auditing
 #
-if confirm 'Check for unrecognized and suspicious programs and files (additional program installation may be required)';
+if confirm 'Check for unrecognized/suspicious programs/files (Additional software needed)'; then
 	# ClamAV malware scan
 	if confirm 'Use ClamAV to scan for viruses (CPU intensive)'; then
 		(
@@ -117,7 +117,7 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 			secure_install clamav clamav-daemon clamdscan
 			systemctl unmask clamav-daemon
 			systemctl enable --now clamav-daemon
-			clamdscan / --multiscan --fdpass --exclude-dir=/sys --exclude-dir=/proc --exclude-dir=/dev -il "$log_dir/clamscan-audit-$suffix"
+			clamdscan / --multiscan --fdpass --exclude-dir=/sys --exclude-dir=/proc --exclude-dir=/dev -il "clamscan-audit-$suffix.log"
 		)
 	fi
 	#
@@ -127,7 +127,7 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 			set -e
 			secure_install chkrootkit
 			chkrootkit |
-				tee -a "$log_dir/chkrootkit-audit-$suffix"
+				tee -a "chkrootkit-audit-$suffix.log"
 		)
 	fi
 	#
@@ -137,7 +137,7 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 			set -e
 			secure_install debsums
 			debsums -s |
-				tee -a "$log_dir/integrity-fails-$suffix"
+				tee -a "integrity-fails-$suffix.log"
 		)
 	fi
 	#
@@ -145,17 +145,20 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 	if confirm 'Search for binaries unrecognized by DPKG'; then
 		(
 			set -e
-			read -ra PATHS <<< "$(printf "$PATH" | tr ':' ' ')"
-			for dir in "${PATHS[@]}"; do
-				binaries=($(
+			mapfile -t paths <(
+				printf '%s' "$PATH" |
+					tr ':' ' '
+			)
+			for dir in "${paths[@]}"; do
+				mapfile -t binaries <(
 					find "$dir" -type f -executable -exec file --mime-type {} + |
 						grep 'application/x' |
-						cut -d: -f1)
+						cut -d: -f1
 				)
 				for binary in "${binaries[@]}"; do
 					if [[ -f "$binary" ]]; then
 						dpkg-query -S "$binary" ||
-							echo "$binary" >> "$log_dir/foreign-binaries-$suffix"
+							echo "$binary" >>"foreign-binaries-$suffix.log"
 					fi
 				done
 			done
@@ -168,7 +171,7 @@ if confirm 'Check for unrecognized and suspicious programs and files (additional
 			set -e
 			secure_install lynis
 			lynis audit system |
-				tee -a "$log_dir/lynis-audit-$suffix"
+				tee -a "lynis-audit-$suffix.log"
 		)
 	fi
 fi

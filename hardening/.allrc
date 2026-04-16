@@ -1,104 +1,47 @@
 #!/bin/bash
-# 
-# Operation Integrity
 #
-# Secure path variable
-declare -rx PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
-#
-# Make directory to store logs
-log_dir="/var/log/hiaudit"
-mkdir -p "$log_dir"
-
-
-#
-# Helper Functions, Wrappers & Variables
+# Helper Logic
 #
 # Regex to compare against to verify user input is a number
-numberCheck='^[0-9]+$'
+num_chk='^[0-9]+$'
 #
-# Wrap the exit command to print the summary before exiting the script if the exit command is ran with code 0 or ran with no exit code
-exit() {
-	if [[
-			-z "$@" ||
-				"$@" == 0
-		]];
-	then
-		cat <<-EOF
-			Script Succeeded
-			File checks:
-			    $log_dir/immutable-files
-			    $log_dir/append-only-files
-			    $log_dir/media-files
-			    $log_dir/suspect-scripts
-			Possibly compromised binaries and risky file permissions
-			    $log_dir/clamscan-audit
-			    $log_dir/integrity-fails
-			    $log_dir/chkrootkit-audit
-			    $log_dir/world-writable-files
-			    $log_dir/world-readable-files
-			    $log_dir/suid-binaries
-			    $log_dir/sgid-binaries
-			Possible backdoors and general vulns
-			    $log_dir/possible-pam-hooks
-			    $log_dir/lynis-audit
-			    $log_dir/wordpress-vulns
-			    $log_dir/open-ports
-			Session log of script(s)
-			    $log_dir/*-script-master-log
-			Note that all log names shown are incomplete and have a suffix to prevent loss of previous log files on subsequent runs, you'll need to check ($log_dir) for the full file names.
-			Not all log files will exist until all scripts have been ran
-		EOF
-		command exit 0
-	else
-		command exit $@
-	fi
-}
-#
-# Print 25 newlines opposed to clearing to allow for scrolling
+# Alternative clear function
 clear() {
-	printf '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+	# Print enough newlines to clear the screen & then move the cursor back to the top
+	printf '\n%.0s' $(seq 1 $(tput lines))
+	command clear -x
 }
 #
 # When making a file using the touch command, make the directories its supposed to be in.
 touch() {
-	local options=()
-	local files=()
-	#
-	# Separate options from file paths
-	for arg in "$@"; do
-		if [[ "$arg" =~ ^-* ]]; then
-			options+=("$arg")
-		else
-			files+=("$arg")
-		fi
-	done
-	#
 	# Process each file path
-	for file in "${files[@]}"; do
-		local dir
-		dir=$(dirname "$file")
+	for path in "$@"; do
+		# Make the file's preceeding directories.
+		mkdir -p "$(dirname "$path")"
 		#
-		# Create the directory if it's not the current directory
-		if [[ "$dir" != "." ]]; then
-			mkdir -p "$dir"
-		fi
+		# Make the file
+		printf >> "$path"
 	done
-	#
-	# Pass everything back to the original touch command
-	command touch "${options[@]}" "${files[@]}"
 }
 #
 # Prompt the user with a yes/no question
 confirm() {
-	local prompt="$1"
-	echo "$prompt?"
-	read -rp "[y/N]: " answer
-	[[ "$answer" =~ ^[Yy] ]]
+	# Ask the question
+	clear
+	local answer
+	while [[ ! "${answer:0:1}" =~ ^[YyNn]$ ]]; do
+		printf "\n$2\n$1? [y/n]: \n"
+		read -er answer
+		answer="${answer:0:1}"
+	done
+	#
+	# Return exit code based on yes/no
+	[[ "$answer" =~ ^[Yy]$ ]]
 }
 #
 # Prompt with a checklist/radiolist
 checklist() {
-	# Grab the title, checklist type and the options for the checklist.
+	# Grab the title, checklist type & the options for the checklist.
 	local title="$1"
 	local type="$2"
 	shift 2
@@ -116,12 +59,12 @@ checklist() {
 	# Prompt the user for their answer via the read command
 	if [[ "$type" == 'checklist' ]]; then
 		cat >&2 <<-'EOF'
-			Type your selections in comma-separated format—no spaces.
-			(i.e. "1,4,6,9")
+			Enter your selections—separated by spaces.
+			(i.e. "1 4 6 9")
 		EOF
 	elif [[ "$type" == 'radiolist' ]]; then
 		cat >&2 <<-'EOF'
-			Type your selection (single-answer only)
+			Enter a single selection
 			(i.e. "5")
 		EOF
 	else
@@ -129,100 +72,88 @@ checklist() {
 			Incorrect usage of the checklist function;
 			($type) was given as the 2nd argument, but the only valid options are (checklist) OR (radiolist).
 		EOF
-		exit 8
+		return 1
 	fi
-	read -rp 'Type your selection(s) then press [ENTER] to submit: ' selections >&2
-	if [[ -z "$selections" ]]; then
+	read -erp 'Type your selection(s) then press [ENTER] to submit: ' -a selections >&2
+	#
+	# Do nothing with empty responses
+	[[ "${#selections[@]}" -eq 0 ]] &&
 		return 0
-	fi
 	#
-	# Replace commas with spaces
-	local selections="${selections//,/ }"
-	#
-	# Load response into an array
-	local selections=($selections)
-	#
-	# Validate user choices and return the choices
-	for choice in "${selections[@]}"; do 
-		if [[ "$choice" =~ $numberCheck ]] &&
-			(( choice >= 0 && choice <= ${#items[@]} ));
-		then
+	# Validate user choices & return the choices
+	for choice in "${selections[@]}"; do
+		[[ "$choice" =~ $num_chk ]] &&
+			(( choice < ${#items[@]} )) &&
 			echo "${items[$choice]}"
-		fi
 	done
 }
 #
 # Force-reinstall/install "$@", preffering new configurations over local changes
 secure_install() {
-	env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef $@
-	dpkg --configure -a ||
-		exit 5
+	env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef "$@"
+	dpkg --configure -a
 }
 #
 # Pause the execution of the script
 pause() {
-	cat <<-'EOF'
-		⏸️ ⏸️ ⏸️ ===> SCRIPT IS PAUSED <=== ⏸️ ⏸️ ⏸️
-		    Press [ENTER] to resume the script.
-	EOF
-	read -r
-	echo '✅: Script was resumed.'
+	read -n1 -p '⏸️ ⏸️ ⏸️ ===> PRESS ANY KEY TO RESUME <=== ⏸️ ⏸️ ⏸️'
+	echo 'OK: Script was resumed.'
 }
 # 
 # Quick service decomissioning
 decommission() {
-	(
-		set -e
-		systemctl disable --now "$1"
-		systemctl mask "$1"
-	)
+	systemctl disable --now "$1"
+	systemctl mask "$1"
 }
 #
 # Quickly apply SystemD override files for services
-sysdpatch() {
-	local service="${$1%.service}"
-	local overrideFile="systemd-overrides/$service.conf"
-	local targetDir="/etc/systemd/system/$service.service.d"
-	mkdir -p "$targetDir"
-	#
-	# Apply patch and restart the service
+svc_patch() {
 	(
+		# Apply patch & restart the service
 		set -e
-		cp "$overrideFile" "$targetDir/override.conf"
+		local service_file="/etc/systemd/system/$1.service.d/override.conf"
+		touch "$service_file"
+		install -m 600 -o root -g root "systemd-overrides/$1.conf" "$service_file"
 		systemctl daemon-reload
-		systemctl restart "$service.service"
+		systemctl restart "$1.service"
 	)
 }
 #
-# Check for root permissions, if the script is running in a Bash shell and if the system daemon is SystemD
-envCheck() {
+# Check for root permissions, if the script is running in a Bash shell & if the system daemon is SystemD
+environ_chk() {
+	# Alert the user of the checks to avoid an invisible hang
+	echo 'Running environment checks...'
+	#
+	# Initialize a variable which when set will stop the script at the end of the check
+	local exit
+	#
+	# Start the check
+	# 1. Is this running in Bash; & am I sourced?
+	# 2. Am I running as root?
+	# 3. Is this system using SystemD?
+	# 4. Can I connect to the APT repositories?
 	if [[ -z "${BASH_SOURCE[0]}" ]]; then
-		echo '❌: Script must be ran by Bash intepreter and the script must NOT be sourced'
-		exit 1
+		echo 'E: Script must be ran by Bash intepreter & must NOT be sourced.'
+		exit=1
 	elif [[ "$EUID" -ne 0 ]]; then
-		echo "❌: Must run as root. Try (sudo bash $0)"
-		exit 2
+		echo "E: Must run as root. Try (sudo bash $0)"
+		exit=1
 	elif [[ "$(cat /proc/1/comm)" != 'systemd' ]]; then
-		echo '❌: System is not using SystemD which is the only system daemon supported by this script.'
-		exit 3
+		echo 'E: System is not using SystemD which is the only system daemon supported by this script.'
+		exit=1
 	elif ! command -v apt apt-get dpkg &>/dev/null; then
-		echo '❌: This script only works with systems using the APT and DPKG package manager, which this system lacks.'
-		exit 4
-	elif apt-get update &>/dev/null |
-		grep -qEi 'W: Failed to fetch|failed to download';
+		echo 'E: This script requires the APT package manager, which this system lacks.'
+		exit=1
+	elif timeout 10 apt-get update |
+		grep -Ei '(failed to fetch|failed to download)';
 	then
-		echo '❌: You lack a proper connection to some APT repositories, ensure you have fully connectivity before running.'
-		exit 7
+		echo 'E: You lack a sufficient connection to some APT repositories.'
+		exit=1
 	fi
-}
-#
-# Function to check for a valid, unused suffix for log files
-suffixCheck() {
-	local num=1
-	while [[ -f "$log_dir/"*"$num" ]]; do
-		((num++))
-	done
-	suffix="$num"
+	#
+	# If the exit variable is set, exit.
+	[[ -n "$exit" ]] &&
+		exit 1
 }
 
 
@@ -232,20 +163,31 @@ suffixCheck() {
 #
 # Environment Setup
 #
-# Run the suffix & envCheck
-suffixCheck
-envCheck
+# Secure path variable
+declare -rx PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin'
+#
+# Secure UMASK
+umask 077
+#
+# Check for an open logfile name
+i=1
+while [[ -f "$(pwd)/"*"$i" ]]; do
+	(( i++ ))
+done
+#
+# Log to master a log file
+exec > >(tee -a "$(pwd)/$(basename "$0")-master-$i.log")
+#
+# Check for a supported environment
+environ_chk
 #
 # Include hidden directories when globbing
-# Trying to avoid errors when globbing results in nothing, and set case insensitivity for responses.
+# Trying to avoid errors when globbing results in nothing, & set case insensitivity for responses.
 shopt -s dotglob nullglob nocasematch
 #
-# Remove aliases and disable alias expansion
+# Unset aliases & disable alias expansion
 unalias -a
 shopt -u expand_aliases
 #
 # Make a pipeline's exit code the exit code of the last failed command of the pipelines
 set -o pipefail
-#
-# Log to master a log file
-exec > >(tee -a "$log_dir/$(basename "$0")-script-master-log-$suffix")

@@ -1,4 +1,4 @@
-#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
+#!/usr/bin/env bash
 #
 # Setup
 #
@@ -34,8 +34,9 @@ echo "OK: Backed up VSFTPD confugrations to $backup"
 #
 # Install/Verify Integrity of VSFTPD
 #
-echo "🚧: Installing/reinstalling VSFTPD..."
-secure_install vsftpd openssl || exit 6
+echo "i: Installing/reinstalling VSFTPD..."
+secure_install vsftpd openssl ||
+	exit 6
 
 
 
@@ -45,67 +46,67 @@ secure_install vsftpd openssl || exit 6
 # Harden VSFTPD
 #
 if ! [[ -f "$certFile" ]]; then
-	echo "🚧: Generating TLS certificate"
+	echo "i: Generating TLS certificate"
 	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "$certFile" -out "$certFile" -subj "/CN=FTP Server"
 	chmod 600 "$certFile"
 fi
 # Disable anonymous access
-echo "🚧: Applying secure VSFTPD configurations..."
-set_vsftpd_config "anonymous_enable" "NO"
+echo "i: Applying secure VSFTPD configurations..."
+set_vsftpd_config anonymous_enable NO
 #
 # Local users only
-set_vsftpd_config "local_enable" "YES"
-set_vsftpd_config "write_enable" "YES"
+set_vsftpd_config local_enable YES
+set_vsftpd_config write_enable YES
 #
 # Chroot/anchor users to their home directories
-set_vsftpd_config "chroot_local_user" "YES"
-set_vsftpd_config "allow_writeable_chroot" "YES"
+set_vsftpd_config chroot_local_user YES
+set_vsftpd_config allow_writeable_chroot YES
 #
 # Restrict file permissions
-set_vsftpd_config "local_umask" "022"
+set_vsftpd_config local_umask 022
 #
 # Disable risky features
-set_vsftpd_config "dirmessage_enable" "NO"
-set_vsftpd_config "xferlog_enable" "YES"
-set_vsftpd_config "port_enable" "NO"
+set_vsftpd_config dirmessage_enable NO
+set_vsftpd_config xferlog_enable YES
+set_vsftpd_config port_enable NO
 #
 # Enable Logging
-set_vsftpd_config "log_ftp_protocol" "YES"
-set_vsftpd_config "vsftpd_log_file" "/var/log/vsftpd.log"
+set_vsftpd_config log_ftp_protocol YES
+set_vsftpd_config vsftpd_log_file /var/log/vsftpd.log
 #
 # Connection limits (brute-force mitigation)
-set_vsftpd_config "max_clients" "10"
-set_vsftpd_config "max_per_ip" "3"
-set_vsftpd_config "pasv_enable" "YES"
-set_vsftpd_config "pasv_min_port" "40000"
-set_vsftpd_config "pasv_max_port" "40100"
+set_vsftpd_config max_clients 10
+set_vsftpd_config max_per_ip 3
+set_vsftpd_config pasv_enable YES
+set_vsftpd_config pasv_min_port 40000
+set_vsftpd_config pasv_max_port 40100
 #
 # Banner
-set_vsftpd_config "ftpd_banner" "Authorized access only."
+set_vsftpd_config ftpd_banner Authorized access only.
 #
 # TLS Hardening
-set_vsftpd_config "ssl_enable" "YES"
-set_vsftpd_config "rsa_cert_file" "$certFile"
-set_vsftpd_config "rsa_private_key_file" "$certFile"
+set_vsftpd_config ssl_enable YES
+set_vsftpd_config rsa_cert_file "$certFile"
+set_vsftpd_config rsa_private_key_file "$certFile"
 #
 # Force Encryption
-set_vsftpd_config "force_local_logins_ssl" "YES"
-set_vsftpd_config "force_local_data_ssl" "YES"
+set_vsftpd_config force_local_logins_ssl YES
+set_vsftpd_config force_local_data_ssl YES
 #
 # Disable Weak SSL
-set_vsftpd_config "ssl_sslv2" "NO"
-set_vsftpd_config "ssl_sslv3" "NO"
-set_vsftpd_config "ssl_tlsv1" "NO"
-set_vsftpd_config "ssl_tlsv1_1" "NO"
-set_vsftpd_config "ssl_tlsv1_2" "YES"
+set_vsftpd_config ssl_sslv2 NO
+set_vsftpd_config ssl_sslv3 NO
+set_vsftpd_config ssl_tlsv1 NO
+set_vsftpd_config ssl_tlsv1_1 NO
+set_vsftpd_config ssl_tlsv1_2 YES
 #
 # Strong ciphers
-set_vsftpd_config "ssl_ciphers" "HIGH"
+set_vsftpd_config ssl_ciphers HIGH
 #
 # Hide users
-set_vsftpd_config "userlist_enable" "YES"
-set_vsftpd_config "userlist_deny" "NO"
-set_vsftpd_config "require_ssl_reuse" "NO"
+set_vsftpd_config userlist_enable YES
+set_vsftpd_config userlist_deny NO
+set_vsftpd_config require_ssl_reuse NO
 
 
 
@@ -114,28 +115,16 @@ set_vsftpd_config "require_ssl_reuse" "NO"
 #
 # Configuration Validation
 #
-echo "🚧: Validating VSFTPD configuration..."
-if vsftpd "$vsftpdConfig" &>/dev/null; then
+echo "i: Validating VSFTPD configuration..."
+if vsftpd "$vsftpdConfig"; then
 	systemctl restart vsftpd
-	echo "OK: VSFTPD started securely"
+	echo "OK: VSFTPD restarted successfully."
 else
 	echo "E: Configuration validation error; reverting to backup(s)..."
 	cp -p "$backup" "$vsftpdConfig"
 	systemctl restart vsftpd
 	exit 1
 fi
-
-
-
-
-
-#
-# Firewall Configuration
-#
-echo "🚧: Adding Firewall Configurations for VSFTPD..."
-ufw allow in 20:21/tcp # Main VSFTPD ports
-ufw allow in 990/tcp # Implicit SSL
-ufw allow in 40000:40100/tcp # Passive VSFTPD ports
 
 
 

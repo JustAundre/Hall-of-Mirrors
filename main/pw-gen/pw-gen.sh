@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Environment Setup
 #
@@ -24,8 +24,9 @@ word_pull() {
 		# Verbose output: print scrapped words
 		if [[
 				-n "$verbose" &&
-					-n "$word"
-			]]; then
+				-n "$word"
+			]];
+		then
 			echo "i: Hit an unfit word '$word'" >&3
 		fi
 		#
@@ -35,14 +36,10 @@ word_pull() {
 			return 4
 		fi
 		#
-		# Shuffle the dictionary and pull 1 word
-		if ! word=$(
-				if ! shuf -n1 "$dict_location"; then
-					# Error out if failed to fetch a word
-					echo 'E: Failed to fetch word from the dictionary.' >&4
-					return 2
-				fi
-			); then
+		# Shuffle the dictionary & pull 1 word
+		word="$(shuf -n1 $dict_location)"
+		if [[ -z "$word" ]]; then
+			echo 'E: Failed to fetch word from the dictionary.' >&4
 			return 2
 		fi
 		#
@@ -89,7 +86,7 @@ while getopts 's:m:M:c:a:p:hv' flag; do
 				Either you used a non-existent option or asked to be directed here by way of -h.
 
 				About:
-				    A very customizable and automatible password generator
+				    A very customizable & automatible password generator
 				
 				    Missing CLI arguments will be prompted for interactively if possible
 				    Pre-determined defaults will substitute invalid arguments
@@ -148,38 +145,44 @@ done
 # Prompts for tuning
 if [[
 		-z "$separator" &&
-			-t 0
-	]]; then
+		-t 0
+	]];
+then
 	read -erp 'Enter a separator (Default is -): ' separator >&4
 fi
 if [[
 		-z "$min" &&
-			-t 0
-	]]; then
+		-t 0
+	]];
+then
 	read -erp 'Minimum word length (Default is 4): ' min >&4
 fi
 if [[
 		-z "$max" &&
-			-t 0
-	]]; then
+		-t 0
+	]];
+then
 	read -erp 'Max word length (Default is 8): ' max >&4
 fi
 if [[
 		-z "$capitals" &&
-			-t 0
-	]]; then
+		-t 0
+	]];
+then
 	read -erp 'Capitalize first letters? [Y/n]: ' capitals >&4
 fi
 if [[
 		-z "$password_amount" &&
-			-t 0
-	]]; then
+		-t 0
+	]];
+then
 	read -erp 'Amount of passwords (Default is 1): ' password_amount >&4
 fi
 if [[
 		-z "$pattern" &&
-			-t 0
-	]]; then
+		-t 0
+	]];
+then
 	cat >&4 <<-'EOF'
 		w = Random word
 		n = Random number
@@ -204,7 +207,7 @@ fi
 if (( "$min" > "$max" )); then
 	cat >&4 <<-EOF
 		W: Minimum ($min) is greater than maximum ($max) is an unfufilable condition;
-		i: Swapping the values of min/max from $min/$max to $max/$min to fix contradiction and proceeding...
+		i: Swapping the values of min/max from $min/$max to $max/$min to fix contradiction & proceeding...
 	EOF
 	read max min <<< "$(echo $min $max)"
 fi
@@ -229,10 +232,17 @@ fi
 #
 # Password generation
 #
-# Download dictionary if not already present
-if [[ ! -f "$dict_location" && ! -f 'en_US-dict.txt' ]]; then
+# If no dictionary is present...
+if [[
+		! -f "$dict_location" &&
+		! -f 'en_US-dict.txt'
+	]];
+then
+	# Attempt to download one (with consent)...
 	echo "W: A pre-existing dictionary couldn't be located in '$dict_location'."
 	dict_location='en_US-dict.txt'
+	#
+	# if there's a terminal.
 	if [[ -t 0 ]]; then
 		read -erp "Download a dictionary from '$dict_url' to '$(pwd)/$dict_location? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
 	else
@@ -240,20 +250,26 @@ if [[ ! -f "$dict_location" && ! -f 'en_US-dict.txt' ]]; then
 			E: As this is non-interactive,
 			    a prompt won't be shown for downloading an external dictionary,
 			    the dictionary won't be downloaded
-			    and the script will now close.
+			    & the script will now close.
 		EOF
 		exit 4
 	fi
+	#
+	# Start the download (if consented)
 	if [[ "$download" =~ ^[yY] ]]; then
 		echo 'i: Downloading...' >&4
+		#
+		# Will timeout if download takes too long.
 		if ! curl -s "$dict_url" --connect-timeout 5 > "$dict_location"; then
+			# Alert user of the error
 			cat >&4 <<-'EOF'
 				E: Failed to download dictionary;
-				    deleting possible remnant file(s) and quitting...
+				    deleting possible remnant file(s) & quitting...
 			EOF
-			if [[ -f "$dict_location" ]]; then
+			#
+			# Remove remnant empty file
+			[[ -f "$dict_location" ]] &&
 				rm "$dict_location"
-			fi
 			exit 1
 		fi
 	fi

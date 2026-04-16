@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Curly brackets to stop output of staging commands
 {
 	# Set secure/safe shell configurations
@@ -24,9 +24,8 @@
 	declare -rx TTY="${TTY##*/}"
 	declare -rx SSH_TTY="$TTY"
 	UID=$(</proc/self/loginuid)
-	if [[ "$UID" == 4294967295 ]]; then
+	[[ "$UID" == 4294967295 ]] &&
 		UID="$(id -u)"
-	fi
 	declare -rx UID
 	declare -rx USER=$(
 		getent passwd "$UID" |
@@ -38,11 +37,9 @@
 	HOSTNAME=$(hostname)
 	declare -rx HOSTNAME="${HOSTNAME%%.*}"
 	for var in SSH_CONNECTION SSH_CLIENT; do
-		if [[ -z "$var" ]]; then
-			declare -rx "$var=Local"
-		else
+		[[ -z "$var" ]] &&
+			declare -rx "$var=Local" ||
 			declare -rx "$var"
-		fi
 	done
 	#
 	# Remove usage of commands which allow bypasses or unauthorized forensics

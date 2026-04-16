@@ -1,4 +1,4 @@
-Name: Pwquality password strength and history checking
+Name: Password quality - Strength & history checks
 Default: yes
 Priority: 1024
 Conflicts: cracklib

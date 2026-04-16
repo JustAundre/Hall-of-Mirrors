@@ -63,14 +63,12 @@
 	#
 	# The prompt to show on each new line
 	declare -x PS1="[$USER@$HOSTNAME ~]$ "
-	if [[ "$fake_root" == "y" ]]; then
+	[[ "$fake_root" == "y" ]] &&
 		declare -x PS1="[root@$HOSTNAME ~]# "
-	fi
 	#
 	# Dynamic handling for SSH_CONNECTION/ip_from
-	if [[ -z "$SSH_CLIENT" ]]; then
+	[[ -z "$SSH_CLIENT" ]] &&
 		SSH_CLIENT='Local'
-	fi
 	#
 	# Log everything
 	IFS='' read -rd '' PROMPT_COMMAND <<-'EOF'
@@ -131,7 +129,7 @@
 		# Check annoyance type
 		case "$annoy_type" in
 			1)
-				# Flash black and white really fast for a few seconds
+				# Flash black & white really fast for a few seconds
 				for i in {1..250}; do
 					printf '\e[?5h'
 					sleep .01
@@ -143,9 +141,8 @@
 				# Splat out 512 bytes from /dev/urandom onto the screen
 				for i in {1..7}; do
 					sleep 2
-					if [[ $(( RANDOM % 100 > 80 )) -eq 1 ]]; then
+					[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] &&
 						head -c 512 /dev/urandom
-					fi
 				done
 				printf "\n%s" "$PS1"
 			;;
@@ -174,7 +171,7 @@
 					printf '\a'
 				done
 				#
-				# Move cursor to the bottom and show your cursor again
+				# Move cursor to the bottom & show your cursor again
 				printf "\e[%d;1H$PS1" "$rows"
 				tput cnorm
 			;;
@@ -205,7 +202,7 @@
 		stty echo
 		#
 		# Enter into logger script if exists
-		if [[ -f '/opt/logger.sh' ]]; then
+		if [[ -f /opt/logger.sh ]]; then
 			builtin exec /usr/bin/env -i\
 				SSH_CONNECTION="$SSH_CONNECTION"\
 				SSH_CLIENT="$SSH_CLIENT"\
@@ -247,34 +244,33 @@
 		# Simulate a fake delay (if configured)
 		# Silently lock out after max_tries
 		# Generate hash only if not locked out
-		if [[ "$layer_at" -eq 1 ]]; then
+		[[ "$layer_at" -eq 1 ]] &&
 			history -s "$input"
-		fi
-		if [[ "$fake_delay" == "y" ]]; then
+		[[ "$fake_delay" == "y" ]] &&
 			sleep "$fake_delay_amount"
-		fi
-		if [[ "$counts" -gt "$max_tries" && "$stop_hash" != "y" ]]; then
+		[[ "$counts" -gt "$max_tries" && "$stop_hash" != "y" ]] &&
 			readonly stop_hash="y"
-		fi
-		if [[ "$stop_hash" == "n" ]]; then
-			in_hashed="$(hash)"
-		else
+		[[ "$stop_hash" == "n" ]] &&
+			in_hashed="$(hash)" ||
 			in_hashed=
-		fi
 		#
 		# Handle common inputs
 		if [[ "${#input}" -gt $max_stdin ]]; then
-			# Print a fake error and exit
+			# Print a fake error & exit
 			printf "\nrbash: fork: cannot allocate memory\n"
 			exit 255
 		elif [[ -z "$input" ]]; then
 			# Do nothing on empty input
 			:
 		elif [[ "$layer_at" -eq 1 ]]; then
-			# Mimic rbash restrictions and errors (L1 exclusive)
+			# Mimic rbash restrictions & errors (L1 exclusive)
 			if [[ "$cmd" == *"/"* ]]; then
 				echo "rbash: $cmd: cannot specify '/' in command names" 1>&2
-			elif [[ "$cmd" == 'exit' || "$cmd" == 'logout' ]]; then
+			elif [[
+					"$cmd" == 'exit' ||
+						"$cmd" == 'logout'
+				]];
+			then
 				exit 1
 			elif [[ "$cmd" == 'sudo' ]]; then
 				sudo echo "$USER is not in the sudoers file.  This incident will be reported." 1>&2
@@ -295,7 +291,12 @@
 		fi
 		#
 		# Check for current layers' password
-		if [[ "$stop_hash" == "n" && -n "$input" && "$in_hashed" == "$target_hash" ]]; then
+		if [[
+				"$stop_hash" == "n" &&
+				-n "$input" &&
+				"$in_hashed" == "$target_hash"
+			]];
+		then
 			# Log success
 			warn 2
 			#

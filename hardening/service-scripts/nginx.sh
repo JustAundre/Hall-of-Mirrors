@@ -1,4 +1,4 @@
-#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
+#!/usr/bin/env bash
 #
 # Setup
 #
@@ -36,7 +36,7 @@ systemctl stop nginx
 	set -e
 	cp -p "$nginx_main_config" "$backup_dir/nginx.conf"
 	cp -p "$default_page" "$backup_dir/default"
-	echo "ℹ️: Configuration backups are saved under ($backup_dir)."
+	echo "i: Configuration backups are saved under ($backup_dir)."
 )
 #
 # Add secure headers to outgoing requests
@@ -53,7 +53,7 @@ if ! grep -qE 'include\s+/etc/nginx/conf\.d/\*\.conf;' "$nginx_main_config"; the
 fi
 #
 # Update the general-confs/default file with what is appropriate with your scenario
-echo '🚧: Replacing default site with secure defaults...'
+echo 'i: Replacing default site with secure defaults...'
 cat general-confs/default >/etc/nginx/sites-available/default
 #
 # Remove overlapping configuration values from nginx.conf
@@ -73,39 +73,21 @@ sed -i '/ssl_session_cache/d' "$nginx_main_config"
 #
 # Configuration Validation
 #
-echo '🚧: Testing Nginx configuration...'
+echo 'i: Testing Nginx configuration...'
 if nginx -t; then
 	cat <<-'EOF'
 		OK: Nginx config is OK,
-		🚧: Restarting Nginx...
+		i: Restarting Nginx...
 	EOF
 	systemctl restart nginx
 else
 	cat <<-'EOF'
 		E: Nginx config test failed.
-		🚧: Reverting to backups...
+		i: Reverting to backups...
 	EOF
 	cp -p "$backup_dir/nginx.conf" "$nginx_main_config"
 	cp -p "$backup_dir/default" "$default_page"
 	exit 1
-fi
-
-
-
-
-
-#
-# Firewall Configuration
-#
-# Whitelist the universal HTTP port
-echo "🚧: Adding UFW exception for default HTTP port"
-read -erp "What port(s) does your webserver use? (Type nothing for default to 80): " ports
-if [[ "$ports" =~ $num_chk ]]; then
-	for port in "$ports"; do
-		ufw allow in "$port/tcp"
-	done
-else
-	ufw allow in 80/tcp
 fi
 
 

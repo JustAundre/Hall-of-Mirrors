@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Environment Setup & Logging
 #
@@ -10,36 +10,38 @@
 
 
 #
-# Immutable and Append-only removal/restoration
+# Attribute Manager
 #
+# Set the choices
 options=(
 	remove
 	restore
 )
-response=$(checklist 'Action Required' radiolist "${options[@]}")
+response="$(checklist 'Attribute manager' radiolist "${options[@]}")"
 if [[ "$response" == 'remove' ]]; then
-	echo 'ℹ️: This will take a second...'
+	# Alert the user of the possible lengthy scan
+	echo 'i: This will take a second...'
 	#
-	# Finds and removes immutable (i) attributes
+	# Removes the (i)mmutable and (a)ppend-only attributes from all files
 	find / -xdev -type f -exec lsattr -d {} + |
-		awk '$1 ~ /i/ { print $2 }' |
-		xargs -r chattr -i \
-		>>"$log_dir/immutable-files.txt"
-	#
-	# Finds and removes append-only (a) attributes
-	find / -xdev -type f -exec lsattr -d {} + |
-		awk '$1 ~ /a/ { print $2 }' |
-		xargs -r chattr -a \
-		>>"$log_dir/append-only-files.txt"
-else
-	cat "$log_dir/immutable-files.txt" |
-		while IFS= read -r file_path; do
+		tee >(
+			awk '$1 ~ /i/ { print $2 }' |
+				tee "immutable-files.txt" |
+				xargs chattr -i
+		) >(
+			awk '$1 ~ /a/ { print $2 }' |
+				tee "append-only-files.txt" |
+				xargs chattr -a
+		) >/dev/null
+elif [[ "$response" == 'restore' ]]; then
+	cat "append-only-files.txt" |
+		while IFS= read -r path; do
+			[[ -f "$path" ]] &&
+				chattr +a "$path"
+		done
+	cat "immutable-files.txt" |
+		while IFS= read -r path; do
 			[[ -f "$file_path" ]] &&
 				chattr +i "$file_path"
-	done
-	cat "$log_dir/append-only-files.txt" |
-		while IFS= read -r file_path; do
-			[[ -f "$file_path" ]] &&
-				chattr +a "$file_path"
-	done
+		done
 fi

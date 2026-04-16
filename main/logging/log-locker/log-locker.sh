@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Environment Setup
 #
@@ -45,7 +45,7 @@ for file in "$log_dir"/*; do
 			echo "Made append-only: $file"
 	else
 		# File is idle/finished
-		# Remove append-only (-a) and set immutable (+i)
+		# Remove append-only (-a) & set immutable (+i)
 		chattr -a +i "$file" &&
 			echo "Made immutable: $file"
 	fi

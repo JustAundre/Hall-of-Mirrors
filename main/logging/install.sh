@@ -33,7 +33,7 @@ EOF
 systemctl restart sshd
 #
 # Get excluded users
-read -aerp 'Enter the usernames of users to exclude from the logger (supports the user@0.0.0.0 format) (space-separated): ' exclusions
+read -erp 'Enter the usernames of users to exclude from the logger (supports the user@0.0.0.0 format) (space-separated): ' -a exclusions
 #
 # Set up user exclusions
 for user in "$exclusions"; do

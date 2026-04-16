@@ -1,4 +1,4 @@
-#!/usr/bin/env -iS /usr/bin/bash --noprofile --norc
+#!/usr/bin/env bash
 #
 # Environment Setup
 #
@@ -33,12 +33,12 @@ cat <<-'EOF'
 	Help Pages:
 	https://unix.stackexchange.com/questions/642824/ssh-fails-to-start-due-to-missing-host-keys
 
-	🚧: Installing and resetting SSH...
+	i: Installing & resetting SSH...
 EOF
 #
 # Backup configurations
 cp -p "$config_file" "$backup_config"
-echo "ℹ️: Backups created at ($backup_config)"
+echo "i: Backups created at ($backup_config)"
 #
 # Refresh SSHD
 secure_install openssh-server
@@ -59,7 +59,7 @@ secure_install openssh-server
 # SSH Hardening
 #
 # Authentication (no keys, all password)
-echo '🚧: Applying SSH setting configurations'
+echo 'i: Applying SSH setting configurations'
 configure_ssh PermitRootLogin no
 configure_ssh PasswordAuthentication yes
 configure_ssh PubkeyAuthentication no
@@ -91,13 +91,13 @@ if getent group ssh &>/dev/null; then
 	members=$(getent group ssh | awk -F: '{print $3, $4}')
 	if [[ -n "$members" ]]; then
 		cat <<-EOF
-			ℹ️: The following users are in the SSH group and may be able to SSH into this machine: $members
+			i: The following users are in the SSH group & may be able to SSH into this machine: $members
 		EOF
 	else
-		echo 'ℹ️: There are no members in the SSH group.'
+		echo 'i: There are no members in the SSH group.'
 	fi
 else
-	echo 'ℹ️: The SSH group does not exist.'
+	echo 'i: The SSH group does not exist.'
 fi
 
 
@@ -108,14 +108,14 @@ fi
 # Configuration Validation
 #
 # Validate SSH configurations
-echo '🚧: Validating configuration(s)...'
+echo 'i: Validating configuration(s)...'
 #
 # If SSHD configurations...
 if sshd -t; then
 	# Pass
 	cat <<-'EOF'
 		OK: SSH configuration is OK.
-		🚧: Restarting SSHD...
+		i: Restarting SSHD...
 	EOF
 	#
 	# Restart SSHD
@@ -124,7 +124,7 @@ else
 	# Fail
 	cat <<-'EOF'
 		E: Configuration validation failed.
-		🚧: Reverting to backup_configs...
+		i: Reverting to backup_configs...
 	EOF
 	#
 	# Revert configurations
@@ -142,13 +142,6 @@ fi
 #
 # Firewall Configuration
 #
-read -erp 'What is the port for SSH? (Enter nothing for default port): ' port
-if [[ "$port" =~ $num_chk ]]; then
-	ufw allow in "$port/tcp"
-else
-	echo 'E: No valid port number provided, exempting default SSH port (22/tcp)'
-	ufw allow in 22/tcp
-fi
 if confirm 'Use Fail2Ban with a secure default configuration'; then
 	apt-get install fail2ban &&
 		install -m 600 -o root -g root general-confs/jail.local /etc/fail2ban/jail.local
