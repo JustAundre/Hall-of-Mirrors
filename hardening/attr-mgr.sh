@@ -22,7 +22,7 @@ if [[ "$response" == 'remove' ]]; then
 	# Alert the user of the possible lengthy scan
 	echo 'i: This will take a second...'
 	#
-	# Removes the (i)mmutable and (a)ppend-only attributes from all files
+	# Removes the (i)mmutable & (a)ppend-only attributes from all files
 	find / -xdev -type f -exec lsattr -d {} + |
 		tee >(
 			awk '$1 ~ /i/ { print $2 }' |
