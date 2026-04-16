@@ -24,7 +24,22 @@ Basically everything here will also depend on the installation of `main/general-
 
 ## Installation
 
-Refer to the respective `README.md`s for each of the directories in `main/`
+Refer to the respective `README.md`s for each of the subdirectories in this root directory.
+
+## Repository Development
+
+Formatting checks
+- Run the below & implement formatting suggestions/fixes as needed.
+```bash
+shfmt -d .
+```
+
+Error & best practices checks
+- Run the below & implement fixes to oversights & best practices as needed.
+```bash
+find . -type f -name '*.sh' |
+    xargs shellcheck -x
+```
 
 ## Notices
 
