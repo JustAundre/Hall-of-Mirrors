@@ -33,11 +33,10 @@ if confirm 'Is there a webserver which uses Wordpress'; then
 		gem install wpscan
 		#
 		# Run the scan
-		read -rp 'What port is the webserver with Wordpress on (port number only)?: ' port
-		if [[ "$port" =~ $num_chk ]]; then
+		read -rp 'Which port is the webserver with Wordpress on (port number only)?: ' port
+		[[ "$port" =~ $num_chk ]] &&
 			wpscan --url "http://127.0.0.1:$port" --enumerate p |
 				tee -a "wordpress-vulns-$suffix.log"
-		fi
 	)
 	#
 	# Remove make dependencies
@@ -48,11 +47,11 @@ fi
 #
 # Log open ports
 ss -tulpn |
-	grep '0.0.0.0' |
+	grep 0.0.0.0 |
 	tee -a "open-ports-$suffix.log"
 #
 # Scan for Malicious PAM Hooks
-grep -r 'pam_exec.so' /etc/pam.d/ |
+grep -r pam_exec.so /etc/pam.d/ |
 	tee -a "possible-pam-hooks-$suffix.log"
 
 
@@ -145,12 +144,12 @@ if confirm 'Check for unrecognized/suspicious programs/files (Additional softwar
 	if confirm 'Search for binaries unrecognized by DPKG'; then
 		(
 			set -e
-			mapfile -t paths <(
+			mapfile -t paths < <(
 				printf '%s' "$PATH" |
 					tr ':' ' '
 			)
 			for dir in "${paths[@]}"; do
-				mapfile -t binaries <(
+				mapfile -t binaries < <(
 					find "$dir" -type f -executable -exec file --mime-type {} + |
 						grep 'application/x' |
 						cut -d: -f1

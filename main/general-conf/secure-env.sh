@@ -6,7 +6,7 @@
 	set -o functrace errtrace pipefail nounset noclobber
 	shopt -s histappend histverify cmdhist dotglob globstar interactive_comments
 	shopt -u cdable_vars cdspell dirspell extglob nocaseglob nocasematch expand_aliases progcomp
-	umask 0077
+	umask 077
 	#
 	# Lock down variables
 	read -r PROMPT_COMMAND <<-'EOF'
@@ -27,14 +27,17 @@
 	[[ "$UID" == 4294967295 ]] &&
 		UID="$(id -u)"
 	declare -rx UID
-	declare -rx USER=$(
+	declare -rx USER="$(
 		getent passwd "$UID" |
 			cut -d: -f1
-	)
+	)"
 	declare -rx LOGNAME="$USER"
-	declare -rx HOME="$(getent passwd $USER | cut -f6)"
+	declare -rx HOME="$(
+		getent passwd "$USER" |
+			cut -f6
+	)"
 	declare -rx HISTFILE="$HOME/.bash_history"
-	HOSTNAME=$(hostname)
+	HOSTNAME="$(hostname)"
 	declare -rx HOSTNAME="${HOSTNAME%%.*}"
 	for var in SSH_CONNECTION SSH_CLIENT; do
 		[[ -z "$var" ]] &&

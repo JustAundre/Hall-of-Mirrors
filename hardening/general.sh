@@ -40,7 +40,7 @@ confirm 'Remove legacy/risky *services*' "${risky_pkgs[*]}\n(See above for afore
 # Audit SystemD services
 if confirm 'Audit SystemD services'; then
 	service_review=y
-	mapfile -t flagged_services <(checklist 'Select services to REMOVE' checklist "${services[@]}")
+	mapfile -t flagged_services < <(checklist 'Select services to REMOVE' checklist "${services[@]}")
 fi
 #
 # Whether to mask vi/vim, netcat/nc or chpasswd
@@ -78,15 +78,19 @@ confirm 'Configure kernel /w SysCTL' &&
 	no_ipv6=y
 #
 # Whether to apply general fixes to filesystem ownership & modes
-confirm 'Apply non-destructive file permission fixes' &&
+confirm 'Apply non-destructive filesystem permission & ownership fixes' &&
 	fix_perms=y
 #
 # Catch logical fallacies in /etc/passwd, /etc/shadow, /etc/gshadow & /etc/groups.
 # - i.e. Group specified in gshadow but not groups
 # - i.e. User doesn't exist in passwd but is referenced as a member of a group in groups
-confirm 'Check shadow files for technical inconsistencies' &&
-	pwck=y
-confirm 'Move possible hashes from /etc/passwd to /etc/shadow' &&
+confirm 'Check local user information for technical inconsistencies' "$(
+	man pwck |
+		head -n 25 |
+		tail -n 16
+	)" &&
+		pwck=y
+confirm 'Move possible hashes from passwd/group (public) files to shadow/gshadow (private) files' &&
 	mv_hash=y
 #
 # Whether to audit users
@@ -101,17 +105,13 @@ confirm 'Reconfigure PAM & /etc/login.defs' &&
 # Whether to audit scheduled tasks
 if
 	[[ -n "$audit_users" ]] &&
-	confirm 'Review & delete scheduled tasks' '(This prompt is unique in that your responses here take effect immediately unlike the others)';
+	confirm 'Review & delete scheduled tasks' "(This prompt is unique in that your responses here take effect immediately unlike the others)\nYou'll be manually reviewing these scheduled tasks:\nCron files\nCrontabs\nSystemD timers\nYou'll then be asked whether the source file should be deleted after reviewing.";
 then
-	# Alert for manual review
-	printf "\nYou'll be manually reviewing these scheduled tasks:\nCron files\nCrontabs\nSystemD timers\nYou'll then be asked whether the source file should be deleted after reviewing.\n"
-	pause
-	#
 	# Cron files
 	find /etc/cron* -maxdepth 1 -type f -exec nano {} \; -exec rm -i {} \;
 	#
 	# Crontabs
-	mapfile -t all_usernames <(
+	mapfile -t all_usernames < <(
 		cat /etc/passwd |
 			cut -d: -f1
 	)
@@ -121,11 +121,11 @@ then
 	done
 	#
 	# SystemD timers
-	find /etc/systemd/system -maxdepth 1 -name "*.timer" -type f -exec nano {} \; -exec rm -i {} \; -exec systemctl disable --now {} \;
+	find /etc/systemd/system -maxdepth 1 -name '*.timer' -type f -exec nano {} \; -exec rm -i {} \; -exec systemctl disable --now {} \;
 fi
 #
 # Whether to configure firewall rules
-if confirm 'Configure firewall'; then
+if confirm 'Configure the firewall'; then
 	firewall_config=y
 	firewall="$(checklist 'Which firewall are we using?' radiolist "${firewall_options[@]}")"
 fi
@@ -154,22 +154,22 @@ if confirm 'Configure resource limitations for users'; then
 	#
 	# Prompt for individual (per-person) limitations
 	while [[
-			-z "$individual_mem" ||
-			(( 100 >= individual_mem && individual_mem >= collective_mem ))
-		]];
-	do
+		-z "$individual_mem" ||
+		"$individual_mem" -gt 100 ||
+		individual_mem -le collective_mem
+	]]; do
 		read -n3 -erp 'Enter % of the max memory would you like an individual user to be able to use?: ' individual_mem
 	done
 	while [[
-			-z "$individual_cpu" ||
-			(( 100 >= individual_cpu && individual_cpu >= collective_cpu ))
-		]];
-	do
+		-z "$individual_cpu" ||
+		$individual_cpu -gt 100 ||
+		$individual_cpu -le $collective_cpu
+	]]; do
 		read -n3 -erp 'Enter % of the CPU would you like an individual user to be able to use?: ' individual_cpu
 	done
 	#
 	# Prompt for "THE" administrative group
-	admin_group=lorem_ipsum
+	admin_group=placeholder
 	while [[ -z "$(getent group "$admin_group")" ]]; do
 		read -erp 'What is THE administrative group? (e.x. wheel, sudo, etc.): ' admin_group
 	done
@@ -189,7 +189,7 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 # Install script dependencies
 [[ -n "$deps" ]] &&
 	secure_install "${hard_deps[@]}" ||
-	exit 1
+	alt_exit 1
 #
 # Run updates
 if [[ -n "$upd" ]]; then
@@ -258,7 +258,8 @@ if [[ -n "$service_review" ]]; then
 		done
 	done
 fi
-#install -m 640 -o root -g root general-confs/apache2.conf /etc/apache2/conf-enabled/99-security.conf
+# Need to move this command to the Apache script
+# install -m 640 -o root -g root general-confs/apache2.conf /etc/apache2/conf-enabled/99-security.conf
 #
 # Apply SystemD drop-ins for misc. services
 svc_patch cron
@@ -383,31 +384,27 @@ fi
 # User & Group Auditing
 #
 if [[ -n "$audit_users" ]]; then
-	# Audit users
 	# Delete users flagged as to be deleted
+	# Delete passwords of users flagged to have their password removed
+	# Lock users flagged to be locked
+	# Prompt to change the shell for users flagged to be reshelled
+	# Prompt to change the UID of users flagged to be reUIDed
+	# Prompt to change the primary & supplemental groups of users flagged to be regrouped
 	for u in "${users_del[@]}"; do
 		userdel -rf "$u"
 	done
-	#
-	# Delete passwords of users flagged to have their password removed
 	for u in "${users_nullpass[@]}"; do
 		passwd "$u" -d
 	done
-	#
-	# Lock users flagged to be locked
 	for u in "${users_lock[@]}"; do
 		passwd "$u" -l
 	done
-	#
-	# Prompt to change the shell for users flagged to be reshelled
 	for u in "${users_reshell[@]}"; do
 		while [[ ! -x "$shell" ]]; do
 			read -erp 'Enter the path to the new shell: ' shell
 		done
 		usermod -s "$shell" "$u"
 	done
-	#
-	# Prompt to change the UID of users flagged to be reUIDed
 	for u in "${users_reuid[@]}"; do
 		while [[
 				"$uid" =~ ^[0-9]+$ &&
@@ -418,18 +415,16 @@ if [[ -n "$audit_users" ]]; then
 		done
 		usermod -s "$uid" "$u"
 	done
-	#
-	# Prompt to change the primary & supplemental groups of users flagged to be regrouped
 	for u in "${users_regroup[@]}"; do
 		while [[ -z "$(getent passwd "$primary_group")" ]]; do
 			read -erp 'Enter new primary group: ' primary_group
 		done
-		i='start'
+		i=placeholder
 		while [[ -n "$i" ]]; do
 			read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
 			for group in "${supplemental_groups[@]}"; do
-				[[ -n "$(getent passwd "$group")" ]] ||
-					i='bad'
+				[[ -n "$(getent passwd "$group")" ]] &&
+					i=
 			done
 		done
 		usermod -g "$primary_group" "$u"
@@ -438,11 +433,10 @@ if [[ -n "$audit_users" ]]; then
 fi
 #
 # Secures root user
-if [[ -n "$lock_root" ]]; then
-	# (L)ocks user (root) & (d)eletes their password
-	passwd root -l
-	passwd root -d
-fi
+# (L)ocks user (root) & (d)eletes their password
+[[ -n "$lock_root" ]] &&
+	passwd root -ld
+
 
 
 
@@ -460,7 +454,7 @@ if [[ -n "$firewall_config" ]]; then
 	#
 	# Configure baseline ruleset
 	# Uncomplicated Firewall/ufw
-	if [[ "$firewall" == 'UFW' ]]; then
+	if [[ "$firewall" == UFW ]]; then
 		# (Unfortunately UFW isn't flexible enough to block certain ICMP ping types.)
 		# Start the firewall
 		systemctl unmask ufw
@@ -474,7 +468,7 @@ if [[ -n "$firewall_config" ]]; then
 		ufw default deny incoming
 		ufw default allow outgoing
 	# FirewallD/firewall-cmd
-	elif [[ "$firewall" == 'FirewallD' ]]; then
+	elif [[ "$firewall" == FirewallD ]]; then
 		# Start the firewall
 		systemctl unmask firewalld
 		systemctl restart --now firewalld
@@ -495,24 +489,23 @@ if [[ -n "$firewall_config" ]]; then
 	fi
 	#
 	# Prompt to whitelist any remaining ports/services
-	ports=(lorem_ipsum)
+	ports=placeholder
 	while [[
-			-n "$(
-				for port in "${ports[@]}"; do
-					[[ ! "$port" =~ ^[0-9]{1,5}(-[0-9]{1,5})?$ ]] &&
-						echo 'bad'
-				done
-			)" ||
-			-z "${ports[*]}"
-		]];
-	do
+		-n "$(
+			for port in "${ports[@]}"; do
+				[[ ! "$port" =~ ^[0-9]{1,5}(-[0-9]{1,5})?$ ]] &&
+					echo placeholder
+			done
+		)" ||
+		-z "${ports[*]}"
+	]]; do
 		read -erp 'Enter any remaining port numbers to allow in: ' -a ports
 	done
 	for port in "${ports[@]}"; do
 		# Whitelist ports
-		if [[ "$firewall" == 'UFW' ]]; then
+		if [[ "$firewall" == UFW ]]; then
 			ufw allow in "$port/tcp"
-		elif [[ "$firewall" == 'FirewallD' ]]; then
+		elif [[ "$firewall" == FirewallD ]]; then
 			firewall-cmd --permanent --add-port "$port/tcp"
 		else
 			echo 'E: Unsupported firewall software.'
@@ -520,7 +513,7 @@ if [[ -n "$firewall_config" ]]; then
 	done
 	#
 	# Apply changes (FirewallD exclusive)
-	[[ "$firewall" == 'FirewallD' ]] &&
+	[[ "$firewall" == FirewallD ]] &&
 		firewall-cmd --reload
 fi
 
@@ -535,10 +528,8 @@ fi
 if [[ -n "$pam_reconfig" ]]; then
 	# RHEL-like distros
 	if hash authselect; then
-		# Configure PAM /w secure defaults
+		# Configure PAM /w secure defaults enabled & further configure password QA
 		authselect select sssd with-faillock with-pamaccess with-pwhistory with-pwquality with-mkhomedir with-sudo without-nullok --force
-		#
-		# Configure password QA
 		install -m 640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
 		#
 		# Regenerate PAM configurations /w previous configuration
@@ -553,10 +544,9 @@ if [[ -n "$pam_reconfig" ]]; then
 			install -m 640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
 			#
 			# Insert faillock configuration
-			install -m 640 -o root -g root -D/general-confs/faillock /usr/share/pam-configs/faillock
+			install -m 640 -o root -g root -D general-confs/faillock /usr/share/pam-configs/faillock
 			install -m 640 -o root -g root -D general-confs/faillock_reset /usr/share/pam-configs/faillock_reset
 			install -m 640 -o root -g root -D general-confs/faillock_notify /usr/share/pam-configs/faillock_notify
-			pam-auth-update --package
 			#
 			# Reject logins for users with no password
 			sed -i 's/[[:space:]]*nullok//g' /usr/share/pam-configs/unix
@@ -569,10 +559,7 @@ if [[ -n "$pam_reconfig" ]]; then
 	fi
 	#
 	# Enforce password age policies (Applies exclusively to non-system users (UID >= 1000))
-	mapfile -t nonsys_users < <(
-		getent passwd |
-			awk -F: '$3 >= 1000 { print $1 }'
-	)
+	mapfile -t nonsys_users < <(awk -F: '$2 !~ /^(!|\*|$)/ { print $1 }' /etc/shadow)
 	for u in "${nonsys_users[@]}"; do
 		# Skips the iterated user if they're the user running the script
 		# Apply the password age restrictions to the user
@@ -587,12 +574,14 @@ if [[ -n "$pam_reconfig" ]]; then
 		safe_add "$entry" /etc/login.defs
 	done
 	#
-	# Migrate stray hashes from passwd to shadow
+	# Migrate stray hashes from passwd to shadow & from group to gshadow
 	# Check for duplicate users on the system & prompt for rectification
-	[[ -n "$mv_hash" ]] &&
+	if [[ -n "$mv_hash" ]]; then
 		pwconv
+		grpconv
+	fi
 	[[ -n "$pwck" ]] &&
-		pwck -r
+		pwck
 	#
 	# Disable guest & automatic login in LightDM
 	if [[ -f /etc/lightdm/lightdm.conf ]]; then
@@ -630,11 +619,10 @@ fi
 #
 # Message of the Day
 #
-if [[ -n "$motd" ]]; then
+[[ -n "$motd" ]] &&
 	for banner_file in "${banner_files[@]}"; do
 		install -m 640 -o root -g root -D general-confs/motd "$banner_file"
 	done
-fi
 
 
 
@@ -643,6 +631,6 @@ fi
 #
 # Exit
 #
-# Clear terminal & exit successfully
+# Clear terminal & alt_exit successfully
 clear
-exit 0
+alt_exit 0

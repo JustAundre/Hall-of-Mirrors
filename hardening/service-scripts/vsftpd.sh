@@ -36,7 +36,7 @@ echo "OK: Backed up VSFTPD confugrations to $backup"
 #
 echo "i: Installing/reinstalling VSFTPD..."
 secure_install vsftpd openssl ||
-	exit 6
+	alt_exit 6
 
 
 
@@ -123,7 +123,7 @@ else
 	echo "E: Configuration validation error; reverting to backup(s)..."
 	cp -p "$backup" "$vsftpdConfig"
 	systemctl restart vsftpd
-	exit 1
+	alt_exit 1
 fi
 
 
@@ -134,4 +134,4 @@ fi
 # Exit
 #
 clear
-exit 0
+alt_exit 0

@@ -1,4 +1,4 @@
-#!/usr/bin/env -v /bin/bash --rcfile /etc/profile.d/secure-env.sh
+#!/usr/bin/env bash
 # Curly brackets to stop output of staging commands
 {
 	#
@@ -25,15 +25,15 @@
 		'c9edc4de9de21784f2e86f2dd087fa8b1670a9442ce614eb2eb1b3358052dd3996b09c3262912fcec67d8ab2d9e4f2fa12e72acb0548cad63ec1af15f9951f17'
 		'6899eb9d96ef8fb19d9c09efa879281b453ca4f7339b3a553111ab12a2c3dfcdd9be236712519894d0490032b047dcc49af050554e8037f9332262f362fdd786'
 	)
-	declare -r auth_layers=${#passwd_hashes[@]}
+	declare -r auth_layers="${#passwd_hashes[@]}"
 	#
 	# General configuration
 	declare -r max_stdin=256 # How big (in bytes) is a response allowed to be parsed
 	declare -r hash_rounds=2500 # How many times to hash inputs
 	declare -r read_tmout=30 # How many seconds before timing out for inactivity
 	declare -r max_tries=3 # The max amount of login attempts before all inputs silently fail
-	declare -r fake_root='y' # Fake a root shell? (y/n)
-	declare -r fake_delay='y' # Should every single command have a small delay to annoy the attackers? (y/n)
+	declare -r fake_root=y # Fake a root shell? (y/n)
+	declare -r fake_delay=y # Should every single command have a small delay to annoy the attackers? (y/n)
 	declare -r fake_delay_amount="0.$((RANDOM % 3 + 1))" # How long should the delay be? (in seconds)
 	declare -r annoy_type=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
 
@@ -49,8 +49,8 @@
 	#
 	# Logging locations/identifiers
 	declare -r log_file='/var/tmp/shell.log'
-	declare -r bullsh_auth_log='bullsh-mfa'
-	declare -r bullsh_cmd_log='bullsh-cmds'
+	declare -r bullsh_auth_log=bullsh-mfa
+	declare -r bullsh_cmd_log=bullsh-cmds
 	#
 	# What layer of the MFA to start at
 	layer_at=1
@@ -68,7 +68,7 @@
 	#
 	# Dynamic handling for SSH_CONNECTION/ip_from
 	[[ -z "$SSH_CLIENT" ]] &&
-		SSH_CLIENT='Local'
+		SSH_CLIENT=local_tty
 	#
 	# Log everything
 	IFS='' read -rd '' PROMPT_COMMAND <<-'EOF'
@@ -93,7 +93,7 @@
 	#
 	# Send identifiers to a log file
 	warn() {
-		local input=$(printf "%q" "$*")
+		local input="$(printf "%q" "$*")"
 		case "$1" in
 			1)
 				shift 1
@@ -177,10 +177,9 @@
 			;;
 			4)
 				# For ~1 minute, have a minor chance every 150 milliseconds to 'drop' their input briefly
-				while {1..400}; do
-					if [[ $(( RANDOM % 100 > 80 )) -eq 1 ]]; then
+				for i in {1..400}; do
+					[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] &&
 						stty -echo
-					fi
 					sleep .15
 					stty echo
 				done
@@ -202,7 +201,7 @@
 		stty echo
 		#
 		# Enter into logger script if exists
-		if [[ -f /opt/logger.sh ]]; then
+		if [[ -x /opt/logger.sh ]]; then
 			builtin exec /usr/bin/env -i\
 				SSH_CONNECTION="$SSH_CONNECTION"\
 				SSH_CLIENT="$SSH_CLIENT"\
@@ -239,6 +238,7 @@
 		local in_hashed=""
 		local target_hash="${passwd_hashes[$((layer_at - 1))]}"
 		local cmd="${input%% *}"
+		local i
 		#
 		# Update history (L1 exclusive)
 		# Simulate a fake delay (if configured)
@@ -255,7 +255,7 @@
 			in_hashed=
 		#
 		# Handle common inputs
-		if [[ "${#input}" -gt $max_stdin ]]; then
+		if [[ "${#input}" -gt "$max_stdin" ]]; then
 			# Print a fake error & exit
 			printf "\nrbash: fork: cannot allocate memory\n"
 			exit 255
@@ -264,22 +264,21 @@
 			:
 		elif [[ "$layer_at" -eq 1 ]]; then
 			# Mimic rbash restrictions & errors (L1 exclusive)
-			if [[ "$cmd" == *"/"* ]]; then
+			if [[ "$cmd" == */* ]]; then
 				echo "rbash: $cmd: cannot specify '/' in command names" 1>&2
 			elif [[
-					"$cmd" == 'exit' ||
-						"$cmd" == 'logout'
-				]];
-			then
+				"$cmd" == exit ||
+				"$cmd" == logout
+			]]; then
 				exit 1
-			elif [[ "$cmd" == 'sudo' ]]; then
+			elif [[ "$cmd" == sudo ]]; then
 				sudo echo "$USER is not in the sudoers file.  This incident will be reported." 1>&2
-			elif [[ "$cmd" == 'printf' ]]; then
-				input="${$input/'printf '//}"
-				printf -- '%s' "$input"
-			elif [[ "$cmd" == 'echo' ]]; then
-				input="${$input/'echo '//}"
-				printf -- '%s' "$input\n"
+			elif [[ "$cmd" == printf ]]; then
+				input="${input/'printf '//}"
+				printf -- %s "$input"
+			elif [[ "$cmd" == echo ]]; then
+				input="${input/'echo '//}"
+				printf -- %s "$input\n"
 			elif [[ "$cmd" =~ ^([a-zA-Z0-9_-]+)= ]]; then
 				echo "rbash: ${BASH_REMATCH[1]}: readonly variable"
 			elif type -t "$cmd" &>/dev/null; then
@@ -292,11 +291,10 @@
 		#
 		# Check for current layers' password
 		if [[
-				"$stop_hash" == "n" &&
-				-n "$input" &&
-				"$in_hashed" == "$target_hash"
-			]];
-		then
+			"$stop_hash" == "n" &&
+			-n "$input" &&
+			"$in_hashed" == "$target_hash"
+		]]; then
 			# Log success
 			warn 2
 			#

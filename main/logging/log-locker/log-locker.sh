@@ -31,14 +31,17 @@ for file in "$log_dir"/*; do
 		rm -f "$file"
 	#
 	# Apply defaults
-	chown root:root "$file"
-	chmod 600 "$file"
+	chown root:root "$file" &&
+		chmod 600 "$file"
 	#
 	# Check if this specific file is in our list (or is being prepared for logging)
-	if echo "$is_open" |
-		grep -qx "$file" ||
-		[[ "$(stat -c %s $file)" == '0' ]];
-	then
+	if [[
+		-n "$(
+			printf '%s' "$is_open" |
+				grep -x "$file"
+		)" ||
+		"$(stat -c %s $file)" == 0
+	]]; then
 		# File is actively being logged to
 		# Add append-only (+a)
 		chattr +a "$file" &&

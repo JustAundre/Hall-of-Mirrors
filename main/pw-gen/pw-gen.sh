@@ -17,18 +17,15 @@ word_pull() {
 	# Pull a word within length constraints
 	local word kill
 	while [[
-			${#word} -lt "$min" ||
-				${#word} -gt "$max"
-		]]; do
-		#
+		"${#word}" -lt "$min" ||
+		"${#word}" -gt "$max"
+	]]; do
 		# Verbose output: print scrapped words
-		if [[
-				-n "$verbose" &&
-				-n "$word"
-			]];
-		then
-			echo "i: Hit an unfit word '$word'" >&3
-		fi
+		[[
+			-n "$verbose" &&
+			-n "$word"
+		]] &&
+			echo "i: Dropped word '$word' because it did not meet complexity requirements." >&3
 		#
 		# Error out if failed to find a word matching set constraints for more than 250 cycles
 		if [[ "$kill" -gt 250 ]]; then
@@ -37,7 +34,7 @@ word_pull() {
 		fi
 		#
 		# Shuffle the dictionary & pull 1 word
-		word="$(shuf -n1 $dict_location)"
+		word="$(shuf -n1 "$dict_location")"
 		if [[ -z "$word" ]]; then
 			echo 'E: Failed to fetch word from the dictionary.' >&4
 			return 2
@@ -49,9 +46,9 @@ word_pull() {
 	#
 	# Capitalize beginning of word as needed, then print result.
 	if [[ "$capitals" =~ ^[yY]$ ]]; then
-		printf "${word^}"
+		printf '%s' "${word^}"
 	else
-		printf "$word"
+		printf '%s' "$word"
 	fi
 	return
 }
@@ -78,7 +75,7 @@ while getopts 's:m:M:c:a:p:hv' flag; do
 			pattern="${OPTARG}"
 		;;
 		v)
-			verbose='y'
+			verbose=y
 		;;
 		h|*)
 			cat >&4 <<-'EOF'
@@ -143,46 +140,35 @@ done
 # Generation Tuning
 #
 # Prompts for tuning
-if [[
-		-z "$separator" &&
-		-t 0
-	]];
-then
+[[
+	-z "$separator" &&
+	-t 0
+]] &&
 	read -erp 'Enter a separator (Default is -): ' separator >&4
-fi
-if [[
-		-z "$min" &&
-		-t 0
-	]];
-then
+[[
+	-z "$min" &&
+	-t 0
+]] &&
 	read -erp 'Minimum word length (Default is 4): ' min >&4
-fi
-if [[
-		-z "$max" &&
-		-t 0
-	]];
-then
+[[
+	-z "$max" &&
+	-t 0
+]] &&
 	read -erp 'Max word length (Default is 8): ' max >&4
-fi
-if [[
-		-z "$capitals" &&
-		-t 0
-	]];
-then
+[[
+	-z "$capitals" &&
+	-t 0
+]] &&
 	read -erp 'Capitalize first letters? [Y/n]: ' capitals >&4
-fi
-if [[
-		-z "$password_amount" &&
-		-t 0
-	]];
-then
+[[
+	-z "$password_amount" &&
+	-t 0
+]] &&
 	read -erp 'Amount of passwords (Default is 1): ' password_amount >&4
-fi
 if [[
-		-z "$pattern" &&
-		-t 0
-	]];
-then
+	-z "$pattern" &&
+	-t 0
+]]; then
 	cat >&4 <<-'EOF'
 		w = Random word
 		n = Random number
@@ -209,12 +195,12 @@ if (( "$min" > "$max" )); then
 		W: Minimum ($min) is greater than maximum ($max) is an unfufilable condition;
 		i: Swapping the values of min/max from $min/$max to $max/$min to fix contradiction & proceeding...
 	EOF
-	read max min <<< "$(echo $min $max)"
+	read max min <<< "$min $max"
 fi
 capitals="${capitals:0:1}"
 if [[ ! "$capitals" =~ ^[yYnN]$ ]]; then
-	echo 'i: Invalid/missing response; defaulting to [Y]es.' >&4
-	capitals='Y'
+	echo 'i: Invalid/missing response; defaulting to [y]es.' >&4
+	capitals=y
 fi
 if [[ -z "$pattern" ]]; then
 	echo 'i: Invalid/missing response; defaulting to wnswnswn.' >&4
@@ -234,10 +220,9 @@ fi
 #
 # If no dictionary is present...
 if [[
-		! -f "$dict_location" &&
-		! -f 'en_US-dict.txt'
-	]];
-then
+	! -f "$dict_location" &&
+	! -f 'en_US-dict.txt'
+]]; then
 	# Attempt to download one (with consent)...
 	echo "W: A pre-existing dictionary couldn't be located in '$dict_location'."
 	dict_location='en_US-dict.txt'
@@ -260,7 +245,7 @@ then
 		echo 'i: Downloading...' >&4
 		#
 		# Will timeout if download takes too long.
-		if ! curl -s "$dict_url" --connect-timeout 5 > "$dict_location"; then
+		if ! curl -s "$dict_url" --connect-timeout 5 >"$dict_location"; then
 			# Alert user of the error
 			cat >&4 <<-'EOF'
 				E: Failed to download dictionary;
@@ -284,7 +269,7 @@ for (( x=0; x < password_amount; x++ )); do
 		case "$char" in
 			w|W)
 				# Parse w/W into a random word
-				word=$(word_pull) ||
+				word="$(word_pull)" ||
 					exit "$?"
 				result+="$word"
 			;;

@@ -26,7 +26,7 @@ mkdir -p "$backup_dir"
 	secure_install nginx
 	systemctl unmask nginx
 	systemctl enable nginx
-) || exit 5
+) || alt_exit 5
 #
 # Stop Nginx for smooth configurations
 systemctl stop nginx
@@ -87,7 +87,7 @@ else
 	EOF
 	cp -p "$backup_dir/nginx.conf" "$nginx_main_config"
 	cp -p "$backup_dir/default" "$default_page"
-	exit 1
+	alt_exit 1
 fi
 
 
@@ -98,4 +98,4 @@ fi
 # Exit
 #
 clear
-exit 0
+alt_exit 0

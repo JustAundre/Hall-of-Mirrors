@@ -12,8 +12,11 @@ ALL ALL=(ALL) SETENV: NOPASSWD: /opt/logger.sh'
 EOF
 #
 # Allow passing of necessary variables through sudo
-echo 'Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"' >> /etc/sudoers
-#
+cat >>/etc/sudoers <<-'EOF'
+
+	# Allow passthrough of SSH_* variables to programs ran via sudo for better forensics.
+	Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"
+EOF
 # Install the log-locker service
 install -m 600 -o root -g root log-locker/log-locker.service /etc/systemd/system/log-locker.service
 install -m 600 -o root -g root log-locker/log-locker.timer /etc/systemd/system/log-locker.path
@@ -36,7 +39,7 @@ systemctl restart sshd
 read -erp 'Enter the usernames of users to exclude from the logger (supports the user@0.0.0.0 format) (space-separated): ' -a exclusions
 #
 # Set up user exclusions
-for user in "$exclusions"; do
+for user in "${exclusions[@]}"; do
 	tee -a /etc/ssh/sshd_config <<-EOF
 		# Exclude user from logger script
 		Match User $user

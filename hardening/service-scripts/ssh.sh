@@ -49,7 +49,7 @@ secure_install openssh-server
 	ssh-keygen -A
 	ssh-keygen -f /root/.ssh/known_hosts -R localhost
 	systemctl restart sshd
-) || exit 8
+) || alt_exit 8
 
 
 
@@ -88,8 +88,11 @@ configure_ssh PrintMotd no
 #
 # SSH Group Check
 if getent group ssh &>/dev/null; then
-	members=$(getent group ssh | awk -F: '{print $3, $4}')
-	if [[ -n "$members" ]]; then
+	if [[ -n "$(
+			getent group ssh |
+				awk -F: '{print $3, $4}'
+		)"
+	]]; then
 		cat <<-EOF
 			i: The following users are in the SSH group & may be able to SSH into this machine: $members
 		EOF
@@ -132,7 +135,7 @@ else
 	#
 	# Restart SSHD
 	systemctl restart sshd
-	exit 1
+	alt_exit 1
 fi
 
 
@@ -155,4 +158,4 @@ fi
 # Exit
 #
 clear
-exit 0
+alt_exit 0

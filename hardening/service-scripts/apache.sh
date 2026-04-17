@@ -78,7 +78,7 @@ else
 		E: Syntax check failed
 		i: Run "apache2ctl -t" to see why.
 	'
-	exit 1
+	alt_exit 1
 fi
 
 
@@ -89,4 +89,4 @@ fi
 # Exit
 #
 clear
-exit 0
+alt_exit 0
