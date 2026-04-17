@@ -60,92 +60,105 @@ done
 # Scanning
 #
 # Wordpress Scanning
-if [[ -n "${audit_lookup["${available_audits[0]}"]}" ]]; then
+[[ -n "${audit_lookup["${available_audits[0]}"]}" ]] && (
+	set -e
+	#
 	# Install make dependencies
-	(
-		set -e
-		secure_install "${wpscan_deps[@]}"
-		#
-		# Build wpscan
-		gem install wpscan
-		#
-		# Run the scan
-		wpscan --url "http://127.0.0.1:$port" --enumerate p >>"wordpress-vulns-$i.log"
-	)
+	secure_install "${wpscan_deps[@]}"
+	#
+	# Build wpscan
+	gem install wpscan
 	#
 	# Remove make dependencies
 	apt-get autoremove --purge -y "${wpscan_deps[@]}"
-fi
+	#
+	# Run the scan (in the bg)
+	wpscan --url "http://127.0.0.1:$port" --enumerate p &>"wordpress-vulns-$i.log"
+) &
 #
-# Log open ports
-[[ -n "${audit_lookup["${available_audits[1]}"]}" ]] &&
+# Log open ports (in the bg)
+[[ -n "${audit_lookup["${available_audits[1]}"]}" ]] && (
 	ss -tulpn |
-	grep 0.0.0.0 >>"open-ports-$i.log"
+		grep 0.0.0.0 &>"open-ports-$i.log"
+) &
 #
-# Scan for Malicious PAM Hooks
-[[ -n "${audit_lookup["${available_audits[2]}"]}" ]] &&
-	grep -r pam_exec.so /etc/pam.d/ >>"possible-pam-hooks-$i.log"
+# Scan for Malicious PAM Hooks (in the bg)
+[[ -n "${audit_lookup["${available_audits[2]}"]}" ]] && (
+	grep -r pam_exec.so /etc/pam.d/ &>"possible-pam-hooks-$i.log"
+) &
 #
-# Scan for world-writable files/directories which lack a sticky-bit
+# Scan for world-writable files/directories
 # (Excluding the temporary data directories)
-[[ -n "${audit_lookup["${available_audits[3]}"]}" ]] &&
-	find / -xdev ! -type l -perm -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm >>"world-writables-$i.log"
+# (in the bg)
+[[ -n "${audit_lookup["${available_audits[3]}"]}" ]] && (
+	find / -xdev ! -type l -perm -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm &>"world-writables-$i.log"
+) &
 #
-# Scan for world-readable files
-[[ -n "${audit_lookup["${available_audits[4]}"]}" ]] &&
-	find / -xdev ! -type l -perm -o+r -not -path /tmp -not -path /var/tmp -not -path /dev/shm >>"world-readables-$i.log"
+# Scan for world-readable files/directories
+# (Excluding the temporary data directories)
+# (in the bg)
+[[ -n "${audit_lookup["${available_audits[4]}"]}" ]] && (
+	find / -xdev ! -type l -perm -o+r -not -path /tmp -not -path /var/tmp -not -path /dev/shm &>"world-readables-$i.log"
+) &
 #
-# Scan for SUID binaries
-[[ -n "${audit_lookup["${available_audits[5]}"]}" ]] &&
-	find / -xdev -type f -perm -4000 >>"suid-binaries-$i.log"
+# Scan for SUID binaries (in the bg)
+[[ -n "${audit_lookup["${available_audits[5]}"]}" ]] && (
+	find / -xdev -type f -perm -4000 &>"suid-binaries-$i.log"
+) &
 #
-# Scan for SGID binaries
-[[ -n "${audit_lookup["${available_audits[6]}"]}" ]] &&
-	find / -xdev -type f -perm -2000 >>"sgid-binaries-$i.log"
+# Scan for SGID binaries (in the bg)
+[[ -n "${audit_lookup["${available_audits[6]}"]}" ]] && (
+	find / -xdev -type f -perm -2000 &>"sgid-binaries-$i.log"
+) &
 #
-# Scan for media files in home directories
-[[ -n "${audit_lookup["${available_audits[7]}"]}" ]] &&
+# Scan for media files in home directories (in the bg)
+[[ -n "${audit_lookup["${available_audits[7]}"]}" ]] && (
 	find /home -xdev -type f -exec file --mime-type {} + |
-	grep -iE '(audio|video|image)/' >>"media-files-$i.log"
+		grep -iE '(audio|video|image)/' &>"media-files-$i.log"
+) &
 #
-# ClamAV malware scan
+# ClamAV malware scan (in the bg)
 [[ -n "${audit_lookup["${available_audits[8]}"]}" ]] && (
 	set -e
 	secure_install clamav clamav-daemon clamdscan
 	systemctl unmask clamav-daemon
 	systemctl enable --now clamav-daemon
-	clamdscan / --multiscan --fdpass --exclude-dir=/sys --exclude-dir=/proc --exclude-dir=/dev -i >>"clamscan-audit-$i.log"
-)
+	clamdscan / --multiscan --fdpass --exclude-dir=/sys --exclude-dir=/proc --exclude-dir=/dev -i &>"clamscan-audit-$i.log"
+	systemctl disable --now clamav-daemon
+) &
 #
-# Chkrootkit rootkit scan
+# Chkrootkit rootkit scan (in the bg)
 [[ -n "${audit_lookup["${available_audits[9]}"]}" ]] && (
 	set -e
 	secure_install chkrootkit
-	chkrootkit >>"chkrootkit-audit-$i.log"
-)
+	chkrootkit &>"chkrootkit-audit-$i.log"
+) &
 #
-# DebSums binary integrity check
+# DebSums binary integrity check (in the bg)
 [[ -n "${audit_lookup["${available_audits[10]}"]}" ]] && (
 	set -e
 	secure_install debsums
-	debsums -s >>"integrity-fails-$i.log"
-)
+	debsums -s &>"integrity-fails-$i.log"
+) &
 #
-# Finds unidentified binaries by 
-if [[ -n "${audit_lookup["${available_audits[11]}"]}" ]]; then
+# Finds unidentified binaries
+# by querying for its corresponding package.
+# (no corresponding package = foreign binary)
+# (in the bg)
+[[ -n "${audit_lookup["${available_audits[11]}"]}" ]] && (
 	for binary in "${binaries[@]}"; do
 		[[ -f "$binary" ]] &&
 			dpkg-query -S "$binary" ||
-			echo "$binary" >>"foreign-binaries-$i.log"
+			echo "$binary" &>"foreign-binaries-$i.log"
 	done
-fi
+) &
 #
-# Lynis audit
+# Lynis audit (in the background)
 [[ -n "${audit_lookup["${available_audits[12]}"]}" ]] && (
 	set -e
 	secure_install lynis
-	lynis audit system >>"lynis-audit-$i.log"
-)
+	lynis audit system &>"lynis-audit-$i.log"
+) &
 
 
 
@@ -153,6 +166,10 @@ fi
 
 #
 # Exit
+#
+# Wait for all children to exit
+echo 'i: Started all audits, this may take a while depending on your selections...'
+wait
 #
 # Exit & print success banner
 # and the logs from this session.
