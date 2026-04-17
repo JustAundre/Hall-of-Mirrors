@@ -15,37 +15,30 @@ alt_exit() {
 		exit "$*"
 	fi
 	#
-	# Display success banner
-	printf '\e[1m'
-	cat <<-'EOF'
-
-		  ---{=========}###[@]###{===========}---
-		        WINDOWS AT LOSS AT THE
-		          AGAPE FREEDOM OF LINUX
-		  ---{=========}###[@]###{===========}---
-	EOF
-	#
-	# Display password hygiene reminder
-	printf '\e[0m'
-	cat <<-'EOF'
-
-		      Cybersecurity is great; though
-		    people often have their priorities
-		       mixed up. Make sure you have
-		        good password hygiene and
-		         a good password manager.
-	EOF
-	#
-	# Enumerate log files to screen
-	cat <<-EOF
-
-		Here are the log files from this session:
-		$(
-			for path in "${log_files[@]}"; do
-				printf '%s\n' "$path"
-			done
-		)
-	EOF
+	# Define success banner
+	local banner="$(
+		cat <<-EOF
+			\e[1m
+			  ---{=========}###[@]###{===========}---
+			        WINDOWS AT LOSS AT THE
+			          AGAPE FREEDOM OF LINUX
+			  ---{=========}###[@]###{===========}---
+			\e[0m
+			      Cybersecurity is great; though
+			    people often have their priorities
+			       mixed up. Make sure you have
+			        good password hygiene and
+			         a good password manager.
+			
+			Here are the log files from this session:
+			$(
+				for path in "${log_files[@]}"; do
+					printf '%s\n' "$path"
+				done
+			)
+		EOF
+	)"
+	printf "$banner\n"
 }
 #
 # Alternative clear command
