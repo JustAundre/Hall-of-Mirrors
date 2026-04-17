@@ -136,7 +136,7 @@ if confirm 'Configure resource limitations for users'; then
 	# Alert the user of their system memory capacity
 	# ...& of the limitations of the input
 	cat <<-EOF
-		i: You have $max_mem megabytes (MB) of max RAM.
+		i: You have $max_mem megabytes (MB) of RAM.
 		i: Please give your response in a percentage, 1 through 100 as an integer without any decimals, prefixes or suffixes.
 		i: Individual requirements must be less than (non-inclusive) the collective requirements
 	EOF
