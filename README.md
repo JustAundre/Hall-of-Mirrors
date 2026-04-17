@@ -43,7 +43,17 @@ find . -type f -name '*.sh' |
 
 ## Notices
 
-TLDR...
-- Everything here depends on the integrity of your system.
-- Basically everything here should be manually reviewed & configured if you want it to work your way.
-- Don't come to me if you lose data—not gonna do anything about it except *try* to fix the issue that caused it, you've been warned.
+Everything here depends on the integrity of your system.
+
+Basically everything here should be manually reviewed & configured if you want it to work your way.
+
+Don't come to me if you lose data—not gonna do anything about it except *try* to fix the issue that caused it, you've been warned.
+
+## Next up:
+
+1. Scripts in `hardening/service-scripts/` need serious refactoring, reorganization and rescripting.
+
+2. I need to implement a backup system for scripts in `hardening/` which:
+- Does not need to be manually hardcoded into scripts
+- Is opt-in
+- Has a consistent backup pattern
