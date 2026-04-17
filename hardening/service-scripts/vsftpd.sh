@@ -1,128 +1,140 @@
 #!/usr/bin/env bash
 #
-# Setup
+# Environment Setup
 #
-# End script on error, error if called missing variable, error if a part of a pipeline errors.
+# Change directory into directory of script
+cd "$(dirname "${BASH_ARGV0[*]}")"
+. ../.allrc
+#
+# End script on error
+# Error if called missing variable
+# Error if a part of a pipeline errors
 set -euo pipefail
 #
 # Script Variables
-vsftpdConfig="/etc/vsftpd.conf"
-backup="/etc/vsftpd.conf.bak"
-certDir=/etc/ssl/private
-certFile="$certDir/vsftpd.pem"
+config=/etc/vsftpd.conf
+cert_dir=/etc/ssl/private
+cert="$cert_dir/vsftpd.pem"
 #
 # A function to apply VSFTPD configurations
-set_vsftpd_config() {
+safe_add() {
 	local key="$1"
 	local value="$2"
-	
-	if grep -qE "^#?\s*${key}=" "$vsftpdConfig"; then
-		sed -i "s|^\s*#\?\s*${key}=.*|${key}=${value}|" "$vsftpdConfig"
+	#
+	# If key already exists...
+	if grep -qE "^#?\s*${key}=" "$config"; then
+		# Replace value of existing key
+		sed -i "s|^\s*#\?\s*${key}=.*|${key}=${value}|" "$config"
 	else
-		echo "${key}=${value}" >>"$vsftpdConfig"
+		# Otherwise make new key with desired value
+		echo "${key}=${value}" >>"$config"
 	fi
 }
-#
-# Backup existing configurations
-cp -p "$vsftpdConfig" "$backup"
-echo "OK: Backed up VSFTPD confugrations to $backup"
 
 
 
 
 
 #
-# Install/Verify Integrity of VSFTPD
+# Integrity Check
 #
-echo "i: Installing/reinstalling VSFTPD..."
+# Force-reinstall/instal VSFTPD.
+echo 'i: Refreshing VSFTPD...'
 secure_install vsftpd openssl ||
-	alt_exit 6
+	alt_exit 2
 
 
 
 
 
 #
-# Harden VSFTPD
+# Configuration
 #
-if ! [[ -f "$certFile" ]]; then
-	echo "i: Generating TLS certificate"
-	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "$certFile" -out "$certFile" -subj "/CN=FTP Server"
-	chmod 600 "$certFile"
+# Generate a TLS certificate if not present.
+if [[ ! -f "$cert" ]]; then
+	echo 'i: Generating TLS certificate...'
+	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "$cert" -out "$cert" -subj '/CN=FTP Server'
+	chmod 600 "$cert"
 fi
+#
 # Disable anonymous access
-echo "i: Applying secure VSFTPD configurations..."
-set_vsftpd_config anonymous_enable NO
+echo 'i: Applying secure VSFTPD configurations...'
+safe_add anonymous_enable NO
 #
 # Local users only
-set_vsftpd_config local_enable YES
-set_vsftpd_config write_enable YES
+safe_add local_enable YES
+safe_add write_enable YES
 #
 # Chroot/anchor users to their home directories
-set_vsftpd_config chroot_local_user YES
-set_vsftpd_config allow_writeable_chroot YES
+safe_add chroot_local_user YES
+safe_add allow_writeable_chroot YES
 #
 # Restrict file permissions
-set_vsftpd_config local_umask 022
+safe_add local_umask 077
 #
 # Disable risky features
-set_vsftpd_config dirmessage_enable NO
-set_vsftpd_config xferlog_enable YES
-set_vsftpd_config port_enable NO
+safe_add dirmessage_enable NO
+safe_add xferlog_enable YES
+safe_add port_enable NO
 #
 # Enable Logging
-set_vsftpd_config log_ftp_protocol YES
-set_vsftpd_config vsftpd_log_file /var/log/vsftpd.log
+safe_add log_ftp_protocol YES
+safe_add vsftpd_log_file /var/log/vsftpd.log
 #
 # Connection limits (brute-force mitigation)
-set_vsftpd_config max_clients 10
-set_vsftpd_config max_per_ip 3
-set_vsftpd_config pasv_enable YES
-set_vsftpd_config pasv_min_port 40000
-set_vsftpd_config pasv_max_port 40100
+safe_add max_clients 10
+safe_add max_per_ip 3
+safe_add pasv_enable YES
+safe_add pasv_min_port 40000
+safe_add pasv_max_port 40100
 #
 # Banner
-set_vsftpd_config ftpd_banner Authorized access only.
+safe_add ftpd_banner Authorized access only.
 #
 # TLS Hardening
-set_vsftpd_config ssl_enable YES
-set_vsftpd_config rsa_cert_file "$certFile"
-set_vsftpd_config rsa_private_key_file "$certFile"
+safe_add ssl_enable YES
+safe_add rsa_cert_file "$cert"
+safe_add rsa_private_key_file "$cert"
 #
 # Force Encryption
-set_vsftpd_config force_local_logins_ssl YES
-set_vsftpd_config force_local_data_ssl YES
+safe_add force_local_logins_ssl YES
+safe_add force_local_data_ssl YES
 #
 # Disable Weak SSL
-set_vsftpd_config ssl_sslv2 NO
-set_vsftpd_config ssl_sslv3 NO
-set_vsftpd_config ssl_tlsv1 NO
-set_vsftpd_config ssl_tlsv1_1 NO
-set_vsftpd_config ssl_tlsv1_2 YES
+safe_add ssl_sslv2 NO
+safe_add ssl_sslv3 NO
+safe_add ssl_tlsv1 NO
+safe_add ssl_tlsv1_1 NO
+safe_add ssl_tlsv1_2 YES
 #
 # Strong ciphers
-set_vsftpd_config ssl_ciphers HIGH
+safe_add ssl_ciphers HIGH
 #
 # Hide users
-set_vsftpd_config userlist_enable YES
-set_vsftpd_config userlist_deny NO
-set_vsftpd_config require_ssl_reuse NO
+safe_add userlist_enable YES
+safe_add userlist_deny NO
+safe_add require_ssl_reuse NO
 
 
 
 
 
 #
-# Configuration Validation
+# Validation
 #
-echo "i: Validating VSFTPD configuration..."
-if vsftpd "$vsftpdConfig"; then
+# Have VSFTPD parse the new configuration file
+if vsftpd "$config"; then
+	# Restart & apply if it finds no errors
+	cat <<-'EOF'
+		OK: Syntax OK
+		i: Restarting VSFTPD...
+	EOF
 	systemctl restart vsftpd
-	echo "OK: VSFTPD restarted successfully."
 else
-	echo "E: Configuration validation error; reverting to backup(s)..."
-	cp -p "$backup" "$vsftpdConfig"
-	systemctl restart vsftpd
+	cat <<-EOF
+		E: Syntax check failed.
+		i: Run (vsftpd $config) to see why.
+	EOF
 	alt_exit 1
 fi
 
@@ -133,5 +145,5 @@ fi
 #
 # Exit
 #
-clear
+# Exit with summary
 alt_exit 0

@@ -3,22 +3,22 @@
 # Environment Setup
 #
 # Variables
+cd "$(dirname "${BASH_ARGV0[*]}")"
 . ../.allrc
-config_file='/etc/ssh/sshd_config'
-backup_config='/etc/ssh/sshd_config~'
+config=/etc/ssh/sshd_config
 #
 # A function to safely set SSH configurations
-configure_ssh() {
+safe_add() {
 	local key="$1"
 	local value="$2"
 	#
 	# Check if the configuration key is already specified
-	if grep -qE "^#?\s*${key}\s+" "$config_file"; then
+	if grep -qE "^#?\s*${key}\s+" "$config"; then
 		# If yes, change the value to the new value.
-		sed -i "s|^\s*#\?\s*${key}\s\+.*|${key} ${value}|" "$config_file"
+		sed -i "s|^\s*#\?\s*${key}\s\+.*|${key} ${value}|" "$config"
 	else
 		# If not, append a new entry of the configuration key
-		echo "${key} ${value}" >>"$config_file"
+		echo "${key} ${value}" >>"$config"
 	fi
 }
 
@@ -36,10 +36,6 @@ cat <<-'EOF'
 	i: Installing & resetting SSH...
 EOF
 #
-# Backup configurations
-cp -p "$config_file" "$backup_config"
-echo "i: Backups created at ($backup_config)"
-#
 # Refresh SSHD
 secure_install openssh-server
 #
@@ -49,7 +45,8 @@ secure_install openssh-server
 	ssh-keygen -A
 	ssh-keygen -f /root/.ssh/known_hosts -R localhost
 	systemctl restart sshd
-) || alt_exit 8
+) ||
+	alt_exit 2
 
 
 
@@ -60,24 +57,24 @@ secure_install openssh-server
 #
 # Authentication (no keys, all password)
 echo 'i: Applying SSH setting configurations'
-configure_ssh PermitRootLogin no
-configure_ssh PasswordAuthentication yes
-configure_ssh PubkeyAuthentication no
-configure_ssh PermitEmptyPasswords no
-configure_ssh ChallengeResponseAuthentication no
-configure_ssh UsePAM yes
+safe_add PermitRootLogin no
+safe_add PasswordAuthentication yes
+safe_add PubkeyAuthentication no
+safe_add PermitEmptyPasswords no
+safe_add ChallengeResponseAuthentication no
+safe_add UsePAM yes
 #
 # Connection hardening
-configure_ssh StrictModes yes
-configure_ssh MaxAuthTries 3
-configure_ssh LoginGraceTime 30
-configure_ssh ClientAliveInterval 300
-configure_ssh ClientAliveCountMax 2
+safe_add StrictModes yes
+safe_add MaxAuthTries 3
+safe_add LoginGraceTime 30
+safe_add ClientAliveInterval 300
+safe_add ClientAliveCountMax 2
 #
 # Feature lockdown
-configure_ssh X11Forwarding no
-configure_ssh AllowTcpForwarding no
-configure_ssh PrintMotd no
+safe_add X11Forwarding no
+safe_add AllowTcpForwarding no
+safe_add PrintMotd no
 
 
 
@@ -126,12 +123,9 @@ if sshd -t; then
 else
 	# Fail
 	cat <<-'EOF'
-		E: Configuration validation failed.
-		i: Reverting to backup_configs...
+		E: Syntax check failed.
+		i: Run (sshd -t) to see why.
 	EOF
-	#
-	# Revert configurations
-	cp -p "$backup_config" "$config_file"
 	#
 	# Restart SSHD
 	systemctl restart sshd
@@ -143,8 +137,9 @@ fi
 
 
 #
-# Firewall Configuration
+# Fail2Ban Configuration
 #
+# Install Fail2Ban & install secure rules.
 if confirm 'Use Fail2Ban with a secure default configuration'; then
 	apt-get install fail2ban &&
 		install -m 600 -o root -g root general-confs/jail.local /etc/fail2ban/jail.local
@@ -157,5 +152,5 @@ fi
 #
 # Exit
 #
-clear
+# Exit with summary
 alt_exit 0

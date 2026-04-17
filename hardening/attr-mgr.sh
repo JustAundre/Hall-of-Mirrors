@@ -3,6 +3,7 @@
 # Environment Setup & Logging
 #
 # Source secure environment
+cd "$(dirname "${BASH_ARGV0[*]}")"
 . .allrc
 
 

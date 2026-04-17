@@ -3,6 +3,7 @@
 # Environment Setup
 #
 # Source secure environment
+cd "$(dirname "${BASH_ARGV0[*]}")"
 . .allrc
 #
 # The ReGex to compare against for potential suspicious scripts

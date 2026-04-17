@@ -2,9 +2,13 @@
 #
 # Setup
 #
+# Import global helper functions and variables
+cd "$(dirname "${BASH_ARGV0[*]}")"
 . ../.allrc
-apache_main_config="/etc/apache2/apache2.conf"
-apache_additional_config="/etc/apache2/conf-enabled/99-apache-security.conf"
+#
+# Script configuration
+apache_main_config=/etc/apache2/apache2.conf
+apache_additional_config=/etc/apache2/conf-enabled/99-apache-security.conf
 #
 # Confirm existence of drop-in configuration file
 touch "$apache_additional_config"
@@ -68,16 +72,16 @@ echo '
 echo "i: Verifying configuration syntax..."
 a2enmod headers
 if apache2ctl -t; then
-	echo "
+	cat <<-'EOF'
 		OK: Syntax OK
 		i: Restarting Apache...
-	"
+	EOF
 	systemctl restart apache2
 else
-	echo '
-		E: Syntax check failed
-		i: Run "apache2ctl -t" to see why.
-	'
+	cat <<-'EOF'
+		E: Syntax check failed.
+		i: Run (apache2ctl -t) to see why.
+	EOF
 	alt_exit 1
 fi
 
@@ -88,5 +92,5 @@ fi
 #
 # Exit
 #
-clear
+# Exit with summary
 alt_exit 0

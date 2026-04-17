@@ -2,6 +2,9 @@
 #
 # Environment Setup & Logging
 #
+# Change directory to directory of the script
+cd "$(dirname "${BASH_ARGV0[*]}")"
+#
 # Source secure environment
 . .allrc
 #
@@ -631,6 +634,5 @@ fi
 #
 # Exit
 #
-# Clear terminal & alt_exit successfully
-clear
+# Exit with summary
 alt_exit 0
