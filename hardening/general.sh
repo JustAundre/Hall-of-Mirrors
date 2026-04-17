@@ -2,13 +2,9 @@
 #
 # Environment Setup & Logging
 #
-# Change directory to directory of the script
+# Source helper functions and variables
 cd "$(dirname "${BASH_ARGV0[*]}")"
-#
-# Source secure environment
 . .allrc
-#
-# Source variables & functions exclusive to this general script
 . .generalrc
 
 
@@ -137,12 +133,6 @@ fi
 if confirm 'Configure resource limitations for users'; then
 	resource_cap=y
 	#
-	# Grab the system's memory capacity
-	max_mem="$(
-		free -m |
-			awk '/^Mem:/{print $2}'
-	)"
-	#
 	# Alert the user of their system memory capacity
 	# ...& of the limitations of the input
 	cat <<-EOF
@@ -261,8 +251,6 @@ if [[ -n "$service_review" ]]; then
 		done
 	done
 fi
-# Need to move this command to the Apache script
-# install -m 640 -o root -g root general-confs/apache2.conf /etc/apache2/conf-enabled/99-security.conf
 #
 # Apply SystemD drop-ins for misc. services
 svc_patch cron
@@ -422,12 +410,12 @@ if [[ -n "$audit_users" ]]; then
 		while [[ -z "$(getent passwd "$primary_group")" ]]; do
 			read -erp 'Enter new primary group: ' primary_group
 		done
-		i=placeholder
-		while [[ -n "$i" ]]; do
+		stop=placeholder
+		while [[ -n "$stop" ]]; do
 			read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
 			for group in "${supplemental_groups[@]}"; do
 				[[ -n "$(getent passwd "$group")" ]] &&
-					i=
+					stop=
 			done
 		done
 		usermod -g "$primary_group" "$u"
@@ -634,5 +622,6 @@ fi
 #
 # Exit
 #
-# Exit with summary
+# Exit & print success banner
+# and the logs from this session.
 alt_exit 0

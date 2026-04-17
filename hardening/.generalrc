@@ -134,41 +134,20 @@ firewall_kernel_modules=(
 	iptable_nat
 )
 #
-# All the users on the system
-all_users=$(getent passwd | awk -F: '{ print $1 }')
-#
-# Groups *no one* should be in
-protected_groups=(
-	shadow
-)
-#
 # All services on the system
-services=(
-	$(
-		TERM=dumb systemctl list-unit-files --type=service --no-legend --plain |
-			awk '{ print $1 }'
-	)
+mapfile -t services < <(
+	TERM=dumb systemctl list-unit-files --type=service --no-legend --plain |
+		awk '{ print $1 }'
 )
+#
+# Fetch the system's memory capacity
+max_mem="$(
+	free -m |
+		awk '/^Mem:/{print $2}'
+)"
 #
 # Firewall software accounted for by the script
 firewall_options=(
 	UFW
 	FirewallD
 )
-#
-# Remove existing values for a configuration & add your own
-safe_add() {
-	key="$(
-		echo "$1" |
-			cut -d' ' -f1
-	)"
-	value="$(
-		echo "$1" |
-			cut -d' ' -f2
-	)"
-	file="$2"
-	#
-	# Remove any existing keys & then add the new entry
-	sed -i "/^$key\s/d" "$file"
-	echo -e "$key\t$value" >>"$file"
-}

@@ -6,14 +6,28 @@
 cd "$(dirname "${BASH_ARGV0[*]}")"
 . .allrc
 #
-# The ReGex to compare against for potential suspicious scripts
-suspicious_filter="\b(curl|wget|base64|chpasswd|netcat|ln|nc)\b"
-#
 # Packages used to build wpscan (wordpress-scan)
 wpscan_deps=(
 	ruby-full
 	build-essential
 	libcurl4-openssl-dev
+)
+#
+# Audits which can be performed
+available_audits=(
+	'Wordpress vulnerability scan'
+	'Enumerate ports in use'
+	'pam_exec.so usages'
+	'World-writable scan'
+	'World-readable scan'
+	'SUID scan'
+	'SGID scan'
+	'Media file scan (home directories)'
+	'ClamAV scan'
+	'chkrootkit scan'
+	'DebSums integrity check'
+	'dpkg-query binary check'
+	'Lynis scan'
 )
 
 
@@ -21,12 +35,34 @@ wpscan_deps=(
 
 
 #
-# Software Vulnerabilities
+# Questionaire
+#
+# Ask what scans to run
+mapfile -t selected_audits < <(checklist 'Select scans to perform' checklist "${available_audits[@]}")
+#
+# Associative array to act on selections
+declare -A audit_lookup
+for audit in "${selected_audits[@]}"; do
+	audit_lookup["$audit"]=y
+done
+#
+#
+[[ -n "${audit_lookup["${available_audits[0]}"]}" ]] &&
+	while [[ ! "$port" =~ $num_chk ]]; do
+		read -rp 'Which port is the webserver with Wordpress on? (port number only): ' port
+	done
+
+
+
+
+
+#
+# Scanning
 #
 # Wordpress Scanning
-if confirm 'Is there a webserver which uses Wordpress'; then
+if [[ -n "${audit_lookup["${available_audits[0]}"]}" ]]; then
+	# Install make dependencies
 	(
-		# Install make dependencies
 		set -e
 		secure_install "${wpscan_deps[@]}"
 		#
@@ -34,144 +70,90 @@ if confirm 'Is there a webserver which uses Wordpress'; then
 		gem install wpscan
 		#
 		# Run the scan
-		read -rp 'Which port is the webserver with Wordpress on (port number only)?: ' port
-		[[ "$port" =~ $num_chk ]] &&
-			wpscan --url "http://127.0.0.1:$port" --enumerate p |
-				tee -a "wordpress-vulns-$suffix.log"
+		wpscan --url "http://127.0.0.1:$port" --enumerate p >>"wordpress-vulns-$i.log"
 	)
 	#
 	# Remove make dependencies
-	set -e
-	apt-get remove --purge -y "${wpscan_deps[@]}"
-	apt-get autoremove --purge
+	apt-get autoremove --purge -y "${wpscan_deps[@]}"
 fi
 #
 # Log open ports
-ss -tulpn |
-	grep 0.0.0.0 |
-	tee -a "open-ports-$suffix.log"
+[[ -n "${audit_lookup["${available_audits[1]}"]}" ]] &&
+	ss -tulpn |
+	grep 0.0.0.0 >>"open-ports-$i.log"
 #
 # Scan for Malicious PAM Hooks
-grep -r pam_exec.so /etc/pam.d/ |
-	tee -a "possible-pam-hooks-$suffix.log"
-
-
-
-
+[[ -n "${audit_lookup["${available_audits[2]}"]}" ]] &&
+	grep -r pam_exec.so /etc/pam.d/ >>"possible-pam-hooks-$i.log"
 #
-# File Permission & Content Auditing
+# Scan for world-writable files/directories which lack a sticky-bit
+# (Excluding the temporary data directories)
+[[ -n "${audit_lookup["${available_audits[3]}"]}" ]] &&
+	find / -xdev ! -type l -perm -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm >>"world-writables-$i.log"
 #
-# Log world-writable files & directories which lack a sticky-bit & aren't one of the 3 usual directories
-if confirm 'Search for world-writable paths'; then
-	find / -xdev ! -type l -perm -o+w -not -path /tmp -not -path /var/tmp -not -path /dev/shm |
-		tee -a "world-writables-$suffix.log"
-fi
+# Scan for world-readable files
+[[ -n "${audit_lookup["${available_audits[4]}"]}" ]] &&
+	find / -xdev ! -type l -perm -o+r -not -path /tmp -not -path /var/tmp -not -path /dev/shm >>"world-readables-$i.log"
 #
-# Log world-readable files
-if confirm 'Search for world-readable paths'; then
-	find / -xdev ! -type l -perm -o+r -not -path /tmp/ -not -path /var/tmp -not -path /dev/shm |
-		tee -a "world-readables-$suffix.log"
-fi
+# Scan for SUID binaries
+[[ -n "${audit_lookup["${available_audits[5]}"]}" ]] &&
+	find / -xdev -type f -perm -4000 >>"suid-binaries-$i.log"
+#
+# Scan for SGID binaries
+[[ -n "${audit_lookup["${available_audits[6]}"]}" ]] &&
+	find / -xdev -type f -perm -2000 >>"sgid-binaries-$i.log"
 #
 # Scan for media files in home directories
-if confirm 'Search for media in home directories'; then
+[[ -n "${audit_lookup["${available_audits[7]}"]}" ]] &&
 	find /home -xdev -type f -exec file --mime-type {} + |
-		grep -iE '(audio|video|image)/' |
-		tee -a "found-media-$suffix.log"
+	grep -iE '(audio|video|image)/' >>"media-files-$i.log"
+#
+# ClamAV malware scan
+[[ -n "${audit_lookup["${available_audits[8]}"]}" ]] && (
+	set -e
+	secure_install clamav clamav-daemon clamdscan
+	systemctl unmask clamav-daemon
+	systemctl enable --now clamav-daemon
+	clamdscan / --multiscan --fdpass --exclude-dir=/sys --exclude-dir=/proc --exclude-dir=/dev -i >>"clamscan-audit-$i.log"
+)
+#
+# Chkrootkit rootkit scan
+[[ -n "${audit_lookup["${available_audits[9]}"]}" ]] && (
+	set -e
+	secure_install chkrootkit
+	chkrootkit >>"chkrootkit-audit-$i.log"
+)
+#
+# DebSums binary integrity check
+[[ -n "${audit_lookup["${available_audits[10]}"]}" ]] && (
+	set -e
+	secure_install debsums
+	debsums -s >>"integrity-fails-$i.log"
+)
+#
+# Finds unidentified binaries by 
+if [[ -n "${audit_lookup["${available_audits[11]}"]}" ]]; then
+	for binary in "${binaries[@]}"; do
+		[[ -f "$binary" ]] &&
+			dpkg-query -S "$binary" ||
+			echo "$binary" >>"foreign-binaries-$i.log"
+	done
 fi
 #
-# Log SUID binaries
-if confirm 'Search for SUID binaries'; then
-	find / -xdev -type f -perm -4000 -ls |
-		tee -a "suid-binaries-$suffix.log"
-fi
-#
-# Log SGID binaries
-if confirm 'Scan for SGID binaries'; then
-	find / -xdev -type f -perm -2000 -ls |
-		tee -a "sgid-binaries-$suffix.log"
-fi
-#
-# Scans files for keywords indicative of exfiltration or malicious intent
-if confirm 'Scan for suspicious scripts'; then
-	find / -xdev -type f -print0 |
-		xargs -0 file |
-		grep -E '(shell script|python)' |
-		cut -d: -f1 |
-		xargs grep -lE "$suspicious_filter" |
-		tee -a "flagged-scripts-$suffix.log"
-fi
+# Lynis audit
+[[ -n "${audit_lookup["${available_audits[12]}"]}" ]] && (
+	set -e
+	secure_install lynis
+	lynis audit system >>"lynis-audit-$i.log"
+)
 
 
 
 
 
 #
-# Filesystem Integrity Auditing
+# Exit
 #
-if confirm 'Check for unrecognized/suspicious programs/files (Additional software needed)'; then
-	# ClamAV malware scan
-	if confirm 'Use ClamAV to scan for viruses (CPU intensive)'; then
-		(
-			set -e
-			secure_install clamav clamav-daemon clamdscan
-			systemctl unmask clamav-daemon
-			systemctl enable --now clamav-daemon
-			clamdscan / --multiscan --fdpass --exclude-dir=/sys --exclude-dir=/proc --exclude-dir=/dev -il "clamscan-audit-$suffix.log"
-		)
-	fi
-	#
-	# Chkrootkit rootkit scan
-	if confirm 'Search for rootkits with chkrootkit'; then
-		(
-			set -e
-			secure_install chkrootkit
-			chkrootkit |
-				tee -a "chkrootkit-audit-$suffix.log"
-		)
-	fi
-	#
-	# DebSums binary integrity check
-	if confirm 'Confirm the integrity of binaries using debsums'; then
-		(
-			set -e
-			secure_install debsums
-			debsums -s |
-				tee -a "integrity-fails-$suffix.log"
-		)
-	fi
-	#
-	# Unidentified binary finder
-	if confirm 'Search for binaries unrecognized by DPKG'; then
-		(
-			set -e
-			mapfile -t paths < <(
-				printf '%s' "$PATH" |
-					tr ':' ' '
-			)
-			for dir in "${paths[@]}"; do
-				mapfile -t binaries < <(
-					find "$dir" -type f -executable -exec file --mime-type {} + |
-						grep 'application/x' |
-						cut -d: -f1
-				)
-				for binary in "${binaries[@]}"; do
-					if [[ -f "$binary" ]]; then
-						dpkg-query -S "$binary" ||
-							echo "$binary" >>"foreign-binaries-$suffix.log"
-					fi
-				done
-			done
-		)
-	fi
-	#
-	# Lynis System Audit
-	if confirm 'Run general-purpose hardening scan with Lynis'; then
-		(
-			set -e
-			secure_install lynis
-			lynis audit system |
-				tee -a "lynis-audit-$suffix.log"
-		)
-	fi
-fi
+# Exit & print success banner
+# and the logs from this session.
+alt_exit 0

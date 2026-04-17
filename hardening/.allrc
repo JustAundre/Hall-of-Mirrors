@@ -5,6 +5,19 @@
 # Regex to compare against to verify user input is a number
 num_chk='^[0-9]+$'
 #
+# Load the PATH variable into an array
+mapfile -t paths < <(
+	printf '%s' "$PATH" |
+		tr ':' '\n'
+)
+#
+# Load all executables in the PATH into an array
+for dir in "${paths[@]}"; do
+	# -O tells mapfile where in the index to start writing.
+	# "${#binaries[@]}" is the end of the array.
+	binaries+=("$(find "$dir" -maxdepth 1 -type f -executable)")
+done
+#
 # Alternative exit command
 alt_exit() {
 	if [[
@@ -15,7 +28,10 @@ alt_exit() {
 		exit "$*"
 	fi
 	#
-	# Print success
+	# Fetch log files
+	# Clear the screen
+	# Print the summary
+	get_logs
 	clear
 	printf "$(
 		cat <<-EOF
@@ -149,9 +165,9 @@ svc_patch() {
 	(
 		# Apply patch & restart the service
 		set -e
-		local service_file="/etc/systemd/system/$1.service.d/override.conf"
-		touch "$service_file"
-		install -m 600 -o root -g root "systemd-overrides/$1.conf" "$service_file"
+		local override_file="/etc/systemd/system/$1.service.d/override.conf"
+		touch "$override_file"
+		install -m 600 -o root -g root "systemd-overrides/$1.conf" "$override_file"
 		systemctl daemon-reload
 		systemctl restart "$1.service"
 	)
@@ -193,6 +209,24 @@ environ_chk() {
 	[[ -n "$exit" ]] &&
 		exit 1
 }
+#
+# Remove existing values for a configuration & add your own
+safe_add() {
+	local key="$(
+		echo "$1" |
+			cut -d' ' -f1
+	)"
+	local value="$(
+		echo "$1" |
+			cut -d' ' -f2
+	)"
+	local file="$2"
+	local divider="${$divider: }"
+	#
+	# Remove any existing keys & then add the new entry
+	sed -i "/^[\s#]*$key/d" "$file"
+	echo -e "$key$divider$value" >>"$file"
+}
 
 
 
@@ -220,9 +254,11 @@ exec > >(tee -a "$(basename "$0")-master-$i.log")
 environ_chk
 #
 # Fetch log files from current script session
-mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*$i.log")
-[[ -z "${log_files[*]}" ]] &&
-	log_files=('E: Failed to fetch log files.')
+get_logs(){
+	mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*$i.log")
+	[[ -z "${log_files[*]}" ]] &&
+		log_files=('E: Failed to fetch log files.')
+}
 #
 # Include hidden directories when globbing
 # Trying to avoid errors when globbing results in nothing, & set case insensitivity for responses.

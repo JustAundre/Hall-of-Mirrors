@@ -2,26 +2,14 @@
 #
 # Environment Setup
 #
-# Variables
-cd "$(dirname "${BASH_ARGV0[*]}")"
-. ../.allrc
+# Import global helper functions and variables
+cd "$(dirname "${BASH_ARGV0[*]}")../"
+. .allrc
+#
+# Script variables
 config=/etc/ssh/sshd_config
 config_dir=/etc/ssh/sshd_config.d/
-#
-# A function to safely set SSH configurations
-safe_add() {
-	local key="$1"
-	local value="$2"
-	#
-	# Check if the configuration key is already specified
-	if grep -qE "^#?\s*${key}\s+" "$config"; then
-		# If yes, change the value to the new value.
-		sed -i "s|^\s*#\?\s*${key}\s\+.*|${key} ${value}|" "$config"
-	else
-		# If not, append a new entry of the configuration key
-		echo "${key} ${value}" >>"$config"
-	fi
-}
+divider=' '
 
 
 
@@ -138,5 +126,6 @@ fi
 #
 # Exit
 #
-# Exit with summary
+# Exit & print success banner
+# and the logs from this session.
 alt_exit 0

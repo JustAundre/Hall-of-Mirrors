@@ -2,34 +2,15 @@
 #
 # Environment Setup
 #
-# Change directory into directory of script
-cd "$(dirname "${BASH_ARGV0[*]}")"
-. ../.allrc
-#
-# End script on error
-# Error if called missing variable
-# Error if a part of a pipeline errors
-set -euo pipefail
+# Import global helper functions and variables
+cd "$(dirname "${BASH_ARGV0[*]}")../"
+. .allrc
 #
 # Script Variables
 config=/etc/vsftpd.conf
 cert_dir=/etc/ssl/private
 cert="$cert_dir/vsftpd.pem"
-#
-# A function to apply VSFTPD configurations
-safe_add() {
-	local key="$1"
-	local value="$2"
-	#
-	# If key already exists...
-	if grep -qE "^#?\s*${key}=" "$config"; then
-		# Replace value of existing key
-		sed -i "s|^\s*#\?\s*${key}=.*|${key}=${value}|" "$config"
-	else
-		# Otherwise make new key with desired value
-		echo "${key}=${value}" >>"$config"
-	fi
-}
+divider='='
 
 
 
@@ -52,44 +33,42 @@ secure_install vsftpd openssl ||
 #
 # Generate a TLS certificate if not present.
 if [[ ! -f "$cert" ]]; then
-	echo 'i: Generating TLS certificate...'
-	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "$cert" -out "$cert" -subj '/CN=FTP Server'
-	chmod 600 "$cert"
+	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout /dev/stdout -out /dev/stdout -subj '/CN=FTP Server' |
+		install -m 600 -u root -g root /dev/stdin "$cert"
 fi
 #
 # Disable anonymous access
-echo 'i: Applying secure VSFTPD configurations...'
 safe_add anonymous_enable NO
 #
 # Local users only
-safe_add local_enable YES
-safe_add write_enable YES
+safe_add 'local_enable YES'
+safe_add 'write_enable YES'
 #
 # Chroot/anchor users to their home directories
-safe_add chroot_local_user YES
-safe_add allow_writeable_chroot YES
+safe_add 'chroot_local_user YES'
+safe_add 'allow_writeable_chroot YES'
 #
 # Restrict file permissions
-safe_add local_umask 077
+safe_add 'local_umask 077'
 #
 # Disable risky features
-safe_add dirmessage_enable NO
-safe_add xferlog_enable YES
-safe_add port_enable NO
+safe_add 'dirmessage_enable NO'
+safe_add 'xferlog_enable YES'
+safe_add 'port_enable NO'
 #
 # Enable Logging
-safe_add log_ftp_protocol YES
-safe_add vsftpd_log_file /var/log/vsftpd.log
+safe_add 'log_ftp_protocol YES'
+safe_add 'vsftpd_log_file /var/log/vsftpd.log'
 #
 # Connection limits (brute-force mitigation)
-safe_add max_clients 10
-safe_add max_per_ip 3
-safe_add pasv_enable YES
-safe_add pasv_min_port 40000
-safe_add pasv_max_port 40100
+safe_add 'max_clients 10'
+safe_add 'max_per_ip 3'
+safe_add 'pasv_enable YES'
+safe_add 'pasv_min_port 40000'
+safe_add 'pasv_max_port 40100'
 #
 # Banner
-safe_add ftpd_banner Authorized access only.
+safe_add 'ftpd_banner Authorized access only.'
 #
 # TLS Hardening
 safe_add ssl_enable YES
@@ -145,5 +124,6 @@ fi
 #
 # Exit
 #
-# Exit with summary
+# Exit & print success banner
+# and the logs from this session.
 alt_exit 0
