@@ -184,8 +184,8 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 	secure_install "${hard_deps[@]}" ||
 	alt_exit 1
 #
-# Run updates
-if [[ -n "$upd" ]]; then
+# Run updates (in the bg)
+[[ -n "$upd" ]] && (
 	# Update APT updates
 	apt-get update
 	apt-get full-upgrade --no-install-recommends -y
@@ -197,14 +197,15 @@ if [[ -n "$upd" ]]; then
 	# Update snaps (if present)
 	hash snap &&
 		snap refresh
-fi
+) &
 #
-# Uninstall reconissiance packages
-[[ -n "$del_recon_pkgs" ]] &&
+# Uninstall reconissiance packages (in the bg)
+[[ -n "$del_recon_pkgs" ]] && (
 	apt-get autoremove --purge "${reconissiance_pkgs[@]}"
+) &
 #
-# Mask selected risky
-[[ -n "${to_be_masked[*]}" ]] &&
+# Mask selected risky (in the bg)
+[[ -n "${to_be_masked[*]}" ]] && (
 	for binary in "${to_be_masked[@]}"; do
 		(
 			set -e
@@ -213,6 +214,7 @@ fi
 			update-alternatives --set "$(basename "$binary")" /bin/false
 		)
 	done
+) &
 
 
 
@@ -221,18 +223,20 @@ fi
 #
 # Service Management
 #
-# Uninstalls risky packages
-[[ -n "$del_bad_pkgs" ]] &&
+# Uninstalls risky packages (in the bg)
+[[ -n "$del_bad_pkgs" ]] && (
 	apt-get autoremove --purge -y "${risky_pkgs[@]}"
+) &
 #
-# Disables & masks risky services
-[[ -n "$del_bad_svcs" ]] &&
+# Disables & masks risky services (in the bg)
+[[ -n "$del_bad_svcs" ]] && (
 	for service in "${risky_svcs[@]}"; do
 		decommission "$service"
 	done
+) &
 #
-# Ask for services which are to be removed
-if [[ -n "$service_review" ]]; then
+# Remove flagged services (if selected) (in the bg)
+[[ -n "$service_review" ]] && (
 	for service in "${services[@]}"; do
 		# Mark any service that was selected to be removed, to be removed.
 		for flagged_service in "${flagged_services[@]}"; do
@@ -250,15 +254,15 @@ if [[ -n "$service_review" ]]; then
 			fi
 		done
 	done
-fi
-#
-# Apply SystemD drop-ins for misc. services
-svc_patch cron
-svc_patch mosquitto
-svc_patch systemd-udevd
-#
-# Reload SystemD
-systemctl daemon-reload
+	#
+	# Apply SystemD drop-ins for misc. services
+	svc_patch cron
+	svc_patch mosquitto
+	svc_patch systemd-udevd
+	#
+	# Reload SystemD
+	systemctl daemon-reload
+) &
 
 
 
@@ -267,20 +271,23 @@ systemctl daemon-reload
 #
 # Kernel Hardening
 #
-if [[ -n "$sysctl" ]]; then
+# Apply generic sysctl hardening values
+# (Not likely to cause issues)
+# (in the bg)
+[[ -n "$sysctl" ]] && (
 	# Stage & apply generic & mostly non-breaking kernel parameters
 	install -m 640 -o root -g root -D general-confs/kernel.conf /etc/sysctl.d/99-security.conf
 	sysctl -p /etc/sysctl.d/99-security.conf
 	sysctl --system
-	#
-	# Is IPv6 networking needed?
-	if [[ -n "$no_ipv6" ]]; then
-		# If not, disable.
-		install -m 640 -o root -g root -D general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
-		sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
-		sysctl --system
-	fi
-fi
+) &
+#
+# Disables IPv6 if requested
+# (in the bg)
+[[ -n "$no_ipv6" ]] && (
+	install -m 640 -o root -g root -D general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
+	sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
+	sysctl --system
+) &
 
 
 
@@ -290,7 +297,8 @@ fi
 # Access Control Repair
 #
 # Repair filesystem ownership & modes
-if [[ -n "$fix_perms" ]]; then
+# (in the bg)
+[[ -n "$fix_perms" ]] && (
 	# Add Sticky Bit to world-writable directories
 	find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod -h +t {} +
 	#
@@ -365,7 +373,7 @@ if [[ -n "$fix_perms" ]]; then
 	# Secure existing home directories
 	chown root:root /root
 	chmod -h 700 /home/* /root
-fi
+) &
 
 
 
@@ -374,6 +382,7 @@ fi
 #
 # User & Group Auditing
 #
+# (in the bg)
 if [[ -n "$audit_users" ]]; then
 	# Delete users flagged as to be deleted
 	# Delete passwords of users flagged to have their password removed
@@ -382,19 +391,19 @@ if [[ -n "$audit_users" ]]; then
 	# Prompt to change the UID of users flagged to be reUIDed
 	# Prompt to change the primary & supplemental groups of users flagged to be regrouped
 	for u in "${users_del[@]}"; do
-		userdel -rf "$u"
+		userdel -rf "$u" &
 	done
 	for u in "${users_nullpass[@]}"; do
-		passwd "$u" -d
+		passwd "$u" -d &
 	done
 	for u in "${users_lock[@]}"; do
-		passwd "$u" -l
+		passwd "$u" -l &
 	done
 	for u in "${users_reshell[@]}"; do
 		while [[ ! -x "$shell" ]]; do
 			read -erp 'Enter the path to the new shell: ' shell
 		done
-		usermod -s "$shell" "$u"
+		usermod -s "$shell" "$u" &
 	done
 	for u in "${users_reuid[@]}"; do
 		while [[
@@ -404,7 +413,7 @@ if [[ -n "$audit_users" ]]; then
 		do
 			read -erp 'Enter the new UID: ' uid
 		done
-		usermod -s "$uid" "$u"
+		usermod -s "$uid" "$u" &
 	done
 	for u in "${users_regroup[@]}"; do
 		while [[ -z "$(getent passwd "$primary_group")" ]]; do
@@ -418,15 +427,15 @@ if [[ -n "$audit_users" ]]; then
 					stop=
 			done
 		done
-		usermod -g "$primary_group" "$u"
-		usermod -G "${supplemental_groups[*]// /,}" "$u"
+		usermod -g "$primary_group" "$u" &
+		usermod -G "${supplemental_groups[*]// /,}" "$u" &
 	done
 fi
 #
 # Secures root user
 # (L)ocks user (root) & (d)eletes their password
 [[ -n "$lock_root" ]] &&
-	passwd root -ld
+	passwd root -ld &
 
 
 
@@ -443,38 +452,45 @@ if [[ -n "$firewall_config" ]]; then
 			modprobe "$module"
 	done
 	#
-	# Configure baseline ruleset
+	# Configure baseline ruleset (in the bg)
 	# Uncomplicated Firewall/ufw
+	# (Unfortunately UFW isn't flexible enough to block certain ICMP ping types)
 	if [[ "$firewall" == UFW ]]; then
-		# (Unfortunately UFW isn't flexible enough to block certain ICMP ping types.)
-		# Start the firewall
-		systemctl unmask ufw
-		systemctl restart --now ufw
-		ufw --force enable
-		#
-		# Reset the firewall
-		ufw reset
-		#
-		# Deny all incoming, allow all outgoing.
-		ufw default deny incoming
-		ufw default allow outgoing
+		(
+			set -e
+			#
+			# Start the firewall
+			systemctl unmask ufw
+			systemctl restart --now ufw
+			ufw --force enable
+			#
+			# Reset the firewall
+			ufw reset
+			#
+			# Deny all incoming, allow all outgoing.
+			ufw default deny incoming
+			ufw default allow outgoing
+		) &
 	# FirewallD/firewall-cmd
 	elif [[ "$firewall" == FirewallD ]]; then
-		# Start the firewall
-		systemctl unmask firewalld
-		systemctl restart --now firewalld
-		#
-		# Reset the firewall
-		firewall-cmd --reset-to-defaults
-		firewall-cmd --set-default-zone public
-		#
-		# Deny all incoming, allow all outgoing.
-		firewall-cmd --permanent --load-zone-defaults public
-		#
-		# Block ICMP echo requests & timestamp requests/replies
-		firewall-cmd --permanent --add-icmp-block echo-request
-		firewall-cmd --permanent --add-icmp-block timestamp-reply
-		firewall-cmd --permanent --add-icmp-block timestamp-request
+		(
+			set -e
+			# Start the firewall
+			systemctl unmask firewalld
+			systemctl restart --now firewalld
+			#
+			# Reset the firewall
+			firewall-cmd --reset-to-defaults
+			firewall-cmd --set-default-zone public
+			#
+			# Deny all incoming, allow all outgoing.
+			firewall-cmd --permanent --load-zone-defaults public
+			#
+			# Block ICMP echo requests & timestamp requests/replies
+			firewall-cmd --permanent --add-icmp-block echo-request
+			firewall-cmd --permanent --add-icmp-block timestamp-reply
+			firewall-cmd --permanent --add-icmp-block timestamp-request
+		) &
 	else
 		echo 'E: Unsupported firewall software.'
 	fi
@@ -497,7 +513,7 @@ if [[ -n "$firewall_config" ]]; then
 		if [[ "$firewall" == UFW ]]; then
 			ufw allow in "$port/tcp"
 		elif [[ "$firewall" == FirewallD ]]; then
-			firewall-cmd --permanent --add-port "$port/tcp"
+			firewall-cmd --permanent --add-port "$port/tcp" &
 		else
 			echo 'E: Unsupported firewall software.'
 		fi
@@ -505,7 +521,7 @@ if [[ -n "$firewall_config" ]]; then
 	#
 	# Apply changes (FirewallD exclusive)
 	[[ "$firewall" == FirewallD ]] &&
-		firewall-cmd --reload
+		firewall-cmd --reload &
 fi
 
 
@@ -515,16 +531,20 @@ fi
 #
 # Lockout Policies
 #
-# Configure PAM with secure defaults
+# Configure PAM with secure defaults (in the bg)
 if [[ -n "$pam_reconfig" ]]; then
 	# RHEL-like distros
 	if hash authselect; then
-		# Configure PAM /w secure defaults enabled & further configure password QA
-		authselect select sssd with-faillock with-pamaccess with-pwhistory with-pwquality with-mkhomedir with-sudo without-nullok --force
-		install -m 640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
-		#
-		# Regenerate PAM configurations /w previous configuration
-		authselect apply-changes
+		(
+			set -e
+			#
+			# Configure PAM /w secure defaults enabled & further configure password QA
+			authselect select sssd with-faillock with-pamaccess with-pwhistory with-pwquality with-mkhomedir with-sudo without-nullok --force
+			install -m 640 -o root -g root -D general-confs/pwquality.conf /etc/security/pwquality.conf
+			#
+			# Regenerate PAM configurations /w previous configuration
+			authselect apply-changes
+		)
 	# Debian-like distros
 	elif hash pam-auth-update; then
 		(
@@ -544,7 +564,7 @@ if [[ -n "$pam_reconfig" ]]; then
 			#
 			# Update PAM configurations
 			pam-auth-update --force --package
-		)
+		) &
 	else
 		echo 'Your PAM configuration setup is unsupported.'
 	fi
@@ -621,6 +641,10 @@ fi
 
 #
 # Exit
+#
+# Wait for all children to exit
+echo 'i: Started work on all fixes dc, this may take a while depending on your selections...'
+wait
 #
 # Exit & print success banner
 # and the logs from this session.
