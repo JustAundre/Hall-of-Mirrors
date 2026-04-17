@@ -6,6 +6,7 @@
 cd "$(dirname "${BASH_ARGV0[*]}")"
 . ../.allrc
 config=/etc/ssh/sshd_config
+config_dir=/etc/ssh/sshd_config.d/
 #
 # A function to safely set SSH configurations
 safe_add() {
@@ -27,14 +28,7 @@ safe_add() {
 
 
 #
-# SSH Setup/Integrity Verification
-#
-cat <<-'EOF'
-	Help Pages:
-	https://unix.stackexchange.com/questions/642824/ssh-fails-to-start-due-to-missing-host-keys
-
-	i: Installing & resetting SSH...
-EOF
+# Integrity Check
 #
 # Refresh SSHD
 secure_install openssh-server
@@ -53,52 +47,48 @@ secure_install openssh-server
 
 
 #
-# SSH Hardening
+# Configuration
 #
-# Authentication (no keys, all password)
-echo 'i: Applying SSH setting configurations'
+# Clear current configuration
+rm -rf /etc/ssh/*
+#
+# Binding
+safe_add Port 22
+safe_add AddressFamily any
+ListenAddress 0.0.0.0
+ListenAddress ::
+#
+# Logging
+LogLevel VERBOSE
+#
+# Authentication
+safe_add GSSAPIAuthentication no
+safe_add KerberosAuthentication no
 safe_add PermitRootLogin no
 safe_add PasswordAuthentication yes
 safe_add PubkeyAuthentication no
 safe_add PermitEmptyPasswords no
 safe_add ChallengeResponseAuthentication no
 safe_add UsePAM yes
+safe_add HostbasedAuthentication no
+safe_add IgnoreUserKnownHosts yes
+safe_add IgnoreRhosts yes
+safe_add PermitEmptyPasswords no
 #
 # Connection hardening
 safe_add StrictModes yes
 safe_add MaxAuthTries 3
-safe_add LoginGraceTime 30
+safe_add LoginGraceTime 20
 safe_add ClientAliveInterval 300
-safe_add ClientAliveCountMax 2
+safe_add ClientAliveCountMax 0
 #
-# Feature lockdown
+# Disable unecessary features
 safe_add X11Forwarding no
 safe_add AllowTcpForwarding no
 safe_add PrintMotd no
-
-
-
-
-
-#
-# Access Audit
-#
-# SSH Group Check
-if getent group ssh &>/dev/null; then
-	if [[ -n "$(
-			getent group ssh |
-				awk -F: '{print $3, $4}'
-		)"
-	]]; then
-		cat <<-EOF
-			i: The following users are in the SSH group & may be able to SSH into this machine: $members
-		EOF
-	else
-		echo 'i: There are no members in the SSH group.'
-	fi
-else
-	echo 'i: The SSH group does not exist.'
-fi
+safe_add AllowAgentForwarding no
+safe_add PermitUserEnvironment no
+safe_add Compression none
 
 
 
@@ -108,27 +98,23 @@ fi
 # Configuration Validation
 #
 # Validate SSH configurations
-echo 'i: Validating configuration(s)...'
 #
-# If SSHD configurations...
+# If syntax check...
 if sshd -t; then
-	# Pass
+	# Passes, then restart SSHD.
 	cat <<-'EOF'
-		OK: SSH configuration is OK.
+		OK: Syntax check passed.
 		i: Restarting SSHD...
 	EOF
 	#
 	# Restart SSHD
 	systemctl restart sshd
 else
-	# Fail
+	# Fails, then tell the user to how to check for why.
 	cat <<-'EOF'
 		E: Syntax check failed.
 		i: Run (sshd -t) to see why.
 	EOF
-	#
-	# Restart SSHD
-	systemctl restart sshd
 	alt_exit 1
 fi
 

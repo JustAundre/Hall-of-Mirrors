@@ -15,8 +15,9 @@ alt_exit() {
 		exit "$*"
 	fi
 	#
-	# Define success banner
-	local banner="$(
+	# Print success
+	clear
+	printf "$(
 		cat <<-EOF
 			\e[1m
 			  ---{=========}###[@]###{===========}---
@@ -35,18 +36,16 @@ alt_exit() {
 				for path in "${log_files[@]}"; do
 					printf '%s\n' "$path"
 				done
-			)
+			)\n
 		EOF
 	)"
-	clear
-	printf "$banner\n"
 }
 #
 # Alternative clear command
 clear() {
 	# Print enough newlines to clear the screen & then move the cursor back to the top
 	local height
-	mapfile -t height <(seq 1 "$(tput lines)")
+	mapfile -t height < <(seq 1 $(tput lines))
 	printf '\n%.0s' "${height[@]}"
 	command clear -x
 }

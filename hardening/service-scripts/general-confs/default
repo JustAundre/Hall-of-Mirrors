@@ -7,18 +7,18 @@ server {
 
 	server_name _;
 
-	# 1. SECURITY HEADERS
+	# Enable security headers
 	include snippets/security-headers.conf;
 
-	# 2. DISABLE DIRECTORY LISTING
+	# Disable diectory enumeration
 	autoindex off;
 
-	# 3. BLOCK UNWANTED HTTP METHODS
+	# Whitelist only common HTTP methods
 	if ($request_method !~ ^(GET|HEAD|POST)$ ) {
 		return 405;
 	}
 
-	# 4. BLOCK HIDDEN FILES (like .git or .htaccess)
+	# Hide dot files
 	location ~ /\. {
 		deny all;
 		access_log off;
