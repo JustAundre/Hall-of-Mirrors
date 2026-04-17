@@ -17,7 +17,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 echo '[y/n] prompts have either the Y or N capitalized to indicate which is the default; but never both.'
 #
 # Install script dependencies
-confirm 'This script has dependencies; install' &&
+confirm 'This script has dependencies; install' "${hard_deps[*]}\n(See above for aforementioned 'dependencies')" &&
 	deps=y
 #
 # Install updates
