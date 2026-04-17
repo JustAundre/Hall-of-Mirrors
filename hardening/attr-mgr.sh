@@ -3,7 +3,7 @@
 # Environment Setup & Logging
 #
 # Source secure environment
-cd "$(dirname "${BASH_ARGV0[*]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 
 
@@ -18,7 +18,11 @@ options=(
 	remove
 	restore
 )
+#
+# Ask which mode
 response="$(checklist 'Attribute manager' radiolist "${options[@]}")"
+#
+# Act based on selected mode
 if [[ "$response" == remove ]]; then
 	# Alert the user of the possible lengthy scan
 	echo i: This will take a second...

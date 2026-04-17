@@ -3,7 +3,7 @@
 # Environment Setup & Logging
 #
 # Source helper functions and variables
-cd "$(dirname "${BASH_ARGV0[*]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 . .generalrc
 

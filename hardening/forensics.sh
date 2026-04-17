@@ -3,7 +3,7 @@
 # Environment Setup
 #
 # Source secure environment
-cd "$(dirname "${BASH_ARGV0[*]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 #
 # Packages used to build wpscan (wordpress-scan)
