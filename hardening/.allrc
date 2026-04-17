@@ -38,6 +38,7 @@ alt_exit() {
 			)
 		EOF
 	)"
+	clear
 	printf "$banner\n"
 }
 #
