@@ -238,7 +238,6 @@
 		local in_hashed=""
 		local target_hash="${passwd_hashes[$((layer_at - 1))]}"
 		local cmd="${input%% *}"
-		local i
 		#
 		# Update history (L1 exclusive)
 		# Simulate a fake delay (if configured)
@@ -330,7 +329,8 @@ while true; do
 	case "$layer_at" in
 		1)
 			# L1 -- False Terminal
-			read -t "$read_tmout" -erp "$PS1" -n $(( $max_stdin + 1 )) input || exit 1
+			read -t "$read_tmout" -erp "$PS1" -n "$(( max_stdin + 1 ))" input ||
+				exit 1
 			if passwd_check; then
 				[[ "$auth_layers" -gt 1 ]] ||
 					handover
@@ -344,7 +344,7 @@ while true; do
 		;;
 		2)
 			# L2 -- Silence
-			read -t "$read_tmout" -ern $(( $max_stdin + 1 )) input ||
+			read -t "$read_tmout" -ern "$(( max_stdin + 1 ))" input ||
 				exit 1
 			if passwd_check; then
 				[[ "$auth_layers" -gt 2 ]] ||
@@ -354,7 +354,7 @@ while true; do
 		;;
 		3)
 			# L3 -- Silence (The Sequel)
-			read -t "$read_tmout" -ern $(( $max_stdin + 1 )) input ||
+			read -t "$read_tmout" -ern "$(( max_stdin + 1 ))" input ||
 				exit 1
 			if passwd_check; then
 				[[ "$auth_layers" -gt 3 ]] ||
