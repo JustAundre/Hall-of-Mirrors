@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 # Install the logging directory
 mkdir -p /var/log/sessions
 chown root:root /var/log/sessions
