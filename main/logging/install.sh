@@ -1,3 +1,4 @@
+#/usr/bin/env bash
 # Install the logging directory
 mkdir -p /var/log/sessions
 chown root:root /var/log/sessions
@@ -19,7 +20,7 @@ cat >>/etc/sudoers <<-'EOF'
 EOF
 # Install the log-locker service
 install -m 600 -o root -g root log-locker/log-locker.service /etc/systemd/system/log-locker.service
-install -m 600 -o root -g root log-locker/log-locker.timer /etc/systemd/system/log-locker.path
+install -m 600 -o root -g root log-locker/log-locker.path /etc/systemd/system/log-locker.path
 install -m 700 -o root -g root log-locker/log-locker.sh /opt/log-locker.sh
 systemctl enable --now log-locker.path
 #

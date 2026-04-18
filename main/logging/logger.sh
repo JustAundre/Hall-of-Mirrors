@@ -58,4 +58,4 @@ exec -c env -i\
 	SSH_CONNECTION="$SSH_CONNECTION"\
 	SSH_TTY="$SSH_TTY"\
 	SSH_ORIGINAL_COMMAND="$SSH_ORIGINAL_COMMAND"\
-	/usr/bin/script "$log_file" -afqc "su -p $LOGNAME -s /bin/bash"
+	/usr/bin/script "$log_file" -afqc "su -p $LOGNAME -s /bin/bash -l"
