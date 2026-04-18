@@ -7,11 +7,17 @@
 	# Environment variables/checks
 	[[ -n "$LOG" ]] &&
 		exit 253
-	declare -rx AUID=$(</proc/self/loginuid)
-	declare -rx LOGNAME="$(getent passwd $AUID | cut -d: -f1)"
-	declare -rx HOME="$(getent passwd $AUID | cut -d: -f6)"
-	declare -r LOGTIME="$(date +%Y-%m-%d-%H-%M-%S)"
-	log_file="/var/log/sessions/$LOGNAME-at-$LOGTIME"
+	declare -rx AUID="$(</proc/self/loginuid)"
+	declare -rx LOGNAME="$(
+		getent passwd "$AUID" |
+			cut -d: -f1
+	)"
+	declare -rx HOME="$(
+		getent passwd "$AUID" |
+			cut -d: -f6
+	)"
+	declare -r timestamp="$(date +%Y-%m-%d-%H-%M-%S)"
+	log_file="/var/log/sessions/$LOGNAME-at-$timestamp"
 
 
 
@@ -45,17 +51,10 @@ if [[ ! -t 0 ]]; then
 	if [[ -n "$SSH_ORIGINAL_COMMAND" ]]; then
 		cmd="with command $SSH_ORIGINAL_COMMAND"
 	fi
-	echo "$LOGNAME/$UID from $SSH_CLIENT attempted to open non-interactive session $cmd" |
+	echo "$LOGNAME/$UID from $SSH_CLIENT attempted to run non-interactive command: ($cmd)" |
 		systemd-cat -p3 -t logger
 	exit 255
+else
+	# Start logging
+	exec -c env -i TERM="$TERM" SSH_CLIENT="$SSH_CLIENT" SSH_CONNECTION="$SSH_CONNECTION" SSH_TTY="$SSH_TTY" SSH_ORIGINAL_COMMAND="$SSH_ORIGINAL_COMMAND" /usr/bin/script "$log_file" -afqc "su -p $LOGNAME -s /bin/bash -l"
 fi
-echo $EUID
-#
-# Start logging
-exec -c env -i\
-	TERM="$TERM"\
-	SSH_CLIENT="$SSH_CLIENT"\
-	SSH_CONNECTION="$SSH_CONNECTION"\
-	SSH_TTY="$SSH_TTY"\
-	SSH_ORIGINAL_COMMAND="$SSH_ORIGINAL_COMMAND"\
-	/usr/bin/script "$log_file" -afqc "su -p $LOGNAME -s /bin/bash -l"
