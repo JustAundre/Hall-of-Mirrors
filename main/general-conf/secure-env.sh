@@ -41,8 +41,7 @@
 	declare -rx HOSTNAME="${HOSTNAME%%.*}"
 	for var in SSH_CONNECTION SSH_CLIENT; do
 		[[ -z "$var" ]] &&
-			declare -rx "$var=Local" ||
-			declare -rx "$var"
+			declare -rx "$var=Local"
 	done
 	#
 	# Remove usage of commands which allow bypasses or unauthorized forensics
