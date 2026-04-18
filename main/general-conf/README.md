@@ -12,7 +12,7 @@ cd Hall-of-Mirrors/main/general-conf
 Restricting certain configurations of a shell usually should be fine; even for admins.
 Install `secure-env.sh` to `/etc/profile.d/secure-env.sh`
 ```bash
-sudo install -m 733 -o root -g root secure-env.sh /etc/profile.d/secure-env.sh
+sudo install -m 755 -o root -g root secure-env.sh /etc/profile.d/secure-env.sh
 ```
 
 Fail2Ban's real nice; you don't want a million bruteforce attacks against your SSH port.
