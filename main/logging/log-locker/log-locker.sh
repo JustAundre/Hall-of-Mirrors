@@ -35,13 +35,10 @@ for file in "$log_dir"/*; do
 		chmod 600 "$file"
 	#
 	# Check if this specific file is in our list (or is being prepared for logging)
-	if [[
-		-n "$(
-			printf '%s' "$is_open" |
-				grep -x "$file"
-		)" ||
-		"$(stat -c %s $file)" == 0
-	]]; then
+	if printf '%s' "$is_open" |
+		grep -qx "$file" ||
+		[[ "$(stat -c %s "$file")" == 0 ]];
+	then
 		# File is actively being logged to
 		# Add append-only (+a)
 		chattr +a "$file" &&
