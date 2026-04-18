@@ -42,7 +42,7 @@ alt_exit() {
 			\e[0m
 			  ---{=========}###[\e[1m@\e[0m]###{===========}---
 			
-			      Cybersecurity is \e[1mgreat\e[0m; though
+			      Cybersecurity is \e[1mgreat\e[0m; though,
 			    people often have their priorities
 			       mixed up. Make sure you have
 			        good password hygiene and
