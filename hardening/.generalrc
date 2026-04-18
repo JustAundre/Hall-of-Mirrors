@@ -18,7 +18,6 @@ hard_deps=(
 	debconf
 	libpam-modules
 	sudo
-	ufw
 	systemd
 	libpam-pwquality
 	sed
@@ -27,7 +26,6 @@ hard_deps=(
 	ca-certificates
 	file
 	auditd
-	nano
 	needrestart
 )
 #
