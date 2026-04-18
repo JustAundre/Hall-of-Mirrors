@@ -62,7 +62,7 @@ alt_exit() {
 clear() {
 	# Print enough newlines to clear the screen & then move the cursor back to the top
 	local height
-	mapfile -t height < <(seq 1 $(tput lines))
+	mapfile -t height < <(seq 1 "$(tput lines)")
 	printf '\n%.0s' "${height[@]}"
 	command clear -x
 }
@@ -85,6 +85,7 @@ confirm() {
 	clear
 	local answer
 	while [[ ! "${answer:0:1}" =~ ^[YyNn]$ ]]; do
+		# shellcheck disable=SC2059
 		printf "\n$2\n$1? [y/n]: \n"
 		read -er answer
 		answer="${answer:0:1}"
@@ -107,6 +108,7 @@ checklist() {
 	echo "$title" >&2
 	local i=0
 	for item in "${items[@]}"; do
+		# shellcheck disable=SC2059
 		printf "\t$i) $item\n" >&2
 		i=$((i + 1))
 	done
@@ -151,7 +153,7 @@ secure_install() {
 #
 # Pause the execution of the script
 pause() {
-	read -n1 -p '⏸️ ⏸️ ⏸️ ===> PRESS ANY KEY TO RESUME <=== ⏸️ ⏸️ ⏸️'
+	read -n1 -rp '⏸️ ⏸️ ⏸️ ===> PRESS ANY KEY TO RESUME <=== ⏸️ ⏸️ ⏸️'
 	echo 'OK: Script was resumed.'
 }
 # 
@@ -222,7 +224,7 @@ safe_add() {
 			cut -d' ' -f2
 	)"
 	local file="$2"
-	local divider="${$divider: }"
+	local divider="${divider: }"
 	#
 	# Remove any existing keys & then add the new entry
 	sed -i "/^[\s#]*$key/d" "$file"
