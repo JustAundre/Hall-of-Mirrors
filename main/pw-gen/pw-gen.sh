@@ -195,7 +195,7 @@ if (( "$min" > "$max" )); then
 		W: Minimum ($min) is greater than maximum ($max) is an unfufilable condition;
 		i: Swapping the values of min/max from $min/$max to $max/$min to fix contradiction & proceeding...
 	EOF
-	read max min <<< "$min $max"
+	read -r max min <<< "$min $max"
 fi
 capitals="${capitals:0:1}"
 if [[ ! "$capitals" =~ ^[yYnN]$ ]]; then
