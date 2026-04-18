@@ -2,7 +2,7 @@
 #
 # Environment Setup & Logging
 #
-# Source secure environment
+# Source helper functions and variables
 cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 
