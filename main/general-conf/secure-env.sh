@@ -22,26 +22,26 @@
 	PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 	TTY="$(tty)"
 	declare -rx TTY="${TTY##*/}"
-	declare -rx SSH_TTY="$TTY"
+	declare -rx SSH_TTY="${TTY}"
 	UID="$(</proc/self/loginuid)"
-	[[ "$UID" == 4294967295 ]] &&
+	[[ "${UID}" == 4294967295 ]] &&
 		UID="$(id -u)"
 	declare -rx UID
 	declare -rx USER="$(
-		getent passwd "$UID" |
+		getent passwd "${UID}" |
 			cut -d: -f1
 	)"
-	declare -rx LOGNAME="$USER"
+	declare -rx LOGNAME="${USER}"
 	declare -rx HOME="$(
-		getent passwd "$USER" |
+		getent passwd "${USER}" |
 			cut -f6
 	)"
-	declare -rx HISTFILE="$HOME/.bash_history"
+	declare -rx HISTFILE="${HOME}/.bash_history"
 	HOSTNAME="$(hostname)"
 	declare -rx HOSTNAME="${HOSTNAME%%.*}"
 	for var in SSH_CONNECTION SSH_CLIENT; do
-		[[ -z "$var" ]] &&
-			declare -rx "$var=Local"
+		[[ -z "${var}" ]] &&
+			declare -rx "${var}=Local"
 	done
 	#
 	# Remove usage of commands which allow bypasses or unauthorized forensics

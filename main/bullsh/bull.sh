@@ -8,7 +8,7 @@
 	stty -echo
 	#
 	# Kill duplicate sessions from the same user
-	pgrep -f "$0" -u "$USER" |
+	pgrep -f "$0" -u "${USER}" |
 		grep -v "^$$\$" |
 		xargs kill -9
 
@@ -62,12 +62,12 @@
 	stop_hash="n"
 	#
 	# The prompt to show on each new line
-	declare -x PS1="[$USER@$HOSTNAME ~]$ "
-	[[ "$fake_root" == "y" ]] &&
-		declare -x PS1="[root@$HOSTNAME ~]# "
+	declare -x PS1="[${USER}@${HOSTNAME} ~]$ "
+	[[ "${fake_root}" == y ]] &&
+		declare -x PS1="[root@${HOSTNAME} ~]# "
 	#
 	# Dynamic handling for SSH_CONNECTION/ip_from
-	[[ -z "$SSH_CLIENT" ]] &&
+	[[ -z "${SSH_CLIENT}" ]] &&
 		SSH_CLIENT=local_tty
 	#
 	# Log everything
@@ -82,14 +82,14 @@
 	EOF
 	#
 	# Python logic to use for quick hashing
-	declare -r python_hashing_logic="import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range($hash_rounds):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
+	declare -r python_hashing_logic="import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range(${hash_rounds}):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
 
 
 
 
 
 	#
-	# The Bricks of the Lego Set (Helper Functions)
+	# The Shell
 	#
 	# Send identifiers to a log file
 	warn() {
@@ -97,22 +97,22 @@
 		case "$1" in
 			1)
 				shift 1
-				local msg="W: MFA layer $layer_at failed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | Input with EUID $EUID: $input"
-				printf -- '%s' "$msg" |
-					tee -a "$log_file" |
-					systemd-cat -p4t "$bullsh_auth_log"
+				local msg="W: MFA layer ${layer_at} failed | User: ${USER}/${UID} | IP: ${SSH_CLIENT%% *} | TTY: ${TTY} | Input with EUID ${EUID}: ${input}"
+				printf -- '%s' "${msg}" |
+					tee -a "${log_file}" |
+					systemd-cat -p4t "${bullsh_auth_log}"
 			;;
 			2)
-				local msg="OK: MFA layer $layer_at passed | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
-				printf -- '%s' "$msg" |
-					tee -a "$log_file" |
-					systemd-cat -p5t "$bullsh_auth_log"
+				local msg="OK: MFA layer ${layer_at} passed | User: ${USER}/${UID} | IP: ${SSH_CLIENT%% *} | TTY: ${TTY} | EUID: ${EUID}"
+				printf -- '%s' "${msg}" |
+					tee -a "${log_file}" |
+					systemd-cat -p5t "${bullsh_auth_log}"
 			;;
 			3)
-				local msg="OK: Passed into the REAL SYSTEM TERMINAL | User: $USER/$UID | IP: ${SSH_CLIENT%% *} | TTY: $TTY | EUID: $EUID"
-				printf -- '%s' "$msg" |
-					tee -a "$log_file" |
-					systemd-cat -p3t "$bullsh_auth_log"
+				local msg="OK: Passed into the REAL SYSTEM TERMINAL | User: ${USER}/${UID} | IP: ${SSH_CLIENT%% *} | TTY: ${TTY} | EUID: ${EUID}"
+				printf -- '%s' "${msg}" |
+					tee -a "${log_file}" |
+					systemd-cat -p3t "${bullsh_auth_log}"
 			;;
 			*)
 				echo 'E: The warn function was called with a non-existent warning type.'
@@ -127,7 +127,7 @@
 		pkill -P "$$"
 		#
 		# Check annoyance type
-		case "$annoy_type" in
+		case "${annoy_type}" in
 			1)
 				# Flash black & white really fast for a few seconds
 				for i in {1..250}; do
@@ -144,7 +144,7 @@
 					[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] &&
 						head -c 512 /dev/urandom
 				done
-				printf "\n%s" "$PS1"
+				printf '\n%s' "${PS1}"
 			;;
 			3)
 				# Splat out a random character from /dev/urandom onto a random positon on the screen 500 times at high speeds
@@ -152,17 +152,16 @@
 				tput civis
 				#
 				# Get current screen dimensions
-				rows=$(tput lines)
-				cols=$(tput cols)
+				local rows="$(tput lines)" cols="$(tput cols)"
 				#
 				# The SPAM
 				for i in {1..500}; do
 					# Find a random position within the current window size
-					r=$((RANDOM % rows + 1))
-					c=$((RANDOM % cols + 1))
+					local y="$((RANDOM % rows + 1))"
+					local x="$((RANDOM % cols + 1))"
 					#
 					# Print a random character at the aforementioned position
-					printf "\e[%d;%dH%s" "$r" "$c" "$(
+					printf "\e[%d;%dH%s" "${y}" "${x}" "$(
 						head -c 1 /dev/urandom |
 							tr -d '\0'
 					)"
@@ -172,13 +171,13 @@
 				done
 				#
 				# Move cursor to the bottom & show your cursor again
-				printf "\e[%d;1H$PS1" "$rows"
+				printf "\e[%d;1H${PS1}" "${rows}"
 				tput cnorm
 			;;
 			4)
 				# For ~1 minute, have a minor chance every 150 milliseconds to 'drop' their input briefly
 				for i in {1..400}; do
-					[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] &&
+					[[ "$(( RANDOM % 100 > 80 ))" -eq 1 ]] &&
 						stty -echo
 					sleep .15
 					stty echo
@@ -202,40 +201,29 @@
 		#
 		# Enter into logger script if exists
 		if [[ -x /opt/logger.sh ]]; then
-			builtin exec /usr/bin/env -i\
-				SSH_CONNECTION="$SSH_CONNECTION"\
-				SSH_CLIENT="$SSH_CLIENT"\
-				SSH_TTY="$SSH_TTY"\
-				SSH_ORIGINAL_COMMAND="$SSH_ORIGINAL_COMMAND"\
-				/usr/bin/bash -i
+			builtin exec /usr/bin/env -i SSH_CONNECTION="${SSH_CONNECTION}" SSH_CLIENT="${SSH_CLIENT}" SSH_TTY="${SSH_TTY}" SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}" /usr/bin/bash -il
 		else
-			builtin exec /usr/bin/env -i\
-				SSH_CONNECTION="$SSH_CONNECTION"\
-				SSH_CLIENT="$SSH_CLIENT"\
-				SSH_TTY="$SSH_TTY"\
-				SSH_ORIGINAL_COMMAND="$SSH_ORIGINAL_COMMAND"\
-				/usr/bin/bash -ic 'sudo /opt/logger.sh'
+			builtin exec /usr/bin/env -i SSH_CONNECTION="${SSH_CONNECTION}" SSH_CLIENT="${SSH_CLIENT}" SSH_TTY="${SSH_TTY}" SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}" /usr/bin/bash -ilc 'sudo /opt/logger.sh'
 		fi
 	}
 	#
 	# Function to hash input
 	hash() {
 		# Variable scoping/isolation
-		local input="$input"
-		local PS1="$PS1"
-		local layer_at="$layer_at"
-		local counts="$counts"
+		local input="${input}"
+		local PS1="${PS1}"
+		local layer_at="${layer_at}"
+		local counts="${counts}"
 		#
 		# Hash the input
-		printf -- '%s' "$input" |
-			python3 -c "$python_hashing_logic"
+		printf -- '%s' "${input}" |
+			python3 -c "${python_hashing_logic}"
 	}
 	#
 	# Function to check input
 	passwd_check() {
 		(( counts++ ))
-		local input="$input"
-		local in_hashed=""
+		local input="${input}"
 		local target_hash="${passwd_hashes[$((layer_at - 1))]}"
 		local cmd="${input%% *}"
 		#
@@ -243,56 +231,58 @@
 		# Simulate a fake delay (if configured)
 		# Silently lock out after max_tries
 		# Generate hash only if not locked out
-		[[ "$layer_at" -eq 1 ]] &&
-			history -s "$input"
-		[[ "$fake_delay" == "y" ]] &&
-			sleep "$fake_delay_amount"
-		[[ "$counts" -gt "$max_tries" && "$stop_hash" != "y" ]] &&
-			readonly stop_hash="y"
-		[[ "$stop_hash" == "n" ]] &&
-			in_hashed="$(hash)" ||
-			in_hashed=
+		[[ "${layer_at}" -eq 1 ]] &&
+			history -s "${input}"
+		[[ "${fake_delay}" == y ]] &&
+			sleep "${fake_delay_amount}"
+		[[
+			"${counts}" -gt "${max_tries}" &&
+			"${stop_hash}" != y
+		]] &&
+			readonly stop_hash=y
+		[[ "${stop_hash}" == n ]] &&
+			local in_hashed="$(hash)"
 		#
 		# Handle common inputs
-		if [[ "${#input}" -gt "$max_stdin" ]]; then
+		if [[ "${#input}" -gt "${max_stdin}" ]]; then
 			# Print a fake error & exit
 			printf "\nrbash: fork: cannot allocate memory\n"
 			exit 255
-		elif [[ -z "$input" ]]; then
+		elif [[ -z "${input}" ]]; then
 			# Do nothing on empty input
 			:
-		elif [[ "$layer_at" -eq 1 ]]; then
+		elif [[ "${layer_at}" -eq 1 ]]; then
 			# Mimic rbash restrictions & errors (L1 exclusive)
-			if [[ "$cmd" == */* ]]; then
-				echo "rbash: $cmd: cannot specify '/' in command names" 1>&2
+			if [[ "${cmd}" == */* ]]; then
+				echo "rbash: ${cmd}: cannot specify '/' in command names" 1>&2
 			elif [[
-				"$cmd" == exit ||
-				"$cmd" == logout
+				"${cmd}" == exit ||
+				"${cmd}" == logout
 			]]; then
 				exit 1
-			elif [[ "$cmd" == sudo ]]; then
-				sudo echo "$USER is not in the sudoers file.  This incident will be reported." 1>&2
-			elif [[ "$cmd" == printf ]]; then
+			elif [[ "${cmd}" == sudo ]]; then
+				sudo echo "${USER} is not in the sudoers file.  This incident will be reported." 1>&2
+			elif [[ "${cmd}" == printf ]]; then
 				input="${input/'printf '//}"
-				printf -- %s "$input"
-			elif [[ "$cmd" == echo ]]; then
+				printf -- %s "${input}"
+			elif [[ "${cmd}" == echo ]]; then
 				input="${input/'echo '//}"
-				printf -- %s "$input\n"
-			elif [[ "$cmd" =~ ^([a-zA-Z0-9_-]+)= ]]; then
+				printf -- %s "${input}\n"
+			elif [[ "${cmd}" =~ ^([a-zA-Z0-9_-]+)= ]]; then
 				echo "rbash: ${BASH_REMATCH[1]}: readonly variable"
-			elif type -t "$cmd" &>/dev/null; then
-				echo "rbash: $cmd: Permission denied" 1>&2
+			elif type -t "${cmd}" &>/dev/null; then
+				echo "rbash: ${cmd}: Permission denied" 1>&2
 			else
-				echo "rbash: $cmd: command not found" 1>&2
+				echo "rbash: ${cmd}: command not found" 1>&2
 			fi
 			annoyance &
 		fi
 		#
 		# Check for current layers' password
 		if [[
-			"$stop_hash" == "n" &&
-			-n "$input" &&
-			"$in_hashed" == "$target_hash"
+			"${stop_hash}" == "n" &&
+			-n "${input}" &&
+			"${in_hashed}" == "${target_hash}"
 		]]; then
 			# Log success
 			warn 2
@@ -303,7 +293,7 @@
 		fi
 		#
 		# Log failure
-		warn 1 "$input"
+		warn 1 "${input}"
 		return 1
 	}
 	#
@@ -316,23 +306,23 @@
 
 
 #
-# Gorilla Glue (The Main Logic)
+# The Honey
 #
 # Check for non-interactive commands
-if [[ -n "$SSH_ORIGINAL_COMMAND" ]]; then
-	warn 1 "$SSH_ORIGINAL_COMMAND -- via non-interactive SSH execution"
+if [[ -n "${SSH_ORIGINAL_COMMAND}" ]]; then
+	warn 1 "${SSH_ORIGINAL_COMMAND} -- via non-interactive SSH execution"
 	exit 10
 fi
 #
 # Fake terminal loop
 while true; do
-	case "$layer_at" in
+	case "${layer_at}" in
 		1)
 			# L1 -- False Terminal
-			read -t "$read_tmout" -erp "$PS1" -n "$(( max_stdin + 1 ))" input ||
+			read -t "${read_tmout}" -erp "${PS1}" -n "$(( max_stdin + 1 ))" input ||
 				exit 1
 			if passwd_check; then
-				[[ "$auth_layers" -gt 1 ]] ||
+				[[ "${auth_layers}" -gt 1 ]] ||
 					handover
 				#
 				# L2 Setup -- Time to go mute!
@@ -344,20 +334,20 @@ while true; do
 		;;
 		2)
 			# L2 -- Silence
-			read -t "$read_tmout" -ern "$(( max_stdin + 1 ))" input ||
+			read -t "${read_tmout}" -ern "$(( max_stdin + 1 ))" input ||
 				exit 1
 			if passwd_check; then
-				[[ "$auth_layers" -gt 2 ]] ||
+				[[ "${auth_layers}" -gt 2 ]] ||
 					handover
 				(( layer_at++ ))
 			fi
 		;;
 		3)
 			# L3 -- Silence (The Sequel)
-			read -t "$read_tmout" -ern "$(( max_stdin + 1 ))" input ||
+			read -t "${read_tmout}" -ern "$(( max_stdin + 1 ))" input ||
 				exit 1
 			if passwd_check; then
-				[[ "$auth_layers" -gt 3 ]] ||
+				[[ "${auth_layers}" -gt 3 ]] ||
 					handover
 				(( layer_at++ ))
 			fi

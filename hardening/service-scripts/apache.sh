@@ -3,7 +3,7 @@
 # Environment Setup
 #
 # Import global helper functions and variables
-cd "$(dirname "${BASH_SOURCE[0]}")../"
+cd "$(dirname "${BASH_SOURCE[0]}")../" || exit
 . .allrc
 #
 # Script configuration
@@ -11,7 +11,7 @@ config=/etc/apache2/apache2.conf
 config_dir=/etc/apache2/conf-enabled/99-apache-security.conf
 #
 # Confirm existence of drop-in configuration file
-touch "$config_dir"
+touch "${config_dir}"
 
 
 

@@ -9,7 +9,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")../"
 # Script Variables
 config=/etc/vsftpd.conf
 cert_dir=/etc/ssl/private
-cert="$cert_dir/vsftpd.pem"
+cert="${cert_dir}/vsftpd.pem"
 divider='='
 
 
@@ -32,9 +32,9 @@ secure_install vsftpd openssl ||
 # Configuration
 #
 # Generate a TLS certificate if not present.
-if [[ ! -f "$cert" ]]; then
+if [[ ! -f "${cert}" ]]; then
 	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout /dev/stdout -out /dev/stdout -subj '/CN=FTP Server' |
-		install -m 600 -u root -g root /dev/stdin "$cert"
+		install -m 600 -u root -g root /dev/stdin "${cert}"
 fi
 #
 # Disable anonymous access
@@ -72,8 +72,8 @@ safe_add 'ftpd_banner Authorized access only.'
 #
 # TLS Hardening
 safe_add ssl_enable YES
-safe_add rsa_cert_file "$cert"
-safe_add rsa_private_key_file "$cert"
+safe_add rsa_cert_file "${cert}"
+safe_add rsa_private_key_file "${cert}"
 #
 # Force Encryption
 safe_add force_local_logins_ssl YES
@@ -102,7 +102,7 @@ safe_add require_ssl_reuse NO
 # Validation
 #
 # Have VSFTPD parse the new configuration file
-if vsftpd "$config"; then
+if vsftpd "${config}"; then
 	# Restart & apply if it finds no errors
 	cat <<-'EOF'
 		OK: Syntax OK
@@ -112,7 +112,7 @@ if vsftpd "$config"; then
 else
 	cat <<-EOF
 		E: Syntax check failed.
-		i: Run (vsftpd $config) to see why.
+		i: Run (vsftpd ${config}) to see why.
 	EOF
 	alt_exit 1
 fi

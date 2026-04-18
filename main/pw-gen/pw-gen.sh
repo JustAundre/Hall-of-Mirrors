@@ -17,25 +17,25 @@ word_pull() {
 	# Pull a word within length constraints
 	local word kill
 	while [[
-		"${#word}" -lt "$min" ||
-		"${#word}" -gt "$max"
+		"${#word}" -lt "${min}" ||
+		"${#word}" -gt "${max}"
 	]]; do
 		# Verbose output: print scrapped words
 		[[
-			-n "$verbose" &&
-			-n "$word"
+			-n "${verbose}" &&
+			-n "${word}"
 		]] &&
-			echo "i: Dropped word '$word' because it did not meet complexity requirements." >&3
+			echo "i: Dropped word '${word}' because it did not meet complexity requirements." >&3
 		#
 		# Error out if failed to find a word matching set constraints for more than 250 cycles
-		if [[ "$kill" -gt 250 ]]; then
+		if [[ "${kill}" -gt 250 ]]; then
 			echo 'E: Script took too long to find a word within constraints, stopping to avoid system stress...' >&4
 			return 4
 		fi
 		#
 		# Shuffle the dictionary & pull 1 word
-		word="$(shuf -n1 "$dict_location")"
-		if [[ -z "$word" ]]; then
+		word="$(shuf -n1 "${dict_location}")"
+		if [[ -z "${word}" ]]; then
 			echo 'E: Failed to fetch word from the dictionary.' >&4
 			return 2
 		fi
@@ -45,10 +45,10 @@ word_pull() {
 	done
 	#
 	# Capitalize beginning of word as needed, then print result.
-	if [[ "$capitals" =~ ^[yY]$ ]]; then
+	if [[ "${capitals}" =~ ^[yY]$ ]]; then
 		printf '%s' "${word^}"
 	else
-		printf '%s' "$word"
+		printf '%s' "${word}"
 	fi
 	return
 }
@@ -141,32 +141,32 @@ done
 #
 # Prompts for tuning
 [[
-	-z "$separator" &&
+	-z "${separator}" &&
 	-t 0
 ]] &&
 	read -erp 'Enter a separator (Default is -): ' separator >&4
 [[
-	-z "$min" &&
+	-z "${min}" &&
 	-t 0
 ]] &&
 	read -erp 'Minimum word length (Default is 4): ' min >&4
 [[
-	-z "$max" &&
+	-z "${max}" &&
 	-t 0
 ]] &&
 	read -erp 'Max word length (Default is 8): ' max >&4
 [[
-	-z "$capitals" &&
+	-z "${capitals}" &&
 	-t 0
 ]] &&
 	read -erp 'Capitalize first letters? [Y/n]: ' capitals >&4
 [[
-	-z "$password_amount" &&
+	-z "${password_amount}" &&
 	-t 0
 ]] &&
 	read -erp 'Amount of passwords (Default is 1): ' password_amount >&4
 if [[
-	-z "$pattern" &&
+	-z "${pattern}" &&
 	-t 0
 ]]; then
 	cat >&4 <<-'EOF'
@@ -178,35 +178,35 @@ if [[
 fi
 #
 # Validate inputs
-if [[ -z "$separator" ]]; then
+if [[ -z "${separator}" ]]; then
 	echo 'i: No separator given; defaulting to a hyphen (-)' >&4
 	separator='-'
 fi
-if [[ ! "$min" =~ ^[0-9]+$ ]]; then
+if [[ ! "${min}" =~ ^[0-9]+$ ]]; then
 	echo 'i: Invalid/missing minimum length; defaulting to 4.' >&4
 	min=4
 fi
-if [[ ! "$max" =~ ^[0-9]+$ ]]; then
+if [[ ! "${max}" =~ ^[0-9]+$ ]]; then
 	echo 'i: Invalid/missing maximum length; defaulting to 8.' >&4
 	max=8
 fi
-if (( "$min" > "$max" )); then
+if (( "${min}" > "${max}" )); then
 	cat >&4 <<-EOF
-		W: Minimum ($min) is greater than maximum ($max) is an unfufilable condition;
-		i: Swapping the values of min/max from $min/$max to $max/$min to fix contradiction & proceeding...
+		W: Minimum (${min}) is greater than maximum (${max}) is an unfufilable condition;
+		i: Swapping the values of min/max from ${min}/${max} to ${max}/${min} to fix contradiction & proceeding...
 	EOF
-	read -r max min <<< "$min $max"
+	read -r max min <<< "${min} ${max}"
 fi
 capitals="${capitals:0:1}"
-if [[ ! "$capitals" =~ ^[yYnN]$ ]]; then
+if [[ ! "${capitals}" =~ ^[yYnN]$ ]]; then
 	echo 'i: Invalid/missing response; defaulting to [y]es.' >&4
 	capitals=y
 fi
-if [[ -z "$pattern" ]]; then
+if [[ -z "${pattern}" ]]; then
 	echo 'i: Invalid/missing response; defaulting to wnswnswn.' >&4
 	pattern='wnswnswn'
 fi
-if [[ "$password_amount" -lt 1 ]]; then
+if [[ "${password_amount}" -lt 1 ]]; then
 	echo 'i: Invalid/missing response; defaulting to 1.' >&4
 	password_amount=1
 fi
@@ -220,16 +220,16 @@ fi
 #
 # If no dictionary is present...
 if [[
-	! -f "$dict_location" &&
+	! -f "${dict_location}" &&
 	! -f 'en_US-dict.txt'
 ]]; then
 	# Attempt to download one (with consent)...
-	echo "W: A pre-existing dictionary couldn't be located in '$dict_location'."
+	echo "W: A pre-existing dictionary couldn't be located in '${dict_location}'."
 	dict_location='en_US-dict.txt'
 	#
 	# if there's a terminal.
 	if [[ -t 0 ]]; then
-		read -erp "Download a dictionary from '$dict_url' to '$(pwd)/$dict_location? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
+		read -erp "Download a dictionary from '${dict_url}' to '$(pwd)/${dict_location}? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
 	else
 		cat >&4 <<-'EOF'
 			E: As this is non-interactive,
@@ -241,11 +241,11 @@ if [[
 	fi
 	#
 	# Start the download (if consented)
-	if [[ "$download" =~ ^[yY] ]]; then
+	if [[ "${download}" =~ ^[yY] ]]; then
 		echo 'i: Downloading...' >&4
 		#
 		# Will timeout if download takes too long.
-		if ! curl -s "$dict_url" --connect-timeout 5 >"$dict_location"; then
+		if ! curl -s "${dict_url}" --connect-timeout 5 >"${dict_location}"; then
 			# Alert user of the error
 			cat >&4 <<-'EOF'
 				E: Failed to download dictionary;
@@ -253,8 +253,8 @@ if [[
 			EOF
 			#
 			# Remove remnant empty file
-			[[ -f "$dict_location" ]] &&
-				rm "$dict_location"
+			[[ -f "${dict_location}" ]] &&
+				rm "${dict_location}"
 			exit 1
 		fi
 	fi
@@ -265,13 +265,13 @@ echo 'Generated password(s):' >&4
 for (( x=0; x < password_amount; x++ )); do
 	result=
 	for (( y=0; y < ${#pattern}; y++ )); do
-		char="${pattern:$y:1}"
-		case "$char" in
+		char="${pattern:${y}:1}"
+		case "${char}" in
 			w|W)
 				# Parse w/W into a random word
 				word="$(word_pull)" ||
 					exit "$?"
-				result+="$word"
+				result+="${word}"
 			;;
 			n|N)
 				# Parse n/N into a random number [0-9]
@@ -279,15 +279,15 @@ for (( x=0; x < password_amount; x++ )); do
 			;;
 			s|S)
 				# Parse s/S into the given separator
-				result+="$separator"
+				result+="${separator}"
 			;;
 			*)
 				# More input validation
-				echo "W: Unrecognized character '$char' in pattern at line 1, column $y. Ignoring..." >&4
+				echo "W: Unrecognized character '${char}' in pattern at line 1, column ${y}. Ignoring..." >&4
 			;;
 		esac
 	done
 	#
 	# Return password
-	echo "$result"
+	echo "${result}"
 done

@@ -7,7 +7,7 @@ num_chk='^[0-9]+$'
 #
 # Load the PATH variable into an array
 mapfile -t paths < <(
-	printf '%s' "$PATH" |
+	printf '%s' "${PATH}" |
 		tr ':' '\n'
 )
 #
@@ -15,7 +15,7 @@ mapfile -t paths < <(
 for dir in "${paths[@]}"; do
 	# -O tells mapfile where in the index to start writing.
 	# "${#binaries[@]}" is the end of the array.
-	binaries+=("$(find "$dir" -maxdepth 1 -type f -executable)")
+	binaries+=("$(find "${dir}" -maxdepth 1 -type f -executable)")
 done
 #
 # Alternative exit command
@@ -33,7 +33,7 @@ alt_exit() {
 	# Print the summary
 	get_logs
 	clear
-	printf "$(
+	printf '%b' "$(
 		cat <<-EOF
 			  ---{=========}###[\e[1m@\e[0m]###{===========}---
 			\e[1m
@@ -51,7 +51,7 @@ alt_exit() {
 			Here are the log files from this session:
 			$(
 				for path in "${log_files[@]}"; do
-					printf '%s\n' "$path"
+					printf '%s\n' "${path}"
 				done
 			)\n
 		EOF
@@ -72,10 +72,10 @@ touch() {
 	# Process each file path
 	for path in "$@"; do
 		# Make the file's preceeding directories.
-		mkdir -p "$(dirname "$path")"
+		mkdir -p "$(dirname "${path}")"
 		#
 		# Make the file
-		printf >> "$path"
+		printf >> "${path}"
 	done
 }
 #
@@ -92,7 +92,7 @@ confirm() {
 	done
 	#
 	# Return exit code based on yes/no
-	[[ "$answer" =~ ^[Yy]$ ]]
+	[[ "${answer}" =~ ^[Yy]$ ]]
 }
 #
 # Prompt with a checklist/radiolist
@@ -105,21 +105,21 @@ checklist() {
 	#
 	# Give the user their options
 	clear >&2
-	echo "$title" >&2
+	echo "${title}" >&2
 	local i=0
 	for item in "${items[@]}"; do
-		# shellcheck disable=SC2059
-		printf "\t$i) $item\n" >&2
+		local item="${i}) ${item}"
+		printf '\t%s\n' "${item}" >&2
 		i=$((i + 1))
 	done
 	#
 	# Prompt the user for their answer via the read command
-	if [[ "$type" == 'checklist' ]]; then
+	if [[ "${type}" == 'checklist' ]]; then
 		cat >&2 <<-'EOF'
 			Enter your selections—separated by spaces.
 			(i.e. "1 4 6 9")
 		EOF
-	elif [[ "$type" == 'radiolist' ]]; then
+	elif [[ "${type}" == 'radiolist' ]]; then
 		cat >&2 <<-'EOF'
 			Enter a single selection
 			(i.e. "5")
@@ -127,7 +127,7 @@ checklist() {
 	else
 		cat >&2 <<-EOF
 			Incorrect usage of the checklist function;
-			($type) was given as the 2nd argument, but the only valid options are (checklist) OR (radiolist).
+			(${type}) was given as the 2nd argument, but the only valid options are (checklist) OR (radiolist).
 		EOF
 		return 1
 	fi
@@ -139,9 +139,9 @@ checklist() {
 	#
 	# Validate user choices & return the choices
 	for choice in "${selections[@]}"; do
-		[[ "$choice" =~ $num_chk ]] &&
+		[[ "${choice}" =~ ${num_chk} ]] &&
 			(( choice < ${#items[@]} )) &&
-			echo "${items[$choice]}"
+			echo "${items[${choice}]}"
 	done
 }
 #
@@ -169,8 +169,8 @@ svc_patch() {
 		# Apply patch & restart the service
 		set -e
 		local override_file="/etc/systemd/system/$1.service.d/override.conf"
-		touch "$override_file"
-		install -m 600 -o root -g root "systemd-overrides/$1.conf" "$override_file"
+		touch "${override_file}"
+		install -m 600 -o root -g root "systemd-overrides/$1.conf" "${override_file}"
 		systemctl daemon-reload
 		systemctl restart "$1.service"
 	)
@@ -192,7 +192,7 @@ environ_chk() {
 	if [[ -z "${BASH_SOURCE[0]}" ]]; then
 		echo 'E: Script must be ran by Bash intepreter & must NOT be sourced.'
 		exit=1
-	elif [[ "$EUID" -ne 0 ]]; then
+	elif [[ "${EUID}" -ne 0 ]]; then
 		echo "E: Must run as root. Try (sudo bash $0)"
 		exit=1
 	elif [[ "$(cat /proc/1/comm)" != 'systemd' ]]; then
@@ -209,7 +209,7 @@ environ_chk() {
 	fi
 	#
 	# If the exit variable is set, exit.
-	[[ -n "$exit" ]] &&
+	[[ -n "${exit}" ]] &&
 		exit 1
 }
 #
@@ -227,8 +227,8 @@ safe_add() {
 	local divider="${divider: }"
 	#
 	# Remove any existing keys & then add the new entry
-	sed -i "/^[\s#]*$key/d" "$file"
-	echo -e "$key$divider$value" >>"$file"
+	sed -i "/^[\s#]*${key}/d" "${file}"
+	echo -e "${key}${divider}${value}" >>"${file}"
 }
 
 
@@ -246,19 +246,19 @@ umask 077
 #
 # Check for an open logfile name
 i=1
-while compgen -G "*-$i.log" >/dev/null; do
+while compgen -G "*-${i}.log" >/dev/null; do
 	(( i++ ))
 done
 #
 # Log to master a log file
-exec > >(tee -a "$(basename "$0")-master-$i.log")
+exec > >(tee -a "$(basename "$0")-master-${i}.log")
 #
 # Check for a supported environment
 environ_chk
 #
 # Fetch log files from current script session
 get_logs(){
-	mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*$i.log")
+	mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*${i}.log")
 	[[ -z "${log_files[*]}" ]] &&
 		log_files=('E: Failed to fetch log files.')
 }

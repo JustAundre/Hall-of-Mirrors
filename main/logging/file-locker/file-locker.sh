@@ -58,8 +58,8 @@ dirchk() {
 	find "$1" -type f -print0 -maxdepth 2 |
 		while IFS= read -r -d '' path;
 	do
-		pathchk "$path" "$2" &&
-			metamod "$path" "$3" "$4" "$5"
+		pathchk "${path}" "$2" &&
+			metamod "${path}" "$3" "$4" "$5"
 	done
 }
 #

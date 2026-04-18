@@ -43,7 +43,7 @@ read -erp 'Enter the usernames of users to exclude from the logger (supports the
 for user in "${exclusions[@]}"; do
 	tee -a /etc/ssh/sshd_config <<-EOF
 		# Exclude user from logger script
-		Match User $user
+		Match User ${user}
 		    ForceCommand sudo /opt/logger.sh
 	EOF
 done

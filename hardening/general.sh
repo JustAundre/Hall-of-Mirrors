@@ -72,7 +72,7 @@ confirm 'Configure kernel /w SysCTL' &&
 	sysctl=y
 #
 # Whether to disable IPv6 via SysCTL
-[[ -n "$sysctl" ]] &&
+[[ -n "${sysctl}" ]] &&
 	confirm 'Disable IPv6 via SysCTL' &&
 	no_ipv6=y
 #
@@ -95,7 +95,7 @@ confirm 'Move possible hashes from passwd/group (public) files to shadow/gshadow
 # Whether to audit users
 confirm 'Audit local users' &&
 	audit_users=y
-[[ -n "$audit_users" ]] &&
+[[ -n "${audit_users}" ]] &&
 	confirm 'Lock & remove password for user (root)' &&
 	lock_root=y
 confirm 'Reconfigure PAM & /etc/login.defs' &&
@@ -103,7 +103,7 @@ confirm 'Reconfigure PAM & /etc/login.defs' &&
 #
 # Whether to audit scheduled tasks
 if
-	[[ -n "$audit_users" ]] &&
+	[[ -n "${audit_users}" ]] &&
 	confirm 'Review & delete scheduled tasks' "(This prompt is unique in that your responses here take effect immediately unlike the others)\nYou'll be manually reviewing these scheduled tasks:\nCron files\nCrontabs\nSystemD timers\nYou'll then be asked whether the source file should be deleted after reviewing.";
 then
 	# Cron files
@@ -115,8 +115,8 @@ then
 			cut -d: -f1
 	)
 	for u in "${all_usernames[@]}"; do
-		crontab -eu "$u"
-		crontab -eri "$u"
+		crontab -eu "${u}"
+		crontab -eri "${u}"
 	done
 	#
 	# SystemD timers
@@ -136,7 +136,7 @@ if confirm 'Configure resource limitations for users'; then
 	# Alert the user of their system memory capacity
 	# ...& of the limitations of the input
 	cat <<-EOF
-		i: You have $max_mem megabytes (MB) of RAM.
+		i: You have ${max_mem} megabytes (MB) of RAM.
 		i: Please give your response in a percentage, 1 through 100 as an integer without any decimals, prefixes or suffixes.
 		i: Individual requirements must be less than (non-inclusive) the collective requirements
 	EOF
@@ -147,23 +147,23 @@ if confirm 'Configure resource limitations for users'; then
 	#
 	# Prompt for individual (per-person) limitations
 	while [[
-		-z "$individual_mem" ||
-		"$individual_mem" -gt 100 ||
+		-z "${individual_mem}" ||
+		"${individual_mem}" -gt 100 ||
 		individual_mem -le collective_mem
 	]]; do
 		read -n3 -erp 'Enter % of the max memory would you like an individual user to be able to use?: ' individual_mem
 	done
 	while [[
-		-z "$individual_cpu" ||
-		$individual_cpu -gt 100 ||
-		$individual_cpu -le $collective_cpu
+		-z "${individual_cpu}" ||
+		${individual_cpu} -gt 100 ||
+		${individual_cpu} -le ${collective_cpu}
 	]]; do
 		read -n3 -erp 'Enter % of the CPU would you like an individual user to be able to use?: ' individual_cpu
 	done
 	#
 	# Prompt for "THE" administrative group
 	admin_group=placeholder
-	while [[ -z "$(getent group "$admin_group")" ]]; do
+	while [[ -z "$(getent group "${admin_group}")" ]]; do
 		read -erp 'What is THE administrative group? (e.x. wheel, sudo, etc.): ' admin_group
 	done
 fi
@@ -179,13 +179,13 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 #
 # Package Updates & Management
 #
-# Install script dependencies
-[[ -n "$deps" ]] &&
+# Install script dependenciesd
+[[ -n "${deps}" ]] &&
 	secure_install "${hard_deps[@]}" ||
 	alt_exit 1
 #
 # Run updates (in the bg)
-[[ -n "$upd" ]] && (
+[[ -n "${upd}" ]] && (
 	# Update APT updates
 	apt-get update
 	apt-get full-upgrade --no-install-recommends -y
@@ -200,7 +200,7 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 ) &
 #
 # Uninstall reconissiance packages (in the bg)
-[[ -n "$del_recon_pkgs" ]] && (
+[[ -n "${del_recon_pkgs}" ]] && (
 	apt-get autoremove --purge "${reconissiance_pkgs[@]}"
 ) &
 #
@@ -209,9 +209,9 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 	for binary in "${to_be_masked[@]}"; do
 		(
 			set -e
-			stat "$binary"
-			update-alternatives --install "$binary" "$(basename "$binary")" /bin/false 1
-			update-alternatives --set "$(basename "$binary")" /bin/false
+			stat "${binary}"
+			update-alternatives --install "${binary}" "$(basename "${binary}")" /bin/false 1
+			update-alternatives --set "$(basename "${binary}")" /bin/false
 		)
 	done
 ) &
@@ -224,33 +224,33 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 # Service Management
 #
 # Uninstalls risky packages (in the bg)
-[[ -n "$del_bad_pkgs" ]] && (
+[[ -n "${del_bad_pkgs}" ]] && (
 	apt-get autoremove --purge -y "${risky_pkgs[@]}"
 ) &
 #
 # Disables & masks risky services (in the bg)
-[[ -n "$del_bad_svcs" ]] && (
+[[ -n "${del_bad_svcs}" ]] && (
 	for service in "${risky_svcs[@]}"; do
-		decommission "$service"
+		decommission "${service}"
 	done
 ) &
 #
 # Remove flagged services (if selected) (in the bg)
-[[ -n "$service_review" ]] && (
+[[ -n "${service_review}" ]] && (
 	for service in "${services[@]}"; do
 		# Mark any service that was selected to be removed, to be removed.
 		for flagged_service in "${flagged_services[@]}"; do
-			if [[ "$service" == "$flagged_service" ]]; then
+			if [[ "${service}" == "${flagged_service}" ]]; then
 				# Attempt to remove package behind service
 				# Will just decommission service file if cannot locate resposible package.
 				apt-get remove --purge -y "$(
-					dpkg -S "/etc/systemd/system/$flagged_service.service" |
+					dpkg -S "/etc/systemd/system/${flagged_service}.service" |
 						cut -d: -f1
 				)" ||
-					decommission "$flagged_service"
-			elif [[ -z "$is_del" ]]; then
+					decommission "${flagged_service}"
+			elif [[ -z "${is_del}" ]]; then
 				# If not removed, patch service with a secure SystemD override.
-				svc_patch "$service"
+				svc_patch "${service}"
 			fi
 		done
 	done
@@ -274,7 +274,7 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 # Apply generic sysctl hardening values
 # (Not likely to cause issues)
 # (in the bg)
-[[ -n "$sysctl" ]] && (
+[[ -n "${sysctl}" ]] && (
 	# Stage & apply generic & mostly non-breaking kernel parameters
 	install -m 640 -o root -g root -D general-confs/kernel.conf /etc/sysctl.d/99-security.conf
 	sysctl -p /etc/sysctl.d/99-security.conf
@@ -283,7 +283,7 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 #
 # Disables IPv6 if requested
 # (in the bg)
-[[ -n "$no_ipv6" ]] && (
+[[ -n "${no_ipv6}" ]] && (
 	install -m 640 -o root -g root -D general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
 	sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
 	sysctl --system
@@ -298,7 +298,7 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 #
 # Repair filesystem ownership & modes
 # (in the bg)
-[[ -n "$fix_perms" ]] && (
+[[ -n "${fix_perms}" ]] && (
 	# Add Sticky Bit to world-writable directories
 	find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod -h +t {} +
 	#
@@ -383,7 +383,7 @@ confirm 'Install a well-formated & extensive but brief MOTD file' &&
 # User & Group Auditing
 #
 # (in the bg)
-if [[ -n "$audit_users" ]]; then
+if [[ -n "${audit_users}" ]]; then
 	# Delete users flagged as to be deleted
 	# Delete passwords of users flagged to have their password removed
 	# Lock users flagged to be locked
@@ -391,50 +391,50 @@ if [[ -n "$audit_users" ]]; then
 	# Prompt to change the UID of users flagged to be reUIDed
 	# Prompt to change the primary & supplemental groups of users flagged to be regrouped
 	for u in "${users_del[@]}"; do
-		userdel -rf "$u" &
+		userdel -rf "${u}" &
 	done
 	for u in "${users_nullpass[@]}"; do
-		passwd "$u" -d &
+		passwd "${u}" -d &
 	done
 	for u in "${users_lock[@]}"; do
-		passwd "$u" -l &
+		passwd "${u}" -l &
 	done
 	for u in "${users_reshell[@]}"; do
-		while [[ ! -x "$shell" ]]; do
+		while [[ ! -x "${shell}" ]]; do
 			read -erp 'Enter the path to the new shell: ' shell
 		done
-		usermod -s "$shell" "$u" &
+		usermod -s "${shell}" "${u}" &
 	done
 	for u in "${users_reuid[@]}"; do
 		while [[
-				"$uid" =~ ^[0-9]+$ &&
-				-n "$(getent passwd "$uid")"
+				"${uid}" =~ ^[0-9]+$ &&
+				-n "$(getent passwd "${uid}")"
 			]];
 		do
 			read -erp 'Enter the new UID: ' uid
 		done
-		usermod -s "$uid" "$u" &
+		usermod -s "${uid}" "${u}" &
 	done
 	for u in "${users_regroup[@]}"; do
-		while [[ -z "$(getent passwd "$primary_group")" ]]; do
+		while [[ -z "$(getent passwd "${primary_group}")" ]]; do
 			read -erp 'Enter new primary group: ' primary_group
 		done
 		stop=placeholder
-		while [[ -n "$stop" ]]; do
+		while [[ -n "${stop}" ]]; do
 			read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
 			for group in "${supplemental_groups[@]}"; do
-				[[ -n "$(getent passwd "$group")" ]] &&
+				[[ -n "$(getent passwd "${group}")" ]] &&
 					stop=
 			done
 		done
-		usermod -g "$primary_group" "$u" &
-		usermod -G "${supplemental_groups[*]// /,}" "$u" &
+		usermod -g "${primary_group}" "${u}" &
+		usermod -G "${supplemental_groups[*]// /,}" "${u}" &
 	done
 fi
 #
 # Secures root user
 # (L)ocks user (root) & (d)eletes their password
-[[ -n "$lock_root" ]] &&
+[[ -n "${lock_root}" ]] &&
 	passwd root -ld &
 
 
@@ -444,18 +444,18 @@ fi
 #
 # Firewall Rules
 #
-if [[ -n "$firewall_config" ]]; then
+if [[ -n "${firewall_config}" ]]; then
 	# Ensures necessary kernel modules are loaded
 	for module in "${firewall_kernel_modules[@]}"; do
 		lsmod |
 			grep -q "^${module}" ||
-			modprobe "$module"
+			modprobe "${module}"
 	done
 	#
 	# Configure baseline ruleset (in the bg)
 	# Uncomplicated Firewall/ufw
 	# (Unfortunately UFW isn't flexible enough to block certain ICMP ping types)
-	if [[ "$firewall" == UFW ]]; then
+	if [[ "${firewall}" == UFW ]]; then
 		(
 			set -e
 			#
@@ -472,7 +472,7 @@ if [[ -n "$firewall_config" ]]; then
 			ufw default allow outgoing
 		) &
 	# FirewallD/firewall-cmd
-	elif [[ "$firewall" == FirewallD ]]; then
+	elif [[ "${firewall}" == FirewallD ]]; then
 		(
 			set -e
 			# Start the firewall
@@ -500,7 +500,7 @@ if [[ -n "$firewall_config" ]]; then
 	while [[
 		-n "$(
 			for port in "${ports[@]}"; do
-				[[ ! "$port" =~ ^[0-9]{1,5}(-[0-9]{1,5})?$ ]] &&
+				[[ ! "${port}" =~ ^[0-9]{1,5}(-[0-9]{1,5})?$ ]] &&
 					echo placeholder
 			done
 		)" ||
@@ -510,17 +510,17 @@ if [[ -n "$firewall_config" ]]; then
 	done
 	for port in "${ports[@]}"; do
 		# Whitelist ports
-		if [[ "$firewall" == UFW ]]; then
-			ufw allow in "$port/tcp"
-		elif [[ "$firewall" == FirewallD ]]; then
-			firewall-cmd --permanent --add-port "$port/tcp" &
+		if [[ "${firewall}" == UFW ]]; then
+			ufw allow in "${port}/tcp"
+		elif [[ "${firewall}" == FirewallD ]]; then
+			firewall-cmd --permanent --add-port "${port}/tcp" &
 		else
 			echo 'E: Unsupported firewall software.'
 		fi
 	done
 	#
 	# Apply changes (FirewallD exclusive)
-	[[ "$firewall" == FirewallD ]] &&
+	[[ "${firewall}" == FirewallD ]] &&
 		firewall-cmd --reload &
 fi
 
@@ -532,7 +532,7 @@ fi
 # Lockout Policies
 #
 # Configure PAM with secure defaults (in the bg)
-if [[ -n "$pam_reconfig" ]]; then
+if [[ -n "${pam_reconfig}" ]]; then
 	# RHEL-like distros
 	if hash authselect; then
 		(
@@ -575,23 +575,23 @@ if [[ -n "$pam_reconfig" ]]; then
 		# Skips the iterated user if they're the user running the script
 		# Apply the password age restrictions to the user
 		# Sets the date they last changed their password to current date to avoid accidental lockouts
-		[[ "$u" != "$SUDO_USER" ]] &&
-			chage -m 7 -M 90 -W 14 "$u" &&
-			chage -d "$(date +%Y-%m-%d)" "$u"
+		[[ "${u}" != "${SUDO_USER}" ]] &&
+			chage -m 7 -M 90 -W 14 "${u}" &&
+			chage -d "$(date +%Y-%m-%d)" "${u}"
 	done
 	#
 	# Apply global defaults via login.defs
 	for entry in "${login_def_configs[@]}"; do
-		safe_add "$entry" /etc/login.defs
+		safe_add "${entry}" /etc/login.defs
 	done
 	#
 	# Migrate stray hashes from passwd to shadow & from group to gshadow
 	# Check for duplicate users on the system & prompt for rectification
-	if [[ -n "$mv_hash" ]]; then
+	if [[ -n "${mv_hash}" ]]; then
 		pwconv
 		grpconv
 	fi
-	[[ -n "$pwck" ]] &&
+	[[ -n "${pwck}" ]] &&
 		pwck
 	#
 	# Disable guest & automatic login in LightDM
@@ -609,14 +609,14 @@ fi
 # Resource Management
 #
 # Prompt for external information
-if [[ -n "$resource_cap" ]]; then
+if [[ -n "${resource_cap}" ]]; then
 	# Parse given information into configuration
 	# ...& install configuration into the system
-	sed -e "s/foo/$collective_mem/g" -e "s/bar/$collective_cpu/g" general-confs/slice-shared.conf |
+	sed -e "s/foo/${collective_mem}/g" -e "s/bar/${collective_cpu}/g" general-confs/slice-shared.conf |
 		install -m 640 -o root -g root /dev/stdin /etc/systemd/system/user.slice.d/override.conf
-	sed -e "s/foo/$individual_mem/g" -e "s/bar/$individual_cpu/g" general-confs/slice-individual.conf |
+	sed -e "s/foo/${individual_mem}/g" -e "s/bar/${individual_cpu}/g" general-confs/slice-individual.conf |
 		install -m 640 -o root -g root /dev/stdin /etc/systemd/system/user-.slice.d/override.conf
-	sed "s/wheel/$admin_group/g" general-confs/limits.conf |
+	sed "s/wheel/${admin_group}/g" general-confs/limits.conf |
 		install -m 644 -o root -g root /dev/stdin /etc/security/limits.conf
 	#
 	# Reload SystemD
@@ -630,9 +630,9 @@ fi
 #
 # Message of the Day
 #
-[[ -n "$motd" ]] &&
+[[ -n "${motd}" ]] &&
 	for banner_file in "${banner_files[@]}"; do
-		install -m 640 -o root -g root -D general-confs/motd "$banner_file"
+		install -m 640 -o root -g root -D general-confs/motd "${banner_file}"
 	done
 
 
