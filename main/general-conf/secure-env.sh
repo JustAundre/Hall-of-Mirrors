@@ -19,11 +19,11 @@
 	declare -rx LD_PRELOAD=
 	declare -rx HISTSIZE=-1
 	declare -rx HISTFILESIZE=-1
-	declare -rx PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
-	TTY=$(tty)
+	PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+	TTY="$(tty)"
 	declare -rx TTY="${TTY##*/}"
 	declare -rx SSH_TTY="$TTY"
-	UID=$(</proc/self/loginuid)
+	UID="$(</proc/self/loginuid)"
 	[[ "$UID" == 4294967295 ]] &&
 		UID="$(id -u)"
 	declare -rx UID
