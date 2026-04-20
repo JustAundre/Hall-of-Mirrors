@@ -32,7 +32,9 @@
 	#
 	# Find an unused file name
 	count=1
-	while [[ -f "${log_file}" ]]; do
+	while
+		[[ -f "${log_file}" ]]
+	do
 		log_file="${log_file}-dupe-${count}"
 	done
 	declare -r log_file="${log_file}.log"
@@ -46,11 +48,12 @@
 # Main Logic
 #
 # Stop & log non-interactive sessions
-if [[ ! -t 0 ]]; then
+if
+	[[ ! -t 0 ]]
+then
 	# ...plus any commands
-	if [[ -n "${SSH_ORIGINAL_COMMAND}" ]]; then
+	[[ -n "${SSH_ORIGINAL_COMMAND}" ]] &&
 		cmd="with command ${SSH_ORIGINAL_COMMAND}"
-	fi
 	echo "${LOGNAME}/${UID} from ${SSH_CLIENT} attempted to run non-interactive command: (${cmd})" |
 		systemd-cat -p3 -t logger
 	exit 255

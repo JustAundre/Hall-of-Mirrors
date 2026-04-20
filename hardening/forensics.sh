@@ -12,8 +12,15 @@ wpscan_deps=(
 	build-essential
 	libcurl4-openssl-dev
 )
+
+
+
+
+
 #
-# Audits which can be performed
+# Questionaire
+#
+# Define the audits available
 available_audits=(
 	'Wordpress vulnerability scan'
 	'Enumerate ports in use'
@@ -29,26 +36,22 @@ available_audits=(
 	'dpkg-query binary check'
 	'Lynis scan'
 )
-
-
-
-
-
-#
-# Questionaire
 #
 # Ask what scans to run
 mapfile -t selected_audits < <(checklist 'Select scans to perform' checklist "${available_audits[@]}")
 #
 # Associative array to act on selections
 declare -A audit_lookup
-for audit in "${selected_audits[@]}"; do
+for audit in "${selected_audits[@]}"
+do
 	audit_lookup["${audit}"]=y
 done
 #
 #
 [[ -n "${audit_lookup["${available_audits[0]}"]}" ]] &&
-	while [[ ! "${port}" =~ ${num_chk} ]]; do
+	while
+		[[ ! "${port}" =~ ${num_chk} ]]
+	do
 		read -rp 'Which port is the webserver with Wordpress on? (port number only): ' port
 	done
 
@@ -146,7 +149,8 @@ done
 # (no corresponding package = foreign binary)
 # (in the bg)
 [[ -n "${audit_lookup["${available_audits[11]}"]}" ]] && (
-	for binary in "${binaries[@]}"; do
+	for binary in "${binaries[@]}"
+	do
 		[[ -f "${binary}" ]] &&
 			dpkg-query -S "${binary}" ||
 			echo "${binary}" &>"foreign-binaries-${i}.log"
@@ -173,4 +177,4 @@ wait
 #
 # Exit & print success banner
 # and the logs from this session.
-alt_exit 0
+success

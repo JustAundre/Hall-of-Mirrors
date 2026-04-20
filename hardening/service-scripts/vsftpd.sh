@@ -22,7 +22,7 @@ divider='='
 # Force-reinstall/instal VSFTPD.
 echo 'i: Refreshing VSFTPD...'
 secure_install vsftpd openssl ||
-	alt_exit 2
+	exit 2
 
 
 
@@ -32,10 +32,9 @@ secure_install vsftpd openssl ||
 # Configuration
 #
 # Generate a TLS certificate if not present.
-if [[ ! -f "${cert}" ]]; then
+[[ ! -f "${cert}" ]] &&
 	openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout /dev/stdout -out /dev/stdout -subj '/CN=FTP Server' |
-		install -m 600 -u root -g root /dev/stdin "${cert}"
-fi
+	install -m 600 -u root -g root /dev/stdin "${cert}"
 #
 # Disable anonymous access
 safe_add anonymous_enable NO
@@ -102,7 +101,9 @@ safe_add require_ssl_reuse NO
 # Validation
 #
 # Have VSFTPD parse the new configuration file
-if vsftpd "${config}"; then
+if
+	vsftpd "${config}"
+then
 	# Restart & apply if it finds no errors
 	cat <<-'EOF'
 		OK: Syntax OK
@@ -114,7 +115,7 @@ else
 		E: Syntax check failed.
 		i: Run (vsftpd ${config}) to see why.
 	EOF
-	alt_exit 1
+	exit 1
 fi
 
 
@@ -126,4 +127,4 @@ fi
 #
 # Exit & print success banner
 # and the logs from this session.
-alt_exit 0
+success

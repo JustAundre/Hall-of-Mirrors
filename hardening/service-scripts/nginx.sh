@@ -21,7 +21,7 @@ general_hardening=/etc/nginx/conf.d/99-hardening.conf
 #
 # Refresh Nginx
 secure_install nginx ||
-	alt_exit 2
+	exit 2
 
 
 
@@ -52,7 +52,9 @@ grep -qE 'include\s+/etc/nginx/conf\.d/\*\.conf;' "${config_main}" ||
 #
 # Configuration Validation
 #
-if nginx -t; then
+if
+	nginx -t
+then
 	cat <<-'EOF'
 		OK: Nginx config is OK,
 		i: Restarting Nginx...
@@ -63,7 +65,7 @@ else
 		E: Syntax check failed.
 		i: Run (nginx -t) to see why.
 	EOF
-	alt_exit 1
+	exit 1
 fi
 
 
@@ -75,4 +77,4 @@ fi
 #
 # Exit & print success banner
 # and the logs from this session.
-alt_exit 0
+success

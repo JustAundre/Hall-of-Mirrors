@@ -139,7 +139,7 @@ mapfile -t services < <(
 )
 #
 # Fetch the system's memory capacity
-max_mem="$(
+system_memory="$(
 	free -m |
 		awk '/^Mem:/{print $2}'
 )"

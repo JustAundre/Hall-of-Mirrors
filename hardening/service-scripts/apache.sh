@@ -40,7 +40,9 @@ install -m 640 -o root -g root general-confs/apache2.conf /etc/apache2/conf-enab
 #
 # If syntax check...
 a2enmod headers
-if apache2ctl -t; then
+if
+	apache2ctl -t
+then
 	# Passes, restart Apache.
 	cat <<-'EOF'
 		OK: Syntax OK
@@ -53,7 +55,7 @@ else
 		E: Syntax check failed.
 		i: Run (apache2ctl -t) to see why.
 	EOF
-	alt_exit 1
+	exit 1
 fi
 
 
@@ -65,4 +67,4 @@ fi
 #
 # Exit & print success banner
 # and the logs from this session.
-alt_exit 0
+success

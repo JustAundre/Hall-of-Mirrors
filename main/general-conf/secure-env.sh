@@ -39,7 +39,8 @@
 	declare -rx HISTFILE="${HOME}/.bash_history"
 	HOSTNAME="$(hostname)"
 	declare -rx HOSTNAME="${HOSTNAME%%.*}"
-	for var in SSH_CONNECTION SSH_CLIENT; do
+	for var in SSH_CONNECTION SSH_CLIENT
+	do
 		[[ -z "${var}" ]] &&
 			declare -rx "${var}=Local"
 	done

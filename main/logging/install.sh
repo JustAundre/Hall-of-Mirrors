@@ -40,7 +40,8 @@ systemctl restart sshd
 read -erp 'Enter the usernames of users to exclude from the logger (supports the user@0.0.0.0 format) (space-separated): ' -a exclusions
 #
 # Set up user exclusions
-for user in "${exclusions[@]}"; do
+for user in "${exclusions[@]}"
+do
 	tee -a /etc/ssh/sshd_config <<-EOF
 		# Exclude user from logger script
 		Match User ${user}

@@ -74,7 +74,9 @@
 	IFS='' read -rd '' PROMPT_COMMAND <<-'EOF'
 		history -a
 		last_cmd=$(echo "$(history 1)" | sed 's/^[ ]*[0-9]*[ ]*//')
-		if [[ -n "$last_cmd" ]]; then
+		if
+			[[ -n "$last_cmd" ]]
+		then
 			printf 'EUID: %s | UID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n'\
 				"$EUID" "$UID" "$USER" "${SSH_CLIENT%% *}" "$SSH_TTY" "$last_cmd" |
 				tee -a "$log_file" | systemd-cat -p5 -t "$bullsh_cmd_log"
@@ -130,7 +132,8 @@
 		case "${annoy_type}" in
 			1)
 				# Flash black & white really fast for a few seconds
-				for i in {1..250}; do
+				for i in {1..250}
+				do
 					printf '\e[?5h'
 					sleep .01
 					printf '\e[?5l'
@@ -139,7 +142,8 @@
 			;;
 			2)
 				# Splat out 512 bytes from /dev/urandom onto the screen
-				for i in {1..7}; do
+				for i in {1..7}
+				do
 					sleep 2
 					[[ $(( RANDOM % 100 > 80 )) -eq 1 ]] &&
 						head -c 512 /dev/urandom
@@ -155,7 +159,8 @@
 				local rows="$(tput lines)" cols="$(tput cols)"
 				#
 				# The SPAM
-				for i in {1..500}; do
+				for i in {1..500}
+				do
 					# Find a random position within the current window size
 					local y="$((RANDOM % rows + 1))"
 					local x="$((RANDOM % cols + 1))"
@@ -176,7 +181,8 @@
 			;;
 			4)
 				# For ~1 minute, have a minor chance every 150 milliseconds to 'drop' their input briefly
-				for i in {1..400}; do
+				for i in {1..400}
+do
 					[[ "$(( RANDOM % 100 > 80 ))" -eq 1 ]] &&
 						stty -echo
 					sleep .15
@@ -200,7 +206,9 @@
 		stty echo
 		#
 		# Enter into logger script if exists
-		if [[ -x /opt/logger.sh ]]; then
+		if
+			[[ -x /opt/logger.sh ]]
+		then
 			builtin exec /usr/bin/env -i SSH_CONNECTION="${SSH_CONNECTION}" SSH_CLIENT="${SSH_CLIENT}" SSH_TTY="${SSH_TTY}" SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}" /usr/bin/bash -il
 		else
 			builtin exec /usr/bin/env -i SSH_CONNECTION="${SSH_CONNECTION}" SSH_CLIENT="${SSH_CLIENT}" SSH_TTY="${SSH_TTY}" SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}" /usr/bin/bash -ilc 'sudo /opt/logger.sh'
@@ -244,33 +252,53 @@
 			local in_hashed="$(hash)"
 		#
 		# Handle common inputs
-		if [[ "${#input}" -gt "${max_stdin}" ]]; then
+		if
+			[[ "${#input}" -gt "${max_stdin}" ]]
+		then
 			# Print a fake error & exit
 			printf "\nrbash: fork: cannot allocate memory\n"
 			exit 255
-		elif [[ -z "${input}" ]]; then
+		elif
+			[[ -z "${input}" ]]
+		then
 			# Do nothing on empty input
 			:
-		elif [[ "${layer_at}" -eq 1 ]]; then
+		elif
+			[[ "${layer_at}" -eq 1 ]]
+		then
 			# Mimic rbash restrictions & errors (L1 exclusive)
-			if [[ "${cmd}" == */* ]]; then
+			if
+				[[ "${cmd}" == */* ]]
+			then
 				echo "rbash: ${cmd}: cannot specify '/' in command names" 1>&2
-			elif [[
-				"${cmd}" == exit ||
-				"${cmd}" == logout
-			]]; then
+			elif 
+				[[
+					"${cmd}" == exit ||
+					"${cmd}" == logout
+				]]
+			then
 				exit 1
-			elif [[ "${cmd}" == sudo ]]; then
+			elif
+				[[ "${cmd}" == sudo ]]
+			then
 				sudo echo "${USER} is not in the sudoers file.  This incident will be reported." 1>&2
-			elif [[ "${cmd}" == printf ]]; then
+			elif
+				[[ "${cmd}" == printf ]]
+			then
 				input="${input/'printf '//}"
 				printf -- %s "${input}"
-			elif [[ "${cmd}" == echo ]]; then
+			elif
+				[[ "${cmd}" == echo ]]
+			then
 				input="${input/'echo '//}"
 				printf -- %s "${input}\n"
-			elif [[ "${cmd}" =~ ^([a-zA-Z0-9_-]+)= ]]; then
+			elif
+				[[ "${cmd}" =~ ^([a-zA-Z0-9_-]+)= ]]
+			then
 				echo "rbash: ${BASH_REMATCH[1]}: readonly variable"
-			elif type -t "${cmd}" &>/dev/null; then
+			elif
+				type -t "${cmd}" &>/dev/null
+			then
 				echo "rbash: ${cmd}: Permission denied" 1>&2
 			else
 				echo "rbash: ${cmd}: command not found" 1>&2
@@ -279,11 +307,13 @@
 		fi
 		#
 		# Check for current layers' password
-		if [[
-			"${stop_hash}" == "n" &&
-			-n "${input}" &&
-			"${in_hashed}" == "${target_hash}"
-		]]; then
+		if
+			[[
+				"${stop_hash}" == "n" &&
+				-n "${input}" &&
+				"${in_hashed}" == "${target_hash}"
+			]]
+		then
 			# Log success
 			warn 2
 			#
@@ -309,19 +339,25 @@
 # The Honey
 #
 # Check for non-interactive commands
-if [[ -n "${SSH_ORIGINAL_COMMAND}" ]]; then
+if
+	[[ -n "${SSH_ORIGINAL_COMMAND}" ]]
+then
 	warn 1 "${SSH_ORIGINAL_COMMAND} -- via non-interactive SSH execution"
 	exit 10
 fi
 #
 # Fake terminal loop
-while true; do
+while
+	true
+do
 	case "${layer_at}" in
 		1)
 			# L1 -- False Terminal
 			read -t "${read_tmout}" -erp "${PS1}" -n "$(( max_stdin + 1 ))" input ||
 				exit 1
-			if passwd_check; then
+			if
+				passwd_check
+			then
 				[[ "${auth_layers}" -gt 1 ]] ||
 					handover
 				#
@@ -336,7 +372,9 @@ while true; do
 			# L2 -- Silence
 			read -t "${read_tmout}" -ern "$(( max_stdin + 1 ))" input ||
 				exit 1
-			if passwd_check; then
+			if
+				passwd_check
+			then
 				[[ "${auth_layers}" -gt 2 ]] ||
 					handover
 				(( layer_at++ ))
@@ -346,7 +384,9 @@ while true; do
 			# L3 -- Silence (The Sequel)
 			read -t "${read_tmout}" -ern "$(( max_stdin + 1 ))" input ||
 				exit 1
-			if passwd_check; then
+			if
+				passwd_check
+			then
 				[[ "${auth_layers}" -gt 3 ]] ||
 					handover
 				(( layer_at++ ))

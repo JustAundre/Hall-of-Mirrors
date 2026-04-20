@@ -28,7 +28,7 @@ secure_install openssh-server
 	ssh-keygen -f /root/.ssh/known_hosts -R localhost
 	systemctl restart sshd
 ) ||
-	alt_exit 2
+	exit 2
 
 
 
@@ -88,7 +88,9 @@ safe_add Compression none
 # Validate SSH configurations
 #
 # If syntax check...
-if sshd -t; then
+if
+	sshd -t
+then
 	# Passes, then restart SSHD.
 	cat <<-'EOF'
 		OK: Syntax check passed.
@@ -103,7 +105,7 @@ else
 		E: Syntax check failed.
 		i: Run (sshd -t) to see why.
 	EOF
-	alt_exit 1
+	exit 1
 fi
 
 
@@ -114,7 +116,9 @@ fi
 # Fail2Ban Configuration
 #
 # Install Fail2Ban & install secure rules.
-if confirm 'Use Fail2Ban with a secure default configuration'; then
+if
+	confirm 'Use Fail2Ban with a secure default configuration'
+then
 	apt-get install fail2ban &&
 		install -m 600 -o root -g root general-confs/jail.local /etc/fail2ban/jail.local
 fi
@@ -128,4 +132,4 @@ fi
 #
 # Exit & print success banner
 # and the logs from this session.
-alt_exit 0
+success

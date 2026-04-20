@@ -12,22 +12,15 @@ mapfile -t paths < <(
 )
 #
 # Load all executables in the PATH into an array
-for dir in "${paths[@]}"; do
+for dir in "${paths[@]}"
+do
 	# -O tells mapfile where in the index to start writing.
 	# "${#binaries[@]}" is the end of the array.
 	binaries+=("$(find "${dir}" -maxdepth 1 -type f -executable)")
 done
 #
-# Alternative exit command
-alt_exit() {
-	if [[
-		-z "$*" ||
-		0 -lt "$*"
-	]]; then
-		echo "E: A fatal error occured; exit code: $*"
-		exit "$*"
-	fi
-	#
+# Successful end-of-script summary
+success() {
 	# Fetch log files
 	# Clear the screen
 	# Print the summary
@@ -35,22 +28,25 @@ alt_exit() {
 	clear
 	printf '%b' "$(
 		cat <<-EOF
-			  ---{=========}###[\e[1m@\e[0m]###{===========}---
-			\e[1m
+			  ---{=========}###[@]###{===========}---
+
 			        WINDOWS AT LOSS AT THE
-			          AGAPE FREEDOM OF LINUX
-			\e[0m
-			  ---{=========}###[\e[1m@\e[0m]###{===========}---
+			           AGAPE FREEDOM OF LINUX
+
+			  ---{=========}###[@]###{===========}---
 			
-			      Cybersecurity is \e[1mgreat\e[0m; though,
+			      Cybersecurity is great; though,
 			    people often have their priorities
 			       mixed up. Make sure you have
 			        good password hygiene and
 			         a good password manager.
 			
+			-----<============>{x}<============>-----
+			
 			Here are the log files from this session:
 			$(
-				for path in "${log_files[@]}"; do
+				for path in "${log_files[@]}"
+				do
 					printf '%s\n' "${path}"
 				done
 			)\n
@@ -70,7 +66,8 @@ clear() {
 # When making a file using the touch command, make the directories its supposed to be in.
 touch() {
 	# Process each file path
-	for path in "$@"; do
+	for path in "$@"
+	do
 		# Make the file's preceeding directories.
 		mkdir -p "$(dirname "${path}")"
 		#
@@ -84,9 +81,10 @@ confirm() {
 	# Ask the question
 	clear
 	local answer
-	while [[ ! "${answer:0:1}" =~ ^[YyNn]$ ]]; do
-		# shellcheck disable=SC2059
-		printf "\n$2\n$1? [y/n]: \n"
+	while
+		[[ ! "${answer:0:1}" =~ ^[YyNn]$ ]]
+	do
+		printf "\n%s\n%s? [y/n]: \n" "$2" "$1"
 		read -er answer
 		answer="${answer:0:1}"
 	done
@@ -107,7 +105,8 @@ checklist() {
 	clear >&2
 	echo "${title}" >&2
 	local i=0
-	for item in "${items[@]}"; do
+	for item in "${items[@]}"
+	do
 		local item="${i}) ${item}"
 		printf '\t%s\n' "${item}" >&2
 		i=$((i + 1))
@@ -138,7 +137,8 @@ checklist() {
 		return 0
 	#
 	# Validate user choices & return the choices
-	for choice in "${selections[@]}"; do
+	for choice in "${selections[@]}"
+	do
 		[[ "${choice}" =~ ${num_chk} ]] &&
 			(( choice < ${#items[@]} )) &&
 			echo "${items[${choice}]}"
@@ -147,7 +147,7 @@ checklist() {
 #
 # Force-reinstall/install "$@", preffering new configurations over local changes
 secure_install() {
-	env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef "$@"
+	env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef -o DPkg::Lock::Timeout=-1 "$@"
 	dpkg --configure -a
 }
 #
@@ -246,12 +246,14 @@ umask 077
 #
 # Check for an open logfile name
 i=1
-while compgen -G "*-${i}.log" >/dev/null; do
+while
+	compgen -G "*-${i}.log" >/dev/null
+do
 	(( i++ ))
 done
 #
 # Log to master a log file
-exec > >(tee -a "$(basename "$0")-master-${i}.log")
+exec &> >(tee -a "$(basename "$0")-master-${i}.log")
 #
 # Check for a supported environment
 environ_chk
