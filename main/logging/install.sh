@@ -5,7 +5,7 @@ chown root:root /var/log/sessions
 chmod 700 /var/log/sessions
 #
 # Install logger.sh to /opt/logger.sh
-install -m 755 -o root -g root logger.sh /opt/logger.sh
+install -m 700 -o root -g root logger.sh /opt/logger.sh
 cat >>/etc/sudoers <<-'EOF'
 
 # Run the logger script as root (needed to send log to secure locations, users are lowered to their original users/privileges)
@@ -27,7 +27,7 @@ systemctl enable --now log-locker.path
 # Install the hist-locker service
 install -m 600 -o root -g root file-locker/file-locker.service /etc/systemd/system/file-locker.service
 install -m 700 -o root -g root file-locker/file-locker.sh /opt/file-locker.sh
-systemctl enable --now hist-locker.service
+systemctl enable --now file-locker.service
 #
 # Enable the session logger
 tee -a /etc/ssh/sshd_config <<-'EOF'
@@ -45,6 +45,6 @@ do
 	tee -a /etc/ssh/sshd_config <<-EOF
 		# Exclude user from logger script
 		Match User ${user}
-		    ForceCommand sudo /opt/logger.sh
+		    ForceCommand none
 	EOF
 done
