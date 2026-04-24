@@ -59,12 +59,12 @@
 	counts=0
 	#
 	# Whether the script stops checking for the password (y/n)
-	stop_hash="n"
+	stop_hash=n
 	#
 	# The prompt to show on each new line
-	declare -x PS1="[${USER}@${HOSTNAME} ~]$ "
+	declare -x PS1="[${USER}@${HOSTNAME%%.*} ~]$ "
 	[[ "${fake_root}" == y ]] &&
-		declare -x PS1="[root@${HOSTNAME} ~]# "
+		declare -x PS1="[root@${HOSTNAME%%.*} ~]# "
 	#
 	# Dynamic handling for SSH_CONNECTION/ip_from
 	[[ -z "${SSH_CLIENT}" ]] &&
@@ -78,8 +78,8 @@
 			[[ -n "$last_cmd" ]]
 		then
 			printf 'EUID: %s | UID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n'\
-				"$EUID" "$UID" "$USER" "${SSH_CLIENT%% *}" "$SSH_TTY" "$last_cmd" |
-				tee -a "$log_file" | systemd-cat -p5 -t "$bullsh_cmd_log"
+				"${EUID}" "${UID}" "${USER}" "${SSH_CLIENT%% *}" "${SSH_TTY}" "${last_cmd}" |
+				tee -a "${log_file}" | systemd-cat -p5 -t "${bullsh_cmd_log}"
 		fi
 	EOF
 	#
