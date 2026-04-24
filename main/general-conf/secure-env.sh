@@ -9,17 +9,17 @@
 	umask 077
 	#
 	# Lock down variables
-	read -r PROMPT_COMMAND <<-'EOF'
+	declare -rx PROMPT_COMMAND='
 		history -a
 		history -w
 		sleep .15
-	EOF
+	'
 	declare -rx HISTIGNORE=
-	declare -rx HISTCONTROL='ignoreboth'
+	declare -rx HISTCONTROL=ignoreboth
 	declare -rx LD_PRELOAD=
 	declare -rx HISTSIZE=-1
 	declare -rx HISTFILESIZE=-1
-	PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+	PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 	TTY="$(tty)"
 	declare -rx TTY="${TTY##*/}"
 	declare -rx SSH_TTY="${TTY}"
