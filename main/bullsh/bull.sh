@@ -182,7 +182,7 @@
 			4)
 				# For ~1 minute, have a minor chance every 150 milliseconds to 'drop' their input briefly
 				for i in {1..400}
-do
+				do
 					[[ "$(( RANDOM % 100 > 80 ))" -eq 1 ]] &&
 						stty -echo
 					sleep .15
