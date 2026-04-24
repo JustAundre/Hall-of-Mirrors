@@ -1,30 +1,12 @@
 [Unit]
 Description=Session log locker
-After=network.target
 
 [Service]
 Type=oneshot
 ExecStart=/opt/log-locker.sh
 RefuseManualStop=yes
-ProtectSystem=strict
-ReadWritePaths=/var/log
 MemoryMax=64MB
 TasksMax=64
-RestrictSUIDSGID=yes
-CapabilityBoundingSet=CAP_LINUX_IMMUTABLE CAP_CHOWN CAP_FOWNER CAP_FSETID
-ProtectKernelModules=yes
-ProtectKernelLogs=true
-ProtectKernelTunables=yes
-ProtectControlGroups=yes
-ProtectClock=yes
-ProtectHostname=yes
-ProtectSystem=strict
-ProtectProc=invisible
-SystemCallArchitectures=native
-RestrictAddressFamilies=
-NoNewPrivileges=yes
-PrivateDevices=yes
-PrivateUsers=true
 
 [Install]
 WantedBy=multi-user.target

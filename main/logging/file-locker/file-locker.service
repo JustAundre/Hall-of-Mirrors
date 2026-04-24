@@ -5,25 +5,9 @@ Description=Locks history files in home directories
 Restart=always
 Type=simple
 ExecStart=/opt/file-locker.sh
-ProtectSystem=strict
-ReadWritePaths=/home /etc /root
 RefuseManualStop=yes
 MemoryMax=128MB
 TasksMax=128
-RestrictSUIDSGID=yes
-CapabilityBoundingSet=CAP_LINUX_IMMUTABLE CAP_CHOWN CAP_FOWNER CAP_FSETID
-ProtectKernelModules=yes
-ProtectKernelLogs=true
-ProtectKernelTunables=yes
-ProtectControlGroups=yes
-ProtectClock=yes
-ProtectHostname=yes
-ProtectProc=invisible
-SystemCallArchitectures=native
-RestrictAddressFamilies=
-NoNewPrivileges=yes
-PrivateDevices=yes
-PrivateUsers=no
 
 [Install]
 WantedBy=multi-user.target
