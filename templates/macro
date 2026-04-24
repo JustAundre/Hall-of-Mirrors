@@ -1,0 +1,8 @@
+Sub FormatAllTables
+	Dim oTables, oTable as Object
+	oTables = ThisComponent.TextTables
+	For i = 0 To oTables.getCount() - 1
+		oTable = oTables.getByIndex(i)
+		oTable.TableTemplateName = "Academic" 
+	Next i
+End Sub
