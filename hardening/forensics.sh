@@ -82,7 +82,7 @@ done
 # Log open ports (in the bg)
 [[ -n "${audit_lookup["${available_audits[1]}"]}" ]] && (
 	ss -tulpn |
-		grep 0.0.0.0 &>"open-ports-${i}.log"
+		grep -vE '^127.' &>"open-ports-${i}.log"
 ) &
 #
 # Scan for Malicious PAM Hooks (in the bg)
