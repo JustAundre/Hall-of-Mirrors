@@ -79,13 +79,6 @@ less -R /var/tmp/shell.log
 
 Session log files are in `/var/tmp/`, unfortunately not `/var/log/` because the script runs in the userland & making it run as root would be walking on ice you don't know the thickness of.
 
-## Compiling
-
-Recompile `chaos-chaos.so`
-```bash
-gcc -fPIC -shared -o chaos-chaos.so chaos-chaos.c -ldl
-```
-
 ## The Password(s)
 
 Default Password(s):
@@ -100,11 +93,7 @@ L3: `T.PLE@$3!?`
 
 First, get the password you want to change to in plaintext. Hash your password into [SHA512](https://qr.ae/pCmBQJ) (with the hashing rounds accounted for.)
 
-Go into `./bull.sh` & change the `passHash` variable(s) to your new hash 
-
-[ it is advised you move the default password hashes to the fake hashes after installing your new hashes. ]
-
-Refer to the Compiling guide & then the Installation guide.
+Go into `./bull.sh` & change the `passHash` variable(s) to your new hash
 
 ## Roadmap/Notes
 
