@@ -6,29 +6,17 @@
 # path, owner, octal perm, attribute
 metamod() {
 	# Change its permissions & attributes based on the given options
-	# If given owner exists...
-	if
-		getent passwd "$2" &>/dev/null
-	then
-		# Owner exists, so execute the chown.
+	# If given owner exists, execute the chown.
+	grep -qE "^$2" /etc/passwd &&
 		chown -- "$2" "$1"
-	fi
 	#
-	# If octal permission format is detected...
-	if
-		[[ "$3" =~ ^[0-9]{3,4}$ ]]
-	then
-		# Command is valid, so execute.
+	# If octal permission format is detected, execute.
+	[[ "$3" =~ ^[0-9]{3,4}$ ]] &&
 		chmod -- "$3" "$1"
-	fi
 	#
-	# If any combination of lowercase i/a (immutable/append-only)...
-	if
-		[[ "$4" =~ ^[ia]{1,2}$ ]]
-	then
-		# Command is valid, so execute.
+	# If any combination of lowercase i/a (immutable/append-only), execute.
+	[[ "$4" =~ ^[ia]{1,2}$ ]] &&
 		chattr +"$4" -- "$1"
-	fi
 }
 #
 # Helper function to check paths
@@ -107,8 +95,8 @@ filemon '/etc' '^passwd$' root 644 ia &
 filemon '/etc' '^g?shadow$' root none ia &
 #
 # Lockdown all history files
-filemon '/home' 'history' root 620 a &
-filemon '/root' 'history' root 620 a &
+filemon '/home' '^history$' root 620 a &
+filemon '/root' '^history$' root 620 a &
 #
 # Lockdown bash rc/logout/profile files
 filemon '/home' '^\..*(rc|logout|profile)$' root 640 ia &
