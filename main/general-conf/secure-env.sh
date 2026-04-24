@@ -37,8 +37,7 @@
 			cut -f6
 	)"
 	declare -rx HISTFILE="${HOME}/.bash_history"
-	HOSTNAME="$(hostname)"
-	declare -rx HOSTNAME="${HOSTNAME%%.*}"
+	declare -rx HOSTNAME="$(hostname)"
 	for var in SSH_CONNECTION SSH_CLIENT
 	do
 		[[ -z "${var}" ]] &&
