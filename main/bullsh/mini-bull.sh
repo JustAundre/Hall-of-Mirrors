@@ -36,9 +36,9 @@
 	declare -rx TMOUT=1
 	#
 	# The prompt to show on each new line
-	declare -x PS1="[${USER}@${HOSTNAME} ~]$ "
+	declare -x PS1="[${USER}@${HOSTNAME%%.*} ~]$ "
 	[[ "${fake_root}" == y ]] &&
-		declare -x PS1="[root@${HOSTNAME} ~]# "
+		declare -x PS1="[root@${HOSTNAME%%.*} ~]# "
 
 
 
