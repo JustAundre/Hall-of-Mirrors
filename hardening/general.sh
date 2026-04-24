@@ -121,7 +121,8 @@ env_resource_limits() {
 	#
 	# Prompt for "THE" administrative group
 	while
-		[[ -z "$(getent group "${admin_group}")" ]]
+		[[ -z "${admin_group}" ]] &&
+		grep -q "${admin_group}:" /etc/group
 	do
 		read -erp 'What is THE administrative group? (e.x. wheel, sudo, etc.): ' admin_group
 	done
@@ -136,7 +137,7 @@ env_resource_limits() {
 # Questionaire
 #
 # Define what patches are available
-available_patches=(
+patches=(
 	'Run updates (apt, flatpak & snaps)'
 	'Remove reconissiance packages'
 	'Remove dated software'
@@ -156,27 +157,46 @@ available_patches=(
 	'Load comprehensive MOTD file'
 )
 #
+# Shortforms to make the code more readable
+declare -A shortforms=(
+	[upd]="${patches[0]}"
+	[recon]="${patches[1]}"
+	[legacy]="${patches[2]}"
+	[svcs]="${patches[3]}"
+	[masking]="${patches[4]}"
+	[sysctl]="${patches[5]}"
+	[ipv6]="${patches[6]}"
+	[perms]="${patches[7]}"
+	[info_err]="${patches[8]}"
+	[mv_hash]="${patches[9]}"
+	[users]="${patches[10]}"
+	[lock_root]="${patches[11]}"
+	[pam]="${patches[12]}"
+	[cron]="${patches[13]}"
+	[firewall]="${patches[14]}"
+	[resources]="${patches[15]}"
+	[motd]="${patches[16]}"
+)
+#
 # Ask what patches to apply
-mapfile -t selected_audits < <(checklist 'Select patches to run' checklist "${available_patches[@]}")
+mapfile -t selected_audits < <(checklist 'Select patches to run' checklist "${patches[@]}")
 #
 # Associative array to act on selections
-declare -A selected_associative
-for patch in "${selected_audits[@]}"
-do
-	selected_associative["${patch}"]=i
+declare -A active
+for selection in "${selected_audits[@]}"; do
+	active["${selection}"]=i
 done
-
 #
 # Whether to audit scheduled tasks
-[[ -n "${selected_associative[available_patches[13]]}" ]] &&
+[[ -n "${selected_associative[shortforms[pam]]}" ]] &&
 	env_schedule_audit
 #
 # Whether to configure firewall rules
-[[ -n "${selected_associative[available_patches[14]]}" ]] &&
+[[ -n "${selected_associative[shortforms[cron]]}" ]] &&
 	env_firewall
 #
 # Whether to configure resource limitations for users
-[[ -n "${selected_associative[available_patches[15]]}" ]] &&
+[[ -n "${selected_associative[shortforms[resources]]}" ]] &&
 	env_resource_limits
 
 
@@ -191,7 +211,7 @@ secure_install "${hard_deps[@]}" ||
 	exit 1
 #
 # Run updates (in the bg)
-[[ -n "${selected_associative[available_patches[0]]}" ]] && (
+[[ -n "${selected_associative[patches[0]]}" ]] && (
 	# Update APT updates
 	apt-get update
 	apt-get full-upgrade --no-install-recommends -y
@@ -206,11 +226,11 @@ secure_install "${hard_deps[@]}" ||
 ) &
 #
 # Uninstall reconissiance packages (in the bg)
-[[ -n "${selected_associative[available_patches[1]]}" ]] &&
+[[ -n "${selected_associative[shortforms[upd]]}" ]] &&
 	(apt-get autoremove --purge "${reconissiance_pkgs[@]}") &
 
 # Removes/disables & masks risky services/packages (in the bg)
-[[ -n "${selected_associative[available_patches[2]]}" ]] && (
+[[ -n "${selected_associative[shortforms[recon]]}" ]] && (
 	apt-get autoremove --purge -y "${risky_pkgs[@]}"
 	for service in "${risky_svcs[@]}"
 	do
@@ -219,7 +239,7 @@ secure_install "${hard_deps[@]}" ||
 ) &
 #
 # Remove flagged services (if selected) (in the bg)
-[[ -n "${selected_associative[available_patches[3]]}" ]] && (
+[[ -n "${selected_associative[shortforms[legacy]]}" ]] && (
 	for service in "${services[@]}"
 	do
 		# Mark any service that was selected to be removed, to be removed.
@@ -254,7 +274,7 @@ secure_install "${hard_deps[@]}" ||
 ) &
 #
 # Mask selected binaries (in the bg)
-[[ -n "${selected_associative[available_patches[4]]}" ]] && (
+[[ -n "${selected_associative[shortforms[svcs]]}" ]] && (
 	for binary in "${mask_staged[@]}"
 	do
 		(
@@ -276,20 +296,19 @@ secure_install "${hard_deps[@]}" ||
 # Apply generic sysctl hardening values
 # (Not likely to cause issues)
 # (in the bg)
-[[ -n "${selected_associative[available_patches[5]]}" ]] && (
+[[ -n "${selected_associative[shortforms[sysctl]]}" ]] && (
 	# Stage & apply generic & mostly non-breaking kernel parameters
 	install -m 640 -o root -g root -D general-confs/kernel.conf /etc/sysctl.d/99-security.conf
-	sysctl -p /etc/sysctl.d/99-security.conf
-	sysctl --system
+	sysctl -f /etc/sysctl.d/99-security.conf
 ) &
 #
 # Disables IPv6 if requested
 # (in the bg)
-[[ -n "${selected_associative[available_patches[6]]}" ]] && (
+[[ -n "${selected_associative[shortforms[ipv6]]}" ]] && (
 	install -m 640 -o root -g root -D general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
-	sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
-	sysctl --system
+	sysctl -f /etc/sysctl.d/99-disable-ipv6.conf
 ) &
+sysctl --system
 
 
 
@@ -300,83 +319,83 @@ secure_install "${hard_deps[@]}" ||
 #
 # Repair filesystem ownership & modes
 # (in the bg)
-[[ -n "${selected_associative[available_patches[7]]}" ]] && (
+[[ -n "${selected_associative[shortforms[perms]]}" ]] && (
 	# Add Sticky Bit to world-writable directories
-	find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod -h +t {} +
+	find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod +t {} +
 	#
 	# For files with an invalid owning user or group, change the owning user & group to root
-	find / -xdev \( -nouser -o -nogroup \) -exec chmod 640 {} + -exec chown -h root:root {} +
+	find / -xdev \( -nouser -o -nogroup \) -exec chmod 640 {} + -exec chown root:root {} +
 	#
 	# Remove broken symlinks
 	find / -xdev -xtype l -exec rm {} +
 	#
 	# Ensure sticky-bit on world-writable dirs
-	chmod -h +t /tmp /var/tmp /dev/shm
+	chmod +t /tmp /var/tmp /dev/shm
 	#
 	# Fix permissions for files regarding identity management
 	chown root:root /etc/passwd /etc/group /etc/sudoers
 	if
-		grep -qE '^shadow:' /etc/group
+		grep -q '^shadow:' /etc/group
 	then
 		chown root:shadow /etc/shadow /etc/gshadow
-		chmod -h 640 /etc/shadow /etc/gshadow
+		chmod 640 /etc/shadow /etc/gshadow
 	else
 		chown root:root /etc/shadow /etc/gshadow
-		chmod -h 600 /etc/shadow /etc/gshadow
+		chmod 600 /etc/shadow /etc/gshadow
 	fi
-	chmod -h 644 /etc/passwd /etc/group
+	chmod 644 /etc/passwd /etc/group
 	#
 	# Ensure only root can read the bootloader config
 	find /boot -type f -exec chown root:root {} + -exec chmod 640 {} +
 	find /boot -type d -exec chown root:root {} + -exec chmod 750 {} +
 	#
 	# Ensure SystemD unit files are secure
-	find /etc/systemd/system -type f -exec chown root:root {} + -exec chmod -h 640 {} +
-	find /etc/systemd/system -type d -exec chown root:root {} + -exec chmod -h 750 {} +
+	find /etc/systemd/system -type f -exec chown root:root {} + -exec chmod 640 {} +
+	find /etc/systemd/system -type d -exec chown root:root {} + -exec chmod 750 {} +
 	#
 	# Secure cron tabs & directories
 	chown root:root /etc/cron* /etc/at.allow
-	chmod -h 750 /etc/cron.* /etc/at.allow
-	chmod -h 640 /etc/crontab
+	chmod -R 750 /etc/cron.* /etc/at.allow
+	chmod -R 640 /etc/crontab
 	#
 	# Secure sudoers configuration
 	chown -R root:root /etc/sudoers /etc/sudoers.d
-	chmod -h 640 /etc/sudoers
-	chmod -h 750 /etc/sudoers.d
-	chmod -Rh 640 /etc/sudoers.d
+	chmod -R 640 /etc/sudoers
+	chmod -R 750 /etc/sudoers.d
+	chmod -R 640 /etc/sudoers.d
 	#
 	# Restrict dmesg access
-	chown root:root /bin/dmesg /usr/bin/dmesg
-	chmod -h 700 /bin/dmesg /usr/bin/dmesg
+	chown -R root:root /bin/dmesg /usr/bin/dmesg
+	chmod -R 700 /bin/dmesg /usr/bin/dmesg
 	#
 	# Secure SSH configurations
-	find /etc/ssh -type f -exec chown root:root {} + -exec chmod -h 600 {} +
-	find /etc/ssh -type d -exec chown root:root {} + -exec chmod -h 700 {} +
-	chmod -h 644 /etc/ssh/*.pub
+	find /etc/ssh -type f -exec chown root:root {} + -exec chmod 600 {} +
+	find /etc/ssh -type d -exec chown root:root {} + -exec chmod 700 {} +
+	chmod -R 644 /etc/ssh/*.pub
 	#
 	# Secure MOTD/banners are secured
-	chown root:root /etc/issue /etc/issue.net /etc/motd
-	chmod -h 644 /etc/issue /etc/issue.net /etc/motd
+	chown -R root:root /etc/issue /etc/issue.net /etc/motd
+	chmod -R 644 /etc/issue /etc/issue.net /etc/motd
 	#
 	# Ensure log files are secured
-	chown root:root /var/log
-	chmod -h 750 /var/log
+	chown -R root:root /var/log
+	chmod -R 750 /var/log
 	#
 	# Secure rsyslog or syslog-ng configs
-	chown root:root /etc/rsyslog.conf /etc/rsyslog.d/*
-	chmod -h 640 /etc/rsyslog.conf /etc/rsyslog.d/*
+	chown -R root:root /etc/rsyslog.conf /etc/rsyslog.d/*
+	chmod -R 640 /etc/rsyslog.conf /etc/rsyslog.d/*
 	#
 	# Secure Auditd logs & configs
-	find /etc/audit -type f -exec chown root:root {} + -exec chmod -h 640 {} +
-	find /etc/audit -type d -exec chown root:root {} + -exec chmod -h 750 {} +
+	find /etc/audit -type f -exec chown root:root {} + -exec chmod 640 {} +
+	find /etc/audit -type d -exec chown root:root {} + -exec chmod 750 {} +
 	#
 	# Secure global shell profiles
-	chown root:root /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
-	chmod -h 644 /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
+	chown -R root:root /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
+	chmod -R 644 /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/*
 	#
 	# Secure existing home directories
-	chown root:root /root
-	chmod -h 700 /home/* /root
+	chown -R root:root /root
+	chmod -R 700 /home/* /root
 ) &
 
 
@@ -387,24 +406,24 @@ secure_install "${hard_deps[@]}" ||
 # User & Group Auditing
 #
 if
-	[[ -n "${selected_associative[available_patches[10]]}" ]]
+	[[ -n "${selected_associative[shortforms[users]]}" ]]
 then
 	# Delete users flagged as to be deleted
 	for u in "${users_del[@]}"
 	do
-		userdel -rf "${u}" &
+		userdel -rf "${u}"
 	done
 	#
 	# Delete passwords of users flagged to have their password removed
 	for u in "${users_nullpass[@]}"
 	do
-		passwd "${u}" -d &
+		passwd "${u}" -d
 	done
 	#
 	# Lock users flagged to be locked
 	for u in "${users_lock[@]}"
 	do
-		passwd "${u}" -l &
+		passwd "${u}" -l
 	done
 	#
 	# Prompt to change the shell for users flagged to be reshelled
@@ -415,21 +434,19 @@ then
 		do
 			read -erp 'Enter the path to the new shell: ' shell
 		done
-		usermod -s "${shell}" "${u}" &
+		usermod -s "${shell}" "${u}"
 	done
 	#
 	# Prompt to change the UID of users flagged to be reUIDed
 	for u in "${users_reuid[@]}"
 	do
 		while
-			[[
-				"${uid}" =~ ^[0-9]+$ &&
-				-z "$(getent passwd "${uid}")"
-			]]
+			[[ "${uid}" =~ ^[0-9]+$ ]] &&
+			grep -qE "^[^:]+:[^:]+:${uid}" /etc/passwd
 		do
 			read -erp 'Enter the new UID: ' uid
 		done
-		usermod -s "${uid}" "${u}" &
+		usermod -s "${uid}" "${u}"
 	done
 	#
 	# Change the primary and supplementary groups
@@ -437,7 +454,8 @@ then
 	do
 		# Prompt for the new primary group
 		while
-			[[ -z "$(getent passwd "${primary_group}")" ]]
+			[[ -z "${primary_group}" ]] ||
+			! grep -qE "^[^:]+:[^:]+:${primary_group}" /etc/group
 		do
 			read -erp 'Enter new primary group: ' primary_group
 		done
@@ -447,23 +465,24 @@ then
 			[[ -z "${stop}" ]]
 		do
 			read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
+			stop=i
 			for group in "${supplemental_groups[@]}"
 			do
-				[[ -n "$(getent passwd "${group}")" ]] &&
-					stop=i
+				grep -qE "^[^:]+:[^:]+:${primary_group}" /etc/group ||
+					stop=
 			done
 		done
 		#
 		# Change the groups
-		usermod -g "${primary_group}" "${u}" &
-		usermod -G "${supplemental_groups[*]// /,}" "${u}" &
+		usermod -g "${primary_group}" "${u}"
+		usermod -G "${supplemental_groups[*]// /,}" "${u}"
 	done
 fi
 #
 # Secures root user
 # (L)ocks user (root) & (d)eletes their password
-[[ -n "${selected_associative[available_patches[11]]}" ]] &&
-	passwd root -ld &
+[[ -n "${selected_associative[shortforms[lock_root]]}" ]] &&
+	passwd root -ld
 
 
 
@@ -474,7 +493,7 @@ fi
 #
 # Configure PAM with secure defaults (in the bg)
 if
-	[[ -n "${selected_associative[available_patches[12]]}" ]]
+	[[ -n "${selected_associative[shortforms[pam]]}" ]]
 then
 	# RHEL-like distros
 	if
@@ -489,7 +508,7 @@ then
 			#
 			# Regenerate PAM configurations /w previous configuration
 			authselect apply-changes
-		)
+		) &
 	# Debian-like distros
 	elif
 		hash pam-auth-update
@@ -536,10 +555,10 @@ then
 	#
 	# Check for duplicate users on the system & prompt for rectification
 	# Migrate stray hashes from passwd to shadow & from group to gshadow
-	[[ -n "${selected_associative[available_patches[8]]}" ]] &&
+	[[ -n "${selected_associative[shortforms[info_err]]}" ]] &&
 		pwck
 	if
-		[[ -n "${selected_associative[available_patches[9]]}" ]]
+		[[ -n "${selected_associative[shortforms[mv_hash]]}" ]]
 	then
 		pwconv
 		grpconv
@@ -562,7 +581,7 @@ fi
 # Firewall Rules
 #
 if
-	[[ -n "${selected_associative[available_patches[14]]}" ]]
+	[[ -n "${selected_associative[shortforms[firewall]]}" ]]
 then
 	# Ensures necessary kernel modules are loaded
 	for module in "${firewall_kernel_modules[@]}"
@@ -665,7 +684,7 @@ fi
 #
 # Prompt for external information
 if
-	[[ -n "${selected_associative[available_patches[15]]}" ]]
+	[[ -n "${selected_associative[shortforms[resources]]}" ]]
 then
 	# Parse given information into configuration
 	# ...& install configuration into the system
@@ -687,7 +706,7 @@ fi
 #
 # Message of the Day
 #
-[[ -n "${selected_associative[available_patches[16]]}" ]] &&
+[[ -n "${selected_associative[shortforms[motd]]}" ]] &&
 	for banner_file in "${banner_files[@]}"
 	do
 		install -m 640 -o root -g root -D general-confs/motd "${banner_file}"
