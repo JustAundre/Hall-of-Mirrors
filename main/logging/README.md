@@ -18,32 +18,23 @@ cd Hall-of-Mirrors/main/logging
 ## Feature Set
 
 1. Full session logging to text files
-- Includes `stdin`, `stdout` & `stderr`
-- Append-only while live
-- Immutable when session closes
-- Logs are done by root not the user; the user can't kill the logging
-- If the logging dies, the shell dies; simple!
+- You see what the user sees.
+- Append-only while live, immutable when done.
+- Logging on the root level, user on the user level. Non-privileged users can't stop the logging.
+- If the logging dies, the shell dies--simple.
 2. Bash history files cannot be deleted; only new entries may be added!
 3. Username on the file stays consistent, even across commands such as `sudo -i`, `sudo su` & `sudo bash`.
 
+Use the below to queue up all logs & select ones to delete after review.
 ```bash
-# Directory where all full session logs are stored
-sudo ls /var/log/sessions/
+mapfile -t logs < <(ls -1t /var/log/sessions/*)
 
-# To view individual session logs
-sudo less -R '[LOG FILE PATH]'
-
-# Queue up all session logs.
-sudo bash -c 'ls -1t /var/log/sessions/* | xargs less -R'
-
-## Type `:n` to go to the next log
-## Type `:p` for the previous log
-## Starts at the latest log, descends to oldest.
-
-# To view attempted non-interactive sessions/commands
-journalctl -p3 -t logger
+for log in "${logs[@]}"; do
+	less -R "${log}" &&
+		read -rp "Delete ${log}?: " del
+	if [[ "${del}" =~ ^[yY] ]]; then
+		chattr -ia "${log}"
+		rm "${log}"
+	fi
+done
 ```
-
-# Roadmap
-
-Hopefully will be able to add an easy way to review logs in a way where once reviewed, do not need to review again & is moved to a different directory.

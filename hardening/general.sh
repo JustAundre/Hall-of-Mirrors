@@ -2,7 +2,7 @@
 #
 # Environment Setup
 #
-# Source helper functions and variables
+# Source helper functions & variables
 cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 . .generalrc
@@ -13,7 +13,7 @@ env_svc_audit() {
 	mapfile -t flagged_services < <(checklist 'Select services to REMOVE' checklist "${services[@]}")
 }
 env_mask() {
-	# Define maskable binaries and other variables locally in advance
+	# Define maskable binaries & other variables locally in advance
 	local selected maskables=(
 		vi/vim
 		nc/ncat/netcat
@@ -449,7 +449,7 @@ then
 		usermod -s "${uid}" "${u}"
 	done
 	#
-	# Change the primary and supplementary groups
+	# Change the primary & supplementary groups
 	for u in "${users_regroup[@]}"
 	do
 		# Prompt for the new primary group
@@ -724,5 +724,5 @@ echo 'i: Patches in progress; this may take a while depending on your selections
 wait
 #
 # Exit & print success banner
-# and the logs from this session.
+# & the logs from this session.
 success

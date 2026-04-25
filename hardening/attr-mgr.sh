@@ -2,7 +2,7 @@
 #
 # Environment Setup & Logging
 #
-# Source helper functions and variables
+# Source helper functions & variables
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 . .allrc
 

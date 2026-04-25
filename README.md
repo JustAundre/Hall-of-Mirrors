@@ -51,7 +51,7 @@ Don't come to me if you lose data—not gonna do anything about it except *try* 
 
 ## Next up:
 
-1. Scripts in `hardening/service-scripts/` need serious refactoring, reorganization and rescripting.
+1. Scripts in `hardening/service-scripts/` need serious refactoring, reorganization & rescripting.
 
 2. I need to implement a backup system for scripts in `hardening/` which:
 - Does not need to be manually hardcoded into scripts
@@ -60,4 +60,4 @@ Don't come to me if you lose data—not gonna do anything about it except *try* 
 
 ## Credits
 
-Special thanks to Benct Philip Jonsson and Albert Krewinkel for their creation of `pagebreak.lua`.
+Special thanks to Benct Philip Jonsson & Albert Krewinkel for their creation of `pagebreak.lua`.

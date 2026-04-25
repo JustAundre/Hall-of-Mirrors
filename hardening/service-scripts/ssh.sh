@@ -2,7 +2,7 @@
 #
 # Environment Setup
 #
-# Import global helper functions and variables
+# Import global helper functions & variables
 cd "$(dirname "${BASH_SOURCE[0]}")../"
 . .allrc
 #
@@ -131,5 +131,5 @@ fi
 # Exit
 #
 # Exit & print success banner
-# and the logs from this session.
+# & the logs from this session.
 success

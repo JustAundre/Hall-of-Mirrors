@@ -176,5 +176,5 @@ echo 'i: Started all audits, this may take a while depending on your selections.
 wait
 #
 # Exit & print success banner
-# and the logs from this session.
+# & the logs from this session.
 success

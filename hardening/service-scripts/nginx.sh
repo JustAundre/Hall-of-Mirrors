@@ -2,7 +2,7 @@
 #
 # Environment Setup
 #
-# Import global helper functions and variables
+# Import global helper functions & variables
 cd "$(dirname "${BASH_SOURCE[0]}")../" || exit
 . .allrc
 #
@@ -33,7 +33,7 @@ secure_install nginx ||
 # Remove overlapping configuration values from nginx.conf
 sed -ie '/server_tokens/d' -e '/client_body_buffer_size/d' -e '/client_header_buffer_size/d' -e '/client_max_body_size/d' -e '/large_client_header_buffers/d' -e '/ssl_protocols/d' -e '/ssl_prefer_server_ciphers/d' -e '/ssl_session_cache/d' "${config_main}"
 #
-# Apply secure header rules and general information leakage prevention
+# Apply secure header rules & general information leakage prevention
 # Install secure default template
 mkdir -p /etc/nginx/snippets
 install -m 640 -u root -g root general-confs/nginx-headers.conf "${config_snippets}"
@@ -76,5 +76,5 @@ fi
 # Exit
 #
 # Exit & print success banner
-# and the logs from this session.
+# & the logs from this session.
 success
