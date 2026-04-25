@@ -26,15 +26,26 @@ cd Hall-of-Mirrors/main/logging
 3. Username on the file stays consistent, even across commands such as `sudo -i`, `sudo su` & `sudo bash`.
 
 Use the below to queue up all logs & select ones to delete after review.
+
 ```bash
 mapfile -t logs < <(ls -1t /var/log/sessions/*)
 
 for log in "${logs[@]}"; do
 	less -R "${log}" &&
-		read -rp "Delete ${log}?: " del
+		read -rp "Delete (${log})?: " del
 	if [[ "${del}" =~ ^[yY] ]]; then
 		chattr -ia "${log}"
 		rm "${log}"
 	fi
+done
+```
+
+Use the below to actively monitor history files in home directories:
+```bash
+mapfile -t histories < <(find /home -maxdepth 2 -type f -name '*history')
+
+for history in "${histories[@]}"; do
+	printf 'Monitoring %s:\n\n' "${history}"
+	tail -fn10 "${history}" &
 done
 ```
