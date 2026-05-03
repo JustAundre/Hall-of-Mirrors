@@ -1,16 +1,44 @@
 #!/usr/bin/env bash
 #
-# The Way the Cog Spins (Configuration)
+# Configuration
 #
-#
-# Password hashes to pass their respective numbered layers (up to 3 layers; only as many layers active as there are hashes)
+# Configure hashes used for authentication (SHA-256).
 declare -r passwd_hashes=(
-	'e5b98bb4f21fd6a3ab4fe9c6928734f960501ab9217f7f22905804d9a1c0e11a0575b9c79930e3f7ab818d98fcfa93dd4424560afbb8232c7a318689885513a0'
-	'c9edc4de9de21784f2e86f2dd087fa8b1670a9442ce614eb2eb1b3358052dd3996b09c3262912fcec67d8ab2d9e4f2fa12e72acb0548cad63ec1af15f9951f17'
-	'6899eb9d96ef8fb19d9c09efa879281b453ca4f7339b3a553111ab12a2c3dfcdd9be236712519894d0490032b047dcc49af050554e8037f9332262f362fdd786'
+	e5b98bb4f21fd6a3ab4fe9c6928734f960501ab9217f7f22905804d9a1c0e11a0575b9c79930e3f7ab818d98fcfa93dd4424560afbb8232c7a318689885513a0
+	c9edc4de9de21784f2e86f2dd087fa8b1670a9442ce614eb2eb1b3358052dd3996b09c3262912fcec67d8ab2d9e4f2fa12e72acb0548cad63ec1af15f9951f17
+	6899eb9d96ef8fb19d9c09efa879281b453ca4f7339b3a553111ab12a2c3dfcdd9be236712519894d0490032b047dcc49af050554e8037f9332262f362fdd786
 )
 #
-# General configuration
+# General BullSH configurations
+declare -Ar config=(
+	# Configure where to log to
+	# Set log_file to /dev/null to disable to-file logging.
+	# JournalCTL logging is required right now.
+	[log_file]=/var/tmp/shell.log
+	[log_tag]=bullsh
+	#
+	# Limitations
+	# stdin_cap limits how many characters can be parsed.
+	# stdin_cap can parse up to its value + 1 due to the way it is scripted.
+	# timeout determines how long a user has to press enter before being forced out.
+	# retry_cap determines how many times BullSH will attempt to hash the user's inputs for the password before quitting hashing.
+	# fake_root determines whether the PS1 variable will display 'root' as the user.
+	# fake_latency determines how much delay there is between each [ENTER].
+	# annoyance_index determines what kind of fate awaits the user when their input is not the password.
+	# hashing_rounds determines for how many rounds will input be hashed
+	# real_tmout determines how quickly should a REAL SHELL be closed (minimum of 1 (second).). Should not be modified.
+	[stdin_cap]=256
+	[timeout]=30
+	[retry_cap]=3
+	[fake_root]=true
+	[fake_latency]="0.$((RANDOM % 3 + 1))"
+	[annoyance_index]=0
+	#
+	# Advanced Options
+	[hashing_rounds]=2500
+	[real_tmout]=1
+)
+
 declare -r max_stdin=256 # How big (in bytes) is a response allowed to be parsed
 declare -r hash_rounds=2500 # How many times to hash inputs
 declare -r read_tmout=30 # How many seconds before timing out for inactivity
@@ -25,10 +53,11 @@ declare -rx TMOUT=1
 declare -r python_hashing_logic="import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range(${hash_rounds}):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
 #
 # What layer of the MFA to start at
-layer_at=1
-#
 # Whether the script stops checking for the password (y/n)
-stop_hash=n
+# The amount of login attempts to start with
+layer_at=1
+stop_hash=true
+counts=0
 #
 # Logging locations/identifiers
 declare -r log_file='/var/tmp/shell.log'
@@ -36,24 +65,17 @@ declare -r auth_log=bullsh
 #
 # The prompt to show on each new line
 declare -x PS1="[${USER}@${HOSTNAME%%.*} ~]$ "
-[[ "${fake_root}" == y ]] &&
-	declare -x PS1="[root@${HOSTNAME%%.*} ~]# "
+[[ "${fake_root}" == y ]] && declare -x PS1="[root@${HOSTNAME%%.*} ~]# "
 #
 # Log everything
-IFS='' read -rd'' PROMPT_COMMAND <<-EOF
+IFS= read -rd'' PROMPT_COMMAND <<-EOF
 	history -a
-	last_cmd=\$(
-		echo "\$(history 1)" |
-			sed 's/^[ ]*[0-9]*[ ]*//'
-	)
+	last_cmd=\$(echo "\$(history 1)" | sed 's/^[ ]*[0-9]*[ ]*//')
 	[[ -n "\$last_cmd" ]] &&
-		printf 'EUID: %s | UID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n' "${EUID}" "${UID}" "${USER}" "${SSH_CLIENT%% *}" "${SSH_TTY}" "\${last_cmd}" |
-		tee -a "${log_file}" |
-		systemd-cat -t "${auth_log}"
+		echo "EUID: \${EUID} | UID: ${UID} | User: ${USER} | IP: ${SSH_CLIENT%% *} | TTY: ${SSH_TTY} | Cmd: \${last_cmd}" |
+		tee -a "${log_file}" | systemd-cat -t "${auth_log}"
 EOF
-#
-# The amount of login attempts to start with
-counts=0
+declare -r PROMPT_COMMAND
 #
 # Dynamic handling for SSH_CONNECTION/ip_from
 [[ -z "${SSH_CLIENT}" ]] && SSH_CLIENT=local_tty
