@@ -56,5 +56,4 @@ EOF
 counts=0
 #
 # Dynamic handling for SSH_CONNECTION/ip_from
-[[ -z "${SSH_CLIENT}" ]] &&
-	SSH_CLIENT=local_tty
+[[ -z "${SSH_CLIENT}" ]] && SSH_CLIENT=local_tty
