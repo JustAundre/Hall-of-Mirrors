@@ -2,13 +2,6 @@
 #
 # Environment Setup
 #
-# Kill duplicate sessions from the same user
-# (Curley brackets to silence possible errors)
-{
-pgrep -f "$0" -u "${USER}" |
-	grep -v "^$$\$" |
-	xargs kill -9
-#
 # Source configuration
 . /opt/.bullshrc
 
@@ -26,21 +19,15 @@ warn() {
 		fail)
 			shift 1
 			local msg="W: ${USER}/${UID}@${SSH_CLIENT%% *} with EUID ${EUID} on ${TTY} failed ${layer_at} with input: ${input}"
-			printf -- '%s' "${msg}" |
-				tee -a "${log_file}" |
-				systemd-cat -t "${auth_log}"
+			printf -- '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		pass)
 			local msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed onto ${layer_at}"
-			printf -- '%s' "${msg}" |
-				tee -a "${log_file}" |
-				systemd-cat -t "${auth_log}"
+			printf -- '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		enter)
 			local msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed into a real terminal."
-			printf -- '%s' "${msg}" |
-				tee -a "${log_file}" |
-				systemd-cat -t "${auth_log}"
+			printf -- '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		*)
 			echo 'E: The warn function was called with a non-existent warning type.'
@@ -52,12 +39,10 @@ warn() {
 # Function to send an annoyance to the terminal which got the password wrong
 annoyance() {
 	# Prevent intensive resource consumption
-	[[ -z "${annoying}" ]] &&
-		annoying=placeholder ||
-		return 1
+	[[ -z "${annoying}" ]] && annoying=placeholder || return 1
 	#
 	# Check annoyance type
-	case "${annoy_type}" in
+	case "${config[annoyance_index]}" in
 		1)
 			# Flash black & white really fast for a few seconds
 			for i in {1..250}; do
@@ -68,7 +53,7 @@ annoyance() {
 			done
 		;;
 		2)
-			# Splat out 512 bytes from /dev/urandom onto the screen
+			# Splat out 512 bytes from /dev/urandom onto the screen every 2 seconds for 14 seconds.
 			for i in {1..7}; do
 				sleep 2
 				[[ "$(( RANDOM % 100 > 80 ))" -eq 1 ]] && head -c 512 /dev/urandom
@@ -84,15 +69,9 @@ annoyance() {
 			local rows="$(tput lines)" cols="$(tput cols)"
 			for i in {1..500}; do
 				# Find a random position within the current window size and...
-				# ...print a random character at the aforementioned position
+				# ...print a random character at the aforementioned position (plus an extra bell as shown by \a)
 				local y="$((RANDOM % rows + 1))" x="$((RANDOM % cols + 1))"
-				printf "\e[%d;%dH%s" "${y}" "${x}" "$(
-					head -c 1 /dev/urandom |
-						tr -d '\0'
-				)"
-				#
-				# Trigger bell sound just as an extra (may not work on some systems/terminals)
-				printf '\a'
+				printf "\a\e[%d;%dH%s" "${y}" "${x}" "$(head -c 1 /dev/urandom | tr -d '\0')"
 			done
 			#
 			# Move cursor to the bottom & show your cursor again
@@ -102,10 +81,8 @@ annoyance() {
 		4)
 			# For ~1 minute, have a minor chance every...
 			# 150 milliseconds to visually drop input
-			for i in {1..400}
-			do
-				[[ "$(( RANDOM % 100 > 80 ))" -eq 1 ]] &&
-					stty -echo
+			for i in {1..400}; do
+				[[ "$(( RANDOM % 100 > 80 ))" -eq 1 ]] && stty -echo
 				sleep .15
 				stty echo
 			done
@@ -119,8 +96,7 @@ annoyance() {
 #
 # Function to pass into the real shell
 handover() {
-	# Log the successful attempt...
-	# ...& pass into a real shell.
+	# Log the successful attempt & pass into a real shell.
 	warn enter
 	builtin exec /usr/bin/env -i SSH_CONNECTION="${SSH_CONNECTION}" SSH_CLIENT="${SSH_CLIENT}" SSH_TTY="${SSH_TTY}" SSH_ORIGINAL_COMMAND="${SSH_ORIGINAL_COMMAND}" /usr/bin/bash -il
 }
@@ -141,7 +117,7 @@ passwd_check() {
 	(( counts++ ))
 	local counts="${counts}"
 	local input="${input}"
-	local target_hash="${passwd_hashes[$((layer_at - 1))]}"
+	local target_hash="${hashes[$((layer_at - 1))]}"
 	local cmd="${input%% *}"
 	#
 	# Update history (L1 exclusive)
@@ -149,16 +125,13 @@ passwd_check() {
 	# Silently lock out after max_tries
 	# Generate hash only if not locked out
 	[[ "${layer_at}" -eq 1 ]] && history -s "${input}"
-	[[ "${fake_delay}" == y ]] && sleep "${fake_delay_amount}"
-	[[
-		"${counts}" -gt "${max_tries}" &&
-		"${stop_hash}" != y
-	]] && readonly stop_hash=y
+	[[ "${config[fake_latency]}" == y ]] && sleep "${config[fake_latency]}"
+	[[ "${counts}" -gt "${config[retry_cap]}" && "${stop_hash}" != true ]] && declare -r stop_hash=true
 	[[ "${stop_hash}" == n ]] && local in_hashed="$(hash)"
 	#
 	# Input Parsing
 	# Print a fake error & exit if the input is too big
-	if [[ "${#input}" -gt "${max_stdin}" ]]; then
+	if [[ "${#input}" -gt "${config[stdin_cap]}" ]]; then
 		printf "\nrbash: fork: cannot allocate memory\n"
 		exit 255
 	#
@@ -167,15 +140,29 @@ passwd_check() {
 	#
 	# Mimic rbash restrictions & errors (L1 exclusive)
 	elif [[ "${layer_at}" -eq 1 ]]; then
-		if [[ "${cmd}" == */* ]]; then echo "rbash: ${cmd}: cannot specify '/' in command names"
-		elif [[ "${cmd}" == exit || "${cmd}" == logout ]]; then exit 1
-		elif [[ "${cmd}" == sudo && "${fake_root}" != y ]]; then sudo echo "${USER} is not in the sudoers file.  This incident will be reported."
-		elif [[ "${cmd}" == printf ]]; then printf -- %s "${input/'printf '//}"
-		elif [[ "${cmd}" == echo ]]; then printf -- %s "${input/'echo '//}\n"
-		elif [[ "${cmd}" =~ ^([a-zA-Z0-9_-]+)= ]]; then echo "rbash: ${BASH_REMATCH[1]}: readonly variable"
-		elif type -t "${cmd}" &>/dev/null; then echo "rbash: ${cmd}: Permission denied"
+		if [[ "${cmd}" == */* ]]; then
+			echo "rbash: ${cmd}: cannot specify '/' in command names"
+		elif [[ "${cmd}" =~ ^(exit|logout)$ ]]; then
+			exit 1
+		elif [[ "${cmd}" == sudo ]]; then
+			if [[ "${config[fake_root]}" == true ]]
+			then sudo echo 'root is not in the sudoers file.  This incident will be reported.'
+			else sudo echo "${USER} is not in the sudoers file.  This incident will be reported."
+			fi
+		elif [[ "${cmd}" == printf ]]; then
+			printf -- %s "${input/'printf '//}"
+		elif [[ "${cmd}" == echo ]]; then
+			printf -- %s "${input/'echo '//}\n"
+		elif [[ "${cmd}" =~ ^([a-zA-Z0-9_-]+)= ]]; then
+			echo "rbash: ${BASH_REMATCH[1]}: readonly variable"
+		elif type -t "${cmd}" &>/dev/null; then
+			echo "rbash: ${cmd}: Permission denied"
 		fi
-		annoyance &
+		#
+		# Just maybe don't try this on epileptic people...
+		# Although maybe don't connect to a server via SSH,
+		# that can send your terminal anything, if you're epileptic.
+		[[ "${config[annoyance_index]}" != 0 ]] && annoyance &
 	fi
 	#
 	# Check for current layers' password
@@ -198,8 +185,7 @@ passwd_check() {
 }
 #
 # Prevent changing of core logic
-declare -rf warn annoyance handover false_enter hash passwd_check
-} &>/dev/null
+declare -rf warn annoyance handover hash passwd_check
 
 
 
@@ -219,7 +205,7 @@ while true; do
 	case "${layer_at}" in
 		1)
 			# L1 -- False Terminal
-			read -t "${read_tmout}" -erp "${PS1}" -n "$(( max_stdin + 1 ))" input || exit 1
+			read -t "${config[read_tmout]}" -erp "${PS1}" -n "$(( max_stdin + 1 ))" input || exit 1
 			#
 			# Check the input & move into next layer if correct.
 			passwd_check || break
@@ -235,7 +221,7 @@ while true; do
 		;;
 		2)
 			# L2 -- Silence
-			read -t "${read_tmout}" -ern "$(( max_stdin + 1 ))" input || exit 1
+			read -t "${config[read_tmout]}" -ern "$(( max_stdin + 1 ))" input || exit 1
 			#
 			# Check the input & move into next layer...
 			# Or pass into real shell if no more layers.
@@ -245,7 +231,7 @@ while true; do
 		;;
 		3)
 			# L3 -- Silence (Again)
-			read -t "${read_tmout}" -ern "$(( max_stdin + 1 ))" input || exit 1
+			read -t "${config[read_tmout]}" -ern "$(( max_stdin + 1 ))" input || exit 1
 			#
 			# Check the input & move into next layer...
 			# Or pass into real shell if no more layers.
