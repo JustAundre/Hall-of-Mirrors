@@ -2,83 +2,36 @@
 #
 # Environment Setup
 #
-# Helper function to modify file metadata
+# Determine whether the system uses...
+# root:shadow or root:root for the system
+is_shadow="$(
+	getent group shadow |
+		cut -d':' -f1
+)"
+is_shadow="${is_shadow:-root}"
+#
+# Helper function to (mod)ify file (meta)data
 # path, owner, octal perm, attribute
 metamod() {
 	# Change its permissions & attributes based on the given options
-	# If given owner exists, execute the chown.
-	grep -qE "^$2" /etc/passwd &&
-		chown -- "$2" "$1"
-	#
-	# If octal permission format is detected, execute.
-	[[ "$3" =~ ^[0-9]{3,4}$ ]] &&
-		chmod -- "$3" "$1"
-	#
-	# If any combination of lowercase i/a (immutable/append-only), execute.
-	[[ "$4" =~ ^[ia]{1,2}$ ]] &&
-		chattr +"$4" -- "$1"
+	echo "($1) was flagged."
+	chown -- "$2" "$1"
+	chmod -- "$3" "$1"
+	chattr -- +"$4" "$1"
 }
 #
-# Helper function to check paths
-# path, pattern
-pathchk() {
-	# Match path with pattern given
-	if
-		[[ ! "$(basename -- "$1")" =~ $2 ]]
-	then
-		# If no match, fail.
-		echo "The basename of $1 ($(basename -- "$1")) didn't match pattern ($2); ignoring..." >&2
-		return 1
-	# Check if path is a directory
-	elif
-		[[ -d "$1" ]]
-	then
-		# If is a directory, fail.
-		echo "$1 is a directory; ignoring..." >&2
-		return 2
-	# Check if path is symlink
-	elif
-		[[ -h "$1" ]]
-	then
-		# If is symlink, fail.
-		echo "$1 is a symlink to $(readlink -f -- "$1"); ignoring..." >&2
-		return 3
-	# Check if path is a file
-	elif
-		[[ ! -f "$1" ]]
-	then
-		# If is not a file, it doesn't exist.
-		echo "$1 doesn't exist anymore; ignoring..."
-		return 4
-	else
-		return 0
-	fi
-}
-#
-# Helper function to check a directory
-dirchk() {
-	find "$1" -type f -print0 -maxdepth 2 |
-		while
-			IFS= read -r -d '' path;
-		do
-			pathchk "${path}" "$2" &&
-				metamod "${path}" "$3" "$4" "$5"
-		done
-}
-#
-# Helper function to monitor files
+# Helper function to (mon)itor (file)s
 filemon() {
-	# Initial check
-	echo "Performing initial scan on $1 for files matching $2 -- on detection will set owner $3, mode $4 & attributes $5."
-	dirchk "$1" "$2" "$3" "$4" "$5"
-	#
-	# Setup the inotify watchers
-	echo "Attempting to setup inotifywait watch for $1 for files matching $2 -- on detection will set owner $3, mode $4 & attributes $5."
-	inotifywait -qmre attrib,create,moved_to,close_write "$1" |
+	# Setup iNotify
+	inotifywait --includei "$2" --format '%w%f%0' -qmrP -e attrib -e move -e create -- "$1" |
 		while
-			read -r i
+			read -r file
 		do
-			dirchk "$1" "$2" "$3" "$4" "$5"
+			# Ensure the path isn't a directory
+			# Ampersand (&) placed at the end of...
+			# ...metamod to prevent it from bottle-necking.
+			[[ -f "${file}" ]] &&
+				metamod "${file}" "$3" "$4" "$5" &
 		done
 }
 
@@ -87,20 +40,20 @@ filemon() {
 
 
 
-#
+
 # Monitoring
 #
 # Monitor & revert changes to identity management
-filemon '/etc' '^passwd$' root 644 ia &
-filemon '/etc' '^g?shadow$' root none ia &
+filemon /etc '/(passwd|group)$' root 644 ia &
+filemon /etc '/g?shadow$' "root:${is_shadow}" 640 ia &
 #
 # Lockdown all history files
-filemon '/home' '^history$' root 620 a &
-filemon '/root' '^history$' root 620 a &
+filemon /home '/history$' root 620 a &
+filemon /root '/history$' root 620 a &
 #
 # Lockdown bash rc/logout/profile files
-filemon '/home' '^\..*(rc|logout|profile)$' root 640 ia &
-filemon '/root' '^\..*(rc|logout|profile)$' root 640 ia &
+filemon /home '/(rc|logout|profile)$' root 640 ia &
+filemon /root '/(rc|logout|profile)$' root 640 ia &
 #
 # Keep the script active until all children processes exit
 wait

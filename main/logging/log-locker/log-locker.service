@@ -4,7 +4,6 @@ Description=Session log locker
 [Service]
 Type=oneshot
 ExecStart=/opt/log-locker.sh
-RefuseManualStop=yes
 MemoryMax=64MB
 TasksMax=64
 

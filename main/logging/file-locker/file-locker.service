@@ -5,7 +5,6 @@ Description=Locks history files in home directories
 Restart=always
 Type=simple
 ExecStart=/opt/file-locker.sh
-RefuseManualStop=yes
 MemoryMax=128MB
 TasksMax=128
 

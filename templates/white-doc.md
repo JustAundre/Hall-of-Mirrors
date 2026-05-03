@@ -2,7 +2,11 @@
 
 2026 21st of April – CDT 11:41 AM
 
+<div style="page-break-after: always;"></div>
+
 [TOC]
+
+<div style="page-break-after: always;"></div>
 
 ## Network Layout
 
@@ -19,6 +23,8 @@ Rationale: pfSense acts as the perimeter firewall between the ISEAGE competition
 | `DB`             | `10.8.0.40` | `104.190.101.30` | Ubuntu 16.04        |
 | `WMS`            | `10.8.0.30` | `104.190.101.40` | Ubuntu 24.04        |
 | `LP`             | `10.8.0.50` | `104.190.101.50` | Windows Server 2019 |
+
+<div style="page-break-after: always;"></div>
 
 ## Shared Hardening (Linux Servers)
 
@@ -236,7 +242,7 @@ find / -xdev -type d -perm -0002 ! -perm -1000 -exec chmod +t {} +
 find / -xdev \( -nouser -o -nogroup \) -exec chmod 640 {} + -exec chown root:root {} +
 #
 # Remove broken symlinks
-find / -xdev -xtype l -exec rm {} +
+find / -xdev -xtype l -exec rm -v {} +
 #
 # Ensure sticky-bit on world-writable dirs
 chmod +t /tmp /var/tmp /dev/shm
@@ -244,13 +250,13 @@ chmod +t /tmp /var/tmp /dev/shm
 # Fix permissions for files regarding identity management
 chown root:root /etc/passwd /etc/group /etc/sudoers
 if
-    grep -q '^shadow:' /etc/group
+	grep -q '^shadow:' /etc/group
 then
-    chown root:shadow /etc/shadow /etc/gshadow
-    chmod 640 /etc/shadow /etc/gshadow
+	chown root:shadow /etc/shadow /etc/gshadow
+	chmod 640 /etc/shadow /etc/gshadow
 else
-    chown root:root /etc/shadow /etc/gshadow
-    chmod 600 /etc/shadow /etc/gshadow
+	chown root:root /etc/shadow /etc/gshadow
+	chmod 600 /etc/shadow /etc/gshadow
 fi
 chmod 644 /etc/passwd /etc/group
 #
@@ -323,19 +329,21 @@ We installed 4 primary custom scripts:
 
 - A custom file @ `/etc/profile.d/secure-env.sh` that severely restricts the user-land area/the shell
 
-  - Examples consist but are not limited to the below:
+	- Examples consist but are not limited to the below:
 
-  - Users may not change variables starting with `SSH_`\*
+	- Users may not change variables starting with `SSH_`\*
 
-  - Users may not change the `USER` or `LOGNAME` variable
+	- Users may not change the `USER` or `LOGNAME` variable
 
-  - Users may not reconfigure their shell options (`shellopts`) using `shopt` or `enable`.
+	- Users may not reconfigure their shell options (`shellopts`) using `shopt` or `enable`.
 
-  - Users may not use the built-in echo command & must call the external binary
+	- Users may not use the built-in echo command & must call the external binary
 
 - A custom file @ /opt/mini-bull.sh that
 
 A side-effect of the logging is that non-interactive SSH sessions will not work.
+
+<div style="page-break-after: always;"></div>
 
 ## WWW (Public Website)
 
@@ -368,6 +376,8 @@ sudo setenforce 0
 
 To comply with the requirement that “...Warehouse Workers must have access to update stock information” swiftly (as the scenario document was most unhelpful in determining in what method to do so), we have decided to allow Warehouse Workers into SSH for WMS with the restriction that they are immediately dropped unto SQL with only the permissions inferred to meet the requirement.
 
+<div style="page-break-after: always;"></div>
+
 ## DB (Database)
 
 ### Software Configuration
@@ -379,6 +389,8 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 | Run `mysql_secure_installation` script | Completed | Applies baseline security hardening to the database engine. |
 | Restrict `richard` SQL user to LAN `.30` & `.20` | Done | Reduces possible openings. |
 | Anonymous Users | Removed | Ensures only authenticated users can access database resources. |
+
+<div style="page-break-after: always;"></div>
 
 ## AD (Active Directory)
 
@@ -445,6 +457,8 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 | Network Level Authentication | Enabled | Requires users to authenticate before an RDP session is established. |
 | Reversible Encryption | Disabled | Prevents the system from storing passwords in a decryptable format. |
 
+<div style="page-break-after: always;"></div>
+
 ## Label Printer
 
 ### Software Configurations
@@ -487,6 +501,8 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 | Disabled | Blue-tooth | Reduces the physical attack surface by disabling unused protocols. |
 | Disabled | Cortana | Removes unneeded assistant features to improve security. |
 | Disabled | Maps/Narrator | Disables background services not required for a print server. |
+
+<div style="page-break-after: always;"></div>
 
 ## Network Firewall (pfSense)
 

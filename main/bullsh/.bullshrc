@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#
+# The Way the Cog Spins (Configuration)
+#
+#
+# Password hashes to pass their respective numbered layers (up to 3 layers; only as many layers active as there are hashes)
+declare -r passwd_hashes=(
+	'e5b98bb4f21fd6a3ab4fe9c6928734f960501ab9217f7f22905804d9a1c0e11a0575b9c79930e3f7ab818d98fcfa93dd4424560afbb8232c7a318689885513a0'
+	'c9edc4de9de21784f2e86f2dd087fa8b1670a9442ce614eb2eb1b3358052dd3996b09c3262912fcec67d8ab2d9e4f2fa12e72acb0548cad63ec1af15f9951f17'
+	'6899eb9d96ef8fb19d9c09efa879281b453ca4f7339b3a553111ab12a2c3dfcdd9be236712519894d0490032b047dcc49af050554e8037f9332262f362fdd786'
+)
+#
+# General configuration
+declare -r max_stdin=256 # How big (in bytes) is a response allowed to be parsed
+declare -r hash_rounds=2500 # How many times to hash inputs
+declare -r read_tmout=30 # How many seconds before timing out for inactivity
+declare -r max_tries=3 # The max amount of login attempts before all inputs silently fail
+declare -r fake_root=y # Fake a root shell? (y/n)
+declare -r fake_delay=y # Should every single command have a small delay to annoy the attackers? (y/n)
+declare -r fake_delay_amount="0.$((RANDOM % 3 + 1))" # How long should the delay be? (in seconds)
+declare -r annoy_type=0 # What kind of annoyance on a wrong password shall await them? (0 = off/none)
+declare -rx TMOUT=1
+#
+# Python logic to use for quick hashing
+declare -r python_hashing_logic="import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range(${hash_rounds}):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
+#
+# What layer of the MFA to start at
+layer_at=1
+#
+# Whether the script stops checking for the password (y/n)
+stop_hash=n
+#
+# Logging locations/identifiers
+declare -r log_file='/var/tmp/shell.log'
+declare -r auth_log=bullsh
+#
+# The prompt to show on each new line
+declare -x PS1="[${USER}@${HOSTNAME%%.*} ~]$ "
+[[ "${fake_root}" == y ]] &&
+	declare -x PS1="[root@${HOSTNAME%%.*} ~]# "
+#
+# Log everything
+IFS='' read -rd'' PROMPT_COMMAND <<-EOF
+	history -a
+	last_cmd=\$(
+		echo "\$(history 1)" |
+			sed 's/^[ ]*[0-9]*[ ]*//'
+	)
+	[[ -n "\$last_cmd" ]] &&
+		printf 'EUID: %s | UID: %s | User: %s | IP: %s | TTY: %s | Cmd: %q\n' "${EUID}" "${UID}" "${USER}" "${SSH_CLIENT%% *}" "${SSH_TTY}" "\${last_cmd}" |
+		tee -a "${log_file}" |
+		systemd-cat -t "${auth_log}"
+EOF
+#
+# The amount of login attempts to start with
+counts=0
+#
+# Dynamic handling for SSH_CONNECTION/ip_from
+[[ -z "${SSH_CLIENT}" ]] &&
+	SSH_CLIENT=local_tty

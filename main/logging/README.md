@@ -35,7 +35,7 @@ for log in "${logs[@]}"; do
 		read -rp "Delete (${log})?: " del
 	if [[ "${del}" =~ ^[yY] ]]; then
 		chattr -ia "${log}"
-		rm "${log}"
+		rmv "${log}"
 	fi
 done
 ```

@@ -10,74 +10,38 @@ TLDR...
 
 ## Dependencies
 
-- `Python 3.0+`
-- `gcc`
-- `SSH` server
+- `python 3.0` and above
+- `SSHD 4.4` (server) and above
 
 ## Installation
 
-```bash
-# CD into the the chaotic sub-project
-cd Hall-of-Mirrors/main/bullsh/
-
-# Create the log file(s)
-sudo install -m 766 -o root -g root /dev/null /var/tmp/shell.log
-sudo chattr +a /var/tmp/shell.log
-
-# Install bull.sh to /opt/bull.sh
-sudo install -m 755 -o root -g root bull.sh /opt/bull.sh
-
-# Enable usage of BullSH via /etc/ssh/sshd_config ForceCommand directive
-sudo tee -a /etc/ssh/sshd_config <<-EOF
-	# Drop everyone into BullSH
-	ForceCommand /opt/bull.sh
-EOF
-```
-
-Installation step requires manual intervention.
-```bash
-# To exclude a user, replace PLACEHOLDER with user you would like to exclude & run;
-# ...repeat as necessary for more than 1 user.
-sudo tee -a /etc/ssh/sshd_config <<EOF
-Match User PLACEHOLDER
-	ForceCommand none
-EOF
-```
-
-Finalize.
-```bash
-sudo systemctl restart sshd
-```
+Review and run `install.sh`
 
 ## Feature List
 
 1. Fake root terminal, realistic errors & psycological torture!
-2. Logging galore; everything from individual commands, failed MFA attempts, *successful* MFA attempts, whole terminal sessions (including in the decoy filesystem)
-	- Source IP of SSH session
-	- Username
-	- UID
-	- EUID
-	- Source TTY
-	- Attempted input (when applicable)
-	- MFA Layer (when applicable)
-3. Logs are duplicated & sent to a file
-4. Self-expandable—if you *really* need more than 3 MFA passwords for some reason
-5. Highly configurable, customizable & optimized.
+2. Logs are duplicated & sent to a file
+3. Self-expandable—if you *really* need more than 3 MFA passwords for some reason
+4. Highly configurable, customizable & optimized.
 
+For BullSH logs, use the below command:
 ```bash
-# Commands ran while in BullSH (if unexpected commands are logged, MAKE A REPORT.)
-journalctl -ft bullsh-cmds
-
-# Authentication logs
-journalctl -ft bullsh-mfa # Merged view of the below
-journalctl -fp4t bullsh-mfa # Failed authentication attempts
-journalctl -fp3t bullsh-mfa # Successful authentication attempts
-
-# Duplicate copy of the above logs
-less -R /var/tmp/shell.log
+journalctl -ft bullsh
 ```
 
-Session log files are in `/var/tmp/`, unfortunately not `/var/log/` because the script runs in the userland & making it run as root would be walking on ice you don't know the thickness of.
+Logs consist of:
+- Failed authentications
+	- Contains input & EUID for command.
+- Successful authentications
+- Passes onto a real shell
+
+All logs contain:
+- User IP
+- Username
+- User UID
+- Current/new BullSH layer
+
+BullSH session log files are in `/var/tmp/` opposed to `/var/`***`log`***`/` due to security risks.
 
 ## The Password(s)
 
