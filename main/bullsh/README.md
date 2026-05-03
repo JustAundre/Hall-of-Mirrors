@@ -64,5 +64,3 @@ Go into `./bull.sh` & change the `passHash` variable(s) to your new hash
 - There is room to add some fake success logic to redirect the attacker to a whole 'nother system entirely;
 	- Use SSHpass to SSH into a sacrificial server where the attacker has full reign over a little crib
 	- Just gotta make sure to disable standalone outbound traffic
-
-- I need to heavily refactor & reformat this...
