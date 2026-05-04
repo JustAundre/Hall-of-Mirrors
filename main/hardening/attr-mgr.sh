@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Environment Setup & Logging
+# Environment Setup
 #
 # Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 
 
@@ -23,9 +23,7 @@ options=(
 response="$(checklist 'Attribute manager' radiolist "${options[@]}")"
 #
 # Act based on selected mode
-if
-	[[ "${response}" == remove ]]
-then
+if [[ "${response}" == remove ]]; then
 	# Alert the user of the possible lengthy scan
 	echo i: This will take a second...
 	#
