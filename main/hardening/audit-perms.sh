@@ -32,7 +32,7 @@ done
 #
 # Invalid Symlinks
 #
-# Map out invalid symlinls
+# Map out invalid symlinks
 mapfile -t broken_symlinks < <(find / -xdev -xtype l)
 for symlink in "${broken_symlinks[@]}"; do
 	# For every broken symlink, alert the user about it...
