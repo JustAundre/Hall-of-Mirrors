@@ -7,12 +7,12 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 #
 # Pause and warn
-echo "Review and edit the files you're about to be shown as needed."
+echo $'Review and edit the files you\'re about to be shown as needed.'
 pause
 #
 # Review the files
 check() {
-	command "${EDITOR}" general-confs/slice-individual.conf general-confs/slice-shared.conf general-confs/limits.conf
+	"${EDITOR}" general-confs/slice-individual.conf general-confs/slice-shared.conf general-confs/limits.conf
 }
 review
 #
@@ -21,10 +21,8 @@ while
 	! systemd-analyze verify general-confs/slice-individual.conf ||
 	! systemd-analyze verify general-confs/slice-shared.conf;
 do
-	cat <<-'EOF'
-		W: SystemD found issue(s) with your configuration.
-		i: After you resume, you'll be made to review your configurations again.
-	EOF
+	echo 'W: SystemD found issue(s) with your configuration.'
+	echo $'i: After you resume, you\'ll be made to review your configurations again.'
 	pause
 	review
 done

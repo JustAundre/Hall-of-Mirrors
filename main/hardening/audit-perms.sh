@@ -17,11 +17,11 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 mapfile -t broken_ownership < <(find / -xdev \( -nouser -o -nogroup \))
 for file in "${broken_ownership[@]}"; do
 	# Verbosity: note invalidities, their type, and the UID/GID.
-	[[ "$(stat -c '%U' "${file}")" == 'UNKNOWN' ]] && echo "i: (${file}) has an invalid owning user of UID $(stat -c '%u' "${file}")."
-	[[ "$(stat -c '%G' "${file}")" == 'UNKNOWN' ]] && echo "i: (${file}) has an invalid owning group of GID $(stat -c '%g' "${file}")."
+	[[ "$(stat -c '%U' "${file}")" == 'UNKNOWN' ]] && echo "i: \"${file}\" has an invalid owning user of UID $(stat -c '%u' "${file}")."
+	[[ "$(stat -c '%G' "${file}")" == 'UNKNOWN' ]] && echo "i: \"${file}\" has an invalid owning group of GID $(stat -c '%g' "${file}")."
 	#
 	# Change ownership to root:root
-	echo "i: Changing (${file})'s ownership to root:root..."
+	echo "i: Changing \"${file}\"'s ownership to root:root..."
 	chown -h root:root "${file}"
 done
 
@@ -37,7 +37,7 @@ mapfile -t broken_symlinks < <(find / -xdev -xtype l)
 for symlink in "${broken_symlinks[@]}"; do
 	# For every broken symlink, alert the user about it...
 	# ...and remove it.
-	echo "i: ${symlink} is a broken symlink; removing symlink..."
+	echo "i: \"${symlink}\" is a broken symlink; removing symlink..."
 	unlink "${symlink}"
 done
 
@@ -63,7 +63,7 @@ done
 		#
 		# If they don't, log it and fix it.
 		if [[ "${perm}" != 1777 ]]; then
-			echo "W: (${dir}) was (${perm}) which is deviated from the expected (1777)."
+			echo "W: \"${dir}\"'s permissions were ${perm} which is deviated from the expected (1777)."
 			chmod 1777 "${dir}"
 		fi
 	done
@@ -119,7 +119,7 @@ done
 				#
 				# Delete the path
 				elif [[ "${choice}" == 'Delete the path.' ]]; then rm -rmv "${file}"
-				else echo "Unknown selection (${choice}), this error shouldn't be possible." >&2
+				else echo "Unknown selection \"${choice}\", this error shouldn't be possible." >&2
 				fi
 			done
 		fi

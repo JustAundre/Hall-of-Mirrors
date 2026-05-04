@@ -19,7 +19,7 @@ options=(
 	restore
 )
 #
-# Ask which mode
+# Remove or restore?
 response="$(checklist 'Attribute manager' radiolist "${options[@]}")"
 #
 # Act based on selected mode

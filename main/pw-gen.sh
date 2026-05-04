@@ -72,7 +72,7 @@ word_pull() {
 	]]; do
 		# Verbose output: print scrapped words
 		[[ -n "${verbose}" && -n "${word}" ]] &&
-			echo "i: Dropped word '${word}' because it did not meet complexity requirements." >&3
+			echo "i: Dropped word \"${word}\" because it did not meet complexity requirements." >&3
 		#
 		# Error out if failed to find a word matching set constraints for more than 250 cycles
 		if [[ "${kill}" -gt 250 ]]; then
@@ -225,7 +225,7 @@ if [[
 	! -f 'en_US-dict.txt'
 ]]; then
 	# Attempt to download one (with consent)...
-	echo "W: A pre-existing dictionary couldn't be located in '${dict_location}'."
+	echo "W: A pre-existing dictionary couldn't be located in \"${dict_location}\"."
 	dict_location='en_US-dict.txt'
 	#
 	# if there's a terminal.
@@ -282,7 +282,7 @@ for (( x=0; x < password_amount; x++ )); do
 			;;
 			*)
 				# More input validation
-				echo "W: Unrecognized character '${char}' in pattern at line 1, column ${y}. Ignoring..." >&4
+				echo "W: Unrecognized character \"${char}\" in pattern at line 1, column ${y}. Ignoring..." >&4
 			;;
 		esac
 	done

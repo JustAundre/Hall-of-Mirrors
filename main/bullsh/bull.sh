@@ -141,7 +141,7 @@ passwd_check() {
 	# Mimic rbash restrictions & errors (L1 exclusive)
 	elif [[ "${layer_at}" -eq 1 ]]; then
 		if [[ "${cmd}" == */* ]]; then
-			echo "rbash: ${cmd}: cannot specify '/' in command names"
+			echo "rbash: ${cmd}: cannot specify \"/\" in command names"
 		elif [[ "${cmd}" =~ ^(exit|logout)$ ]]; then
 			exit 1
 		elif [[ "${cmd}" == sudo ]]; then

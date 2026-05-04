@@ -3,12 +3,11 @@
 # Install Mini-BullSH
 #
 # Ask for locations to replace
-echo "(Enter nothing once you're done)"
+echo $'(Enter nothing once you\'re done)'
 echo 'Enter the absolute paths of files to replace with mini-bull.sh: '
 while true; do
 	read -rp '> ' path
-	[[ -z "${path}" ]] &&
-		break
+	[[ -z "${path}" ]] && break
 	staged+=("${path}")
 done
 #

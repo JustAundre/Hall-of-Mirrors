@@ -1,5 +1,9 @@
 # Hall of Mirrors
 
+> [!CAUTION]
+> This is a highly experimental and fluid project, I am ***not*** responsible for data loss.
+> *Certain tools here depend on the active security of your system to be safely deployed.*
+
 ## Download
 
 Clone the repository
@@ -9,16 +13,18 @@ git clone https://github.com/JustAundre/Hall-of-Mirrors.git
 
 ## Global Dependencies
 
-Must be running Linux
-- MacOS doesn't count.
+Must be running `Linux`
+- `MacOS` doesn't count.
 
 Must have/use
 - `GNU Coreutils`
 - `inotify-tools`
 
-Required in-use shell: `Bash 5.0+`
+Required active shell
+- `Bash 5.0+`
 
-Required in-use Init. System: `SystemD`
+Required in-use Init. System
+- `SystemD`
 
 Basically everything here will also depend on the installation of `main/general-conf/secure-env.sh`
 
@@ -38,16 +44,9 @@ Error & best practices checks
 - Run the below & implement fixes to oversights & best practices as needed.
 ```bash
 find . -type f -name '*.sh' |
-    xargs shellcheck -x
+	xargs shellcheck -x
 ```
 
-## Notices
-
-Everything here depends on the integrity of your system.
-
-Basically everything here should be manually reviewed & configured if you want it to work your way.
-
-Don't come to me if you lose data—not gonna do anything about it except *try* to fix the issue that caused it, you've been warned.
 
 ## Next up:
 

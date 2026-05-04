@@ -126,7 +126,7 @@ passwd_check() {
 # The Honey
 #
 # Fake terminal loop
-trap 'echo "$PS1"' 2
+trap 'echo "${PS1}"' 2
 while true; do
 	read -t "${config[read_tmout]}" -erp "${PS1}" -n "$(( max_stdin + 1 ))" input || exit 1
 	passwd_check

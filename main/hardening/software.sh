@@ -165,27 +165,18 @@ while read -r svc_path; do
 		fi
 	#
 	# Handle directories
+	# Delete the directory if it is empty.
 	elif [[ -d "${svc_path}" ]]; then
-		if [[ "${svc_path}" == *.d ]]; then
-			echo "i: ${svc_path} is just an overrides directory."
-		else
-			confirm "${svc_path} doesn't end in .d; review its contents" &&
-				find "${svc_path}" -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
+		if [[ "${svc_path}" == *.d ]]; then echo "i: ${svc_path} is just an overrides directory."
+		else confirm "${svc_path} doesn't end in .d; review its contents" && find "${svc_path}" -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
 		fi
-		#
-		# Delete the directory if it is now empty.
 		[[ "$(find "${svc_path}" -mindepth 1)" == '' ]] && rm -vdi "${svc_path}"
 	#
-	# Handle files
-	elif [[ -f "${svc_path}" ]]; then
-		if confirm "${svc_path} is a real file located in /etc/systemd/system/—may be a custom service. Review"; then
-			"${EDITOR}" "${svc_path}"
-			rm -vi "${svc_path}"
-		fi
-	#
-	# Generally impossible edge-case
-	else
-		echo "E: ${svc_path} was found using the find command but isn't a symlink, directory, or a file. This error shouldn't be possible."
+	# Prompt to audit files
+	# If yes; audit files, then ask whether to delete the file.
+	elif [[ -f "${svc_path}" ]] && confirm "${svc_path} is a real file located in /etc/systemd/system/—may be a custom service. Review"; then
+		"${EDITOR}" "${svc_path}"
+		rm -vi "${svc_path}"
 	fi
 done < <(find /etc/systemd/system -maxdepth 1 -mindepth 1)
 #
