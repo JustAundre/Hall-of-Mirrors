@@ -2,6 +2,11 @@
 
 2026 21st of April – CDT 11:41 AM
 
+> [!NOTE]
+>
+> `10.8.0.0/24` is the LAN.
+> `199.100.16.100`/`199.100.16.101` is the Proxy IP and the Blue VPN IP.
+
 <div style="page-break-after: always;"></div>
 
 [TOC]
@@ -51,7 +56,9 @@ Systems covered under this section:
 
 ### Software Net Positives
 
-- Only this specific section applies to ALL machines, meaning including the Windows machines.
+> [!NOTE]
+>
+> Only this specific section applies to ALL machines, meaning including the Windows machines.
 
 | Target | Action | Rationale |
 |----|----|----|
@@ -64,7 +71,7 @@ Systems covered under this section:
 
 Installed the `AuditD` package on every Linux machine & inserted the AuditD rules below @ File `/etc/audit/auditd.rules`:
 
-```txt
+```bash
 ## Monitor all executions
 -a always,exit -F arch=b64 -S execve -k execution_monitor
 -a always,exit -F arch=b32 -S execve -k execution_monitor
@@ -106,7 +113,7 @@ Installed & configured for an 8 hour ban on 5 failed authentication attempts in 
 
 - Excluded localhost @ `127.0.0.1/8`
 
-- Excluded the LAN at @ `10.8.0.0/24
+- Excluded the LAN at @ `10.8.0.0/24`
 
 - Excluded the Blue VPN IP @ `190.100.16.101`
 
@@ -117,11 +124,11 @@ Services being monitored:
 
 - MySQL
 
-#### Firewall
+#### Firewall : `FirewallD`
 
-Firewall Software: `FirewallD`
-
-- Uninstalled any occurrences of the `UFW` in favor of `FirewallD` for its granularity.
+> [!NOTE]
+>
+> All instances of UFW found were replaced by `FirewallD` in favor of its granulinity.
 
 | Direction | Port | Type | Allowed | Rationale |
 | --- | --- | -------------- | --- | --------------------------------------------------------------------------- |
@@ -153,7 +160,7 @@ Examples of this are found below:
 
   - Too many to list here. Reference the example override for a generic front-end service below.
 
-```conf
+```shell
 [Service]
 # De-escalate service.
 User=www-data
@@ -207,13 +214,13 @@ PrivateUsers=true
 RemoveIPC=true
 ```
 
-Aside from applying strict kernel-level restrictions, we also de-escalated all primary services from the `root` user down to a more reasonably permission-ed user such as the commonly used `www-data` user or the `MySQL` user.
+Aside from applying strict kernel-level restrictions, we also deescalated all primary services from the `root` user down to a more reasonably permission-ed user such as the commonly used `www-data` user or the `MySQL` user.
 
-#### Sudoers Configuration
+#### `/etc/sudoers` Configuration
 
 | Previous effect | Current effect | Rationale |
 | --- | --- | --- |
-| Allowed all `domain users` to use sudo on all commands | Strictly only allows `it administrators` & the `wheel` group (near-universal agreed upon local administrative group) to use sudo on all commands. | Non-administrators should not be able to conduct changes on a system befitting of administrators. |
+| Allowed all `domain users` to use `sudo` on all commands | Strictly only allows `it administrators` & the `wheel` group to use `sudo` on all commands. | Non-administrators should not be able to conduct changes on a system befitting of administrators. |
 
 ### Software/File removals
 
@@ -231,6 +238,12 @@ Aside from applying strict kernel-level restrictions, we also de-escalated all p
 | `PAM` | Reinstall | Parts of `PAM` failed system package manager integrity checks & so it was re-installed to remove possible back-doors. |
 
 ### File-system Ownership & Permission Repairs
+
+> [!WARNING]
+>
+> The permissions on the home directories were especially the most offensive, being `755` instead of `700`, meaning anyone could read & execute any files inside another person’s home directory.
+>
+> We also don’t get why the default permissions for the `/etc/systemd/system` directory is 755 even though no unprivileged user needs to read from the services nor their override files. We have rectified that to `600` for files in the directory & `700` for directories in the directory.
 
 Applied fixes to the systems’ file/directory permission & ownership as per the script below.
 
@@ -313,10 +326,6 @@ chown -R root:root /root
 chmod -R 700 /home/* /root
 ```
 
-The permissions on the home directories were especially the most offensive, being `755` instead of `700`, meaning anyone could read & execute any files inside another person’s home directory.
-
-We also don’t get why the default permissions for the `/etc/systemd/system` directory is 755 even though no unprivileged user needs to read from the services nor their override files. We have rectified that to `600` for files in the directory & `700` for directories in the directory.
-
 ### Extra preventative & noise-making measures
 
 We installed 4 primary custom scripts:
@@ -351,21 +360,19 @@ A side-effect of the logging is that non-interactive SSH sessions will not work.
 
 #### Front-end Service
 
-The front-end service formerly granted administrative permissions to all users with a sufficient amount of loyalty points; which has been deemed too much of a security risk & has been removed from the codebase.
-
-There was a function default that defaulted to elevating a user to `Admin` on the front-end/back-end if the function was called without a specified elevation type
-
-We migrated the service’s codebase location from the `cdc` user’s home directory to the `www-data` user’s home directory @ `/home/www-data/`.
-
-We migrated all secrets to the service’s SystemD override file.
-
-We migrated the service from plain `Flask` to `Gunicorn` to allow for better resource efficiency & more detailed logs.
+| Target                                    | Action                                                       | Rationale                                                    |
+| ----------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `auth.py` dependency/utility in code-base | Removed the ability to elevate to an administrator on the front-end by gaining 200 "*loyalty points*". | Administrators on the front-end can modify stock information including the creation/deletion of items and price changes, which is usually not something up to the discretion of a loyal shopper. |
+| `auth.py` dependency/utility in code-base | Changed the default for a user elevation function from `Admin=true` to `Admin=false`. | In the event the function is used incorrectly, assuming that elevating a user to administrative permissions is quite the bold (and insecure) assumption for the program to make. |
+| Code-base Location & Ownership            | Moved from `/home/cdc/` to `/home/www-data`—changed ownership from `cdc:cdc` to `www-data:www-data`. | Privilege separation is a good idea; a web server shouldn't run as root and it also shouldn't run as a user that can possibly access root. |
+| Secrets                                   | Moved sensitive secrets from the service's configuration file (`config.py`) to a file owned by `root:root` with permissions `600`. | The service needs only to read its configuration, and read it only once—and that's at the initialization of the service. Any further access would absolutely be a security risk for a service that parses user input in anyway including user sign-up and login. |
+| Flask                                     | Changed to `Gunicorn`                                        | Flask is not made for enterprise web servers and is single-core, meaning it only utilizes a fraction of the CPU that it could which can act as a performance bottleneck. |
 
 ### Software/File Removals
 
 | File/program | Extent | Rationale |
 |----|----|----|
-| `/home/cdc/.bashrc` | Removed the below lines | Disables SELinux & made the `/etc/shadow` file world-writable & world-readable. Clearly undesirable behavior, & may trick users who log on for the first time. (Red team’s playing dirty, eh?) |
+| `/home/cdc/.bashrc` | Removed the below lines | Disables SELinux & made the `/etc/shadow` file world-writable & world-readable. Clearly undesirable behavior, & may trick users who log on for the first time.<br />Kind of a dirty trick to play. |
 
 ```bash
 sudo chmod -R 777 /etc/shadow
@@ -415,8 +422,8 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 | Action | Result | Rationale |
 | --- | --- | --- |
 | “Everyone” permissions to anonymous users | Disabled | Reduced attack surface for anonymous users. |
-| Disallowed group Domain Users from RDP access | Permissions Removed | Standard domain users do not need access to the RDP service, this reduces manuverability for a potential red team breach. |
-| Removed RDP access from users Guest, scrat, & troy tomsonson | Removed | Removing unknown/insecure users reduces potential nonpermitted logon oppurtunity. |
+| Disallowed group Domain Users from `RDP` access | Permissions Removed | Standard domain users do not need access to the `RDP` service, this reduces manuverability for a potential red team breach. |
+| Removed `RDP` access from users Guest, scrat, & troy tomsonson | Removed | Removing unknown/insecure users reduces potential nonpermitted logon oppurtunity. |
 | Added group IT Administrators to Domain Administrators | Added | Allows for the IT Administrators group to perform administrative tasks. |
 | Removed group Domain Users from group Domain Administrators | Removed | This rule would allow for all users on the domain to have administrative permissions, allowing for red team to perform any action with the breach of one account. |
 | Gave RDP access to IT Administrator group | Added | Required as per the scenario. |
@@ -446,7 +453,7 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 | --- | --- | --- |
 | Disabled Account | guest, scrat, troy tomson | Disables accounts that are unused or suspicious. |
 | Removed from Domain Administrators | Domain Users | Enforces the principle of least privilege for standard users. |
-| Access Restricted | RDP | Restricted RDP access exclusively to the IT Administrators group. |
+| Access Restricted | `RDP` | Restricted `RDP` access exclusively to the IT Administrators group. |
 
 ### System & Service Configuration
 
@@ -454,7 +461,7 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 
 | Policy | Setting | Rationale |
 | --- | --- | --- |
-| Network Level Authentication | Enabled | Requires users to authenticate before an RDP session is established. |
+| Network Level Authentication | Enabled | Requires users to authenticate before an `RDP` session is established. |
 | Reversible Encryption | Disabled | Prevents the system from storing passwords in a decryptable format. |
 
 <div style="page-break-after: always;"></div>
@@ -510,13 +517,13 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 
 | Direction | Source | Destination | Port | Action | Rationale |
 | --- | --- | --- | --- | --- | --- |
-| ALL | Any | Any | Any | Block | **Default Deny**: All traffic is blocked unless matching a rule below. |
-| In (WAN) | Any | Any | 22 | Allow | Allow SSH access as needed. |
-| In (WAN) | Any | Any | 80 | Allow | Web traffic for the storefront. |
-| In (WAN) | Any | `10.8.0.10` | 3389 | Allow | RDP access for AD management. |
-| In (WAN) | Any | `10.8.0.10` | 389 | Allow | LDAP access for domain services. |
-| Out (LAN) | `10.8.0.0/24` | Any | Any | Allow | Allows internal servers to initiate outbound connections. |
-| Out (LAN) | `10.8.0.0/24` | `199.100.16.100` | 3128 | Allow | Specific rule for ISEAGE proxy requirements. |
+| ALL | Any | Any | ALL | ❌ | **Default Deny**: All traffic is blocked unless matching a rule below. |
+| In | Any | Any | 22 | ✅ | Allow SSH access as needed. |
+| In | Any | Any | 80 | ✅ | Web traffic for the storefront. |
+| In | Any | `10.8.0.10` | 3389 | ✅ | `RDP` access for AD management. |
+| In | Any | `10.8.0.10` | 389 | ✅ | `LDAP` access for domain services. |
+| Out | `10.8.0.0/24` | Any | ALL | ✅ | Allows internal servers to initiate outbound connections. |
+| Out | `10.8.0.0/24` | `199.100.16.100` | 3128 | ✅ | Specific rule for ISEAGE proxy requirements. |
 
 ### DNS Configuration
 
