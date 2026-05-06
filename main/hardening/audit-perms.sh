@@ -104,8 +104,8 @@ mapfile -t not_root_owned < <(find /etc \( ! -group root -o ! -user root \))
 for file in "${not_root_owned[@]}"; do
 	# If the owners are system users/groups, it's probably fine.
 	if [[
-		"$(stat -c %g -- "${file}")" -ge 1000 ||
-		"$(stat -c %u -- "${file}")" -ge 1000
+		"$(stat -c %g "${file}")" -ge 1000 ||
+		"$(stat -c %u "${file}")" -ge 1000
 	]]; then
 		# Prompt for action
 		mapfile -t choices < <(checklist "${file} is owned by $(stat -c '%U:%G/%u:%g' "${file}") with permissions $(stat -c '%A/%a' "${file}"). What do you want to do?" checklist "${fixes[@]}")
@@ -147,6 +147,7 @@ chown -h 0:0 /etc/passwd /etc/group
 chmod 644 /etc/passwd /etc/group
 #
 # Shadow file permissions vary by distribution
+(
 if [[ "${os_info[ID]}" == almalinux ]]; then
 	for file in /etc/shadow /etc/gshadow /etc/shadow- /etc/gshadow-; do
 		current="$(stat -c '%a %u:%g' "${file}")"
@@ -183,6 +184,7 @@ else
 		fi
 	done
 fi
+)
 #
 # Fix Sudoers configuration
 find /etc/sudoers.d /etc/sudoers -type f -exec chown -h 0:0 {} + -exec chmod 600 {} +
