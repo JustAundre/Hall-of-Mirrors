@@ -3,7 +3,7 @@
 # Environment Setup
 #
 # Determine whether the system uses...
-# root:shadow or root:root for the system
+# 0:shadow or 0:0 for the system
 is_shadow="$(
 	getent group shadow |
 		cut -d':' -f1

@@ -29,7 +29,7 @@ for file in "${log_dir}"/*; do
 	[[ -h "${file}" ]] && rm -fv "${file}"
 	#
 	# Apply defaults
-	chown root:root "${file}" && chmod 600 "${file}"
+	chown 0:0 "${file}" && chmod 600 "${file}"
 	#
 	# Check if this specific file is in our list (or is being prepared for logging)
 	if

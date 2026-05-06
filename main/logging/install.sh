@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install the logging directory
 mkdir -p /var/log/sessions
-chown root:root /var/log/sessions
+chown 0:0 /var/log/sessions
 chmod 640 /var/log/sessions
 #
 # Install logger.sh to /opt/logger.sh
@@ -31,7 +31,7 @@ install -m 750 -o root -g root file-locker/file-locker.sh /opt/file-locker.sh
 systemctl enable --now file-locker.service
 #
 # Enable the session logger
-tee -a /etc/ssh/sshd_config <<-'EOF'
+cat >>/etc/ssh/sshd_config <<-'EOF'
 
 	# Force all users into terminal logger
 	ForceCommand /bin/sudo /opt/logger.sh

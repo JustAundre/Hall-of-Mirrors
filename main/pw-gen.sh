@@ -97,8 +97,7 @@ word_pull() {
 }
 #
 # Parse CLI arguments
-while getopts 's:m:M:c:a:p:hv' flag
-do
+while getopts 's:m:M:c:a:p:hv' flag; do
 	case "${flag}" in
 		s) separator="${OPTARG}";;
 		m) min="${OPTARG}";;
@@ -268,8 +267,7 @@ for (( x=0; x < password_amount; x++ )); do
 		case "${char}" in
 			w|W)
 				# Parse w/W into a random word
-				word="$(word_pull)" ||
-					exit "$?"
+				word="$(word_pull)" || exit "$?"
 				result+="${word}"
 			;;
 			n|N)
