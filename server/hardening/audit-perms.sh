@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+#
+# Environment Setup
+#
+# Source helper functions & variables
+cd "$(dirname "${BASH_SOURCE[0]}")"
+. .allrc
+#
+# Helper function
+perm_fix() {
+	# Parse arguments
+	local before after
+	while getopts 'm:o:g:' arg; do
+		case "${arg}" in
+			m)
+				mode="${OPTARG}"
+			;;
+			o)
+				owner="${OPTARG}"
+			;;
+			g)
+				group="${OPTARG}"
+			;;
+			*)
+				echo "E: Invalid argument." >&2
+				exit 255
+			;;
+		esac
+	done
+	#
+	# Validate user:group
+	# Validate permissions
+	if
+		[[ -n "${owner}" && ! "${owner}" =~ ${num_chk} ]] ||
+		! getent passwd "${owner}" >/dev/null
+	then
+		echo "E: ${owner} is an invalid user."
+		return 254
+	elif
+		[[ -n "${group}" && ! "${group}" =~ ${num_chk} ]] ||
+		! getent passwd "${group}" >/dev/null
+	then
+		echo "E: ${group} is an invalid group."
+		return 253
+	elif [[ -n "${mode}" && ! "${mode}" =~ ^[01234567]{3,4} ]]; then
+		echo "E: ${mode} is an invalid mode."
+		return 252
+	fi
+	#
+	# Shift by the amount of getopts to get our paths
+	shift "$(( OPTIND - 1 ))"
+	#
+	# Iterate over every path
+	for path in "$@"; do
+		# Stop processing of non-existent file
+		if ! stat -c '' "${path}"; then
+			echo "E: ${path} doesn't exist."
+			continue
+		fi
+		#
+		# Save stats for file pre-change
+		before="$(stat -c '%a %u/%U:%g/%G')"
+		chown -hP "${owner}:${group}" "${path}"
+		[[ -n "${mode}" ]] && chmod -hP "${mode}" "${path}"
+		#
+		# Check stats for file post-change
+		after="$(stat -c '%a %u/%U:%g/%G')"
+		#
+		# Log diffs bewteen pre and post stats
+		[[ "${before}" != "${after}" ]] &&
+			echo "W: ${path} with \"${before}\" deviated from, and was restored to \"${after}\"."
+	done
+}
+#
+# Let subshells use this function
+# (needed for the find command)
+export -f perm_fix
+
+
+
+
+
+#
+# Invalid Ownership
+#
+# Map out files /w broken ownership.
+(
+mapfile -t broken_ownership < <(find / -xdev \( -nouser -o -nogroup \))
+for path in "${broken_ownership[@]}"; do
+	# Verbosity: note invalidities, their type, and the UID/GID.
+	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && bad_uid=true
+	[[ "$(stat -c '%G' "${path}")" == UNKNOWN ]] && bad_gid=true
+	if [[ -n "${bad_uid}" && -z "${bad_gid}" ]]; then invalid_type=UID
+	elif [[ -n "${bad_gid}" && -z "${bad_uid}" ]]; then invalid_type=GID
+	elif [[ -n "${bad_uid}" && -n "${bad_gid}" ]]; then invalid_type='UID & GID'
+	fi
+	echo "i: ${path} has an invalid owner ${invalid_type}; changed owners to 0:0."
+	chown -h 0:0 "${path}"
+done
+)
+
+
+
+
+
+#
+# Invalid Symlinks
+#
+# Remove invalid symlinks
+find / -xdev -xtype l -exec echo 'i: {} is a broken symlink; removing...' \; -exec unlink {} +
+
+
+
+
+
+#
+# Sticky Temps
+#
+# Check if the below directories are world-writable /w sticky-bit
+perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
+
+
+
+
+
+#
+# World-Writable Paths
+#
+# A stub. Needs to be finished.
+# Find world-writable paths
+mapfile -t world_writables < <(find / -xdev -perm -0002)
+
+
+
+
+
+#
+# /etc/ Ownerships
+#
+# Choices for remediation when encountering a path owned by a non-system user in /etc/
+# Note: There's 3 empty choices to act as a buffer for fat-fingering "Delete the path".
+fixes=(
+	'Change ownership'
+	'Change permissions'
+	'' '' ''
+	'Delete the path.'
+)
+# Find paths in /etc/ with ownership that is not 0:0
+while IFS= read -rd'' file; do
+	# If the owners are system users/groups, it's probably fine.
+	if [[
+		"$(stat -c %g "${file}")" -ge 1000 ||
+		"$(stat -c %u "${file}")" -ge 1000
+	]]; then
+		# Prompt for action
+		mapfile -t choices < <(checklist "${file} is owned by $(stat -c '%U:%G/%u:%g' "${file}") with permissions $(stat -c '%A/%a' "${file}"). What do you want to do?" checklist "${fixes[@]}")
+		#
+		# Act on selections
+		for choice in "${choices[@]}"; do
+			# Prompt for new ownership
+			# Validate given user and group
+			# Change the ownership
+			if [[ "${choice}" == 'Change ownership' ]]; then
+				(
+				until
+					getent passwd "${user}" &>/dev/null &&
+					getent group "${group}" &>/dev/null &&
+					[[ -u "${user}" && -u "${group}" ]]
+				do
+					read -rp 'Enter the new user owner: ' user
+					read -rp 'Enter the new group owner: ' group
+				done
+				chown -hc "${user}:${group}" "${file}"
+				)
+			#
+			# Prompt for new permissions
+			elif [[ "${choice}" == 'Change permissions' ]]; then
+				(
+				until [[ "${perm}" =~ ^[1234567]{3,4}$ ]]; do
+					read -rp 'Enter the octal permission: ' perm
+				done
+				chmod -c "${perm}" "${file}"
+				)
+			#
+			# Delete the path
+			elif [[ "${choice}" == 'Delete the path.' ]]; then
+				rm -rfv "${file}"
+			fi
+		done
+	fi
+done < <(find /etc \( ! -group root -o ! -user root \) -print0)
+
+
+
+
+
+#
+# Identity & Authorization Files
+#
+# Handle /etc/passwd & /etc/group
+perm_fix -m 644 -o 0 -g 0 /etc/passwd /etc/group
+#
+# Shadow file permissions vary by the presence of the shadow group.
+if grep -qE '^shadow:' /etc/group; then
+	perm_fix -m 0640 -o 0 -g shadow /etc/shadow /etc/gshadow
+	perm_fix -m 0600 -o 0 -g 0 /etc/shadow- /etc/gshadow-
+else
+	perm_fix -m 0000 -o 0 -g 0 /etc/shadow /etc/gshadow /etc/shadow- /etc/gshadow-
+fi
+#
+# Fix Sudoers configuration
+find /etc/sudoers.d /etc/sudoers -type f -exec bash -c 'perm_fix -m 600 -o 0 -g 0' {} +
+find /etc/sudoers.d /etc/sudoers -type d -exec bash -c 'perm_fix -m 700 -o 0 -g 0' {} +
+
+
+
+
+
+#
+# Misc. System Files
+#
+# Can be improved
+# Ensure only root can read the bootloader config
+find /boot -type f -exec bash -c 'perm_fix -m 640 -o 0 -g 0' {} +
+find /boot -type d -exec bash -c 'perm_fix -m 750 -o 0 -g 0' {} +
+#
+# Ensure SystemD unit files are secure
+find /etc/systemd/system -type f -exec bash -c 'perm_fix -m 640 -o 0 -g 0' {} +
+find /etc/systemd/system -type d -exec bash -c 'perm_fix -m 750 -o 0 -g 0' {} +
+#
+# Secure cronjobs
+find /etc/cron.* /etc/crontab /etc/at.allow -type f -exec bash -c 'perm_fix -m 640 -o 0 -g 0' {} +
+find /etc/cron.* /etc/crontab /etc/at.allow -type d -exec bash -c 'perm_fix -m 750 -o 0 -g 0' {} +
+#
+# Restrict privileged binaries
+perm_fix -m 750 -o 0 -g 0 /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules /bin/dmesg /usr/bin/dmesg
+#
+# Secure SSH configurations/private keys, and public keys.
+find /etc/ssh -type f -exec bash -c 'perm_fix -m 600 -o 0 -g 0' {} +
+find /etc/ssh -type d -exec bash -c 'perm_fix -m 700 -o 0 -g 0' {} +
+find /etc/ssh -name '*.pub' -type f -exec bash -c 'perm_fix -m 644 -o 0 -g 0' {} +
+#
+# Secure MOTD/banners are secured
+perm_fix /etc/issue /etc/issue.net /etc/motd -m 644 -o 0 -g 0
+#
+# Secure logging directory
+perm_fix -m 755 -o 0 -g 0 /var/log
+find /var/log/ -mindepth 1 -type f -exec bash -c 'perm_fix -m 640' {} +
+find /var/log/ -mindepth 1 -type d -exec bash -c 'perm_fix -m 750' {} +
+#
+# Some distros use the adm user for these logs
+(
+auditd_log_dir="$(dirname "$(awk -F'=' '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs)")"
+if [[ "${os_info[ID]}" =~ ^(ubuntu|almalinux)$ && -d "${auditd_log_dir}" ]]
+then find "${auditd_log_dir}" -type f -exec bash -c 'perm_fix -m 640 -o 0 -g adm' {} +
+else find "${auditd_log_dir}" -type f -exec bash -c 'perm_fix -m 0600 -o 0 -g 0' {} +
+fi
+chmod -c 0750 "${auditd_log_dir}"
+)
+#
+# Secure AuditD/rsyslog configurations
+find /etc/audit /etc/rsyslog.d/ /etc/rsyslog.conf -mindepth 1 -type f -exec bash -c 'perm_fix -m 640 -o 0 -g 0' {} +
+find /etc/audit /etc/rsyslog.d/ -type d -exec bash -c 'perm_fix -m 750 -o 0 -g 0' {} +
+#
+# Secure global shell profiles
+find /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/ -type f -exec bash -c 'perm_fix -m 644 -o 0 -g 0' {} +
+find /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/ -type d -exec bash -c 'perm_fix -m 755 -o 0 -g 0' {} +
+#
+# Secure local home directories
+# (including root's home @ /root)
+# (Subshell for variable cleanup)
+(
+# Iterate over all interactive users'...
+for user in "${int_users[@]}"; do
+	# Home directories.
+	home="$(grep "^${user}:" | tail -n1 | cut -d: -f6)"
+	find "${home}" -type f -exec bash -c "perm_fix -m 600 -o ${user} -g ${user}" {} +
+	find "${home}" -type d -exec bash -c "perm_fix -m 700 -o ${user} -g ${user}" {} +
+done
+)
+find /root -type f -exec bash -c 'perm_fix -m 600 -o 0 -g 0' {} +
+find /root -type d -exec bash -c 'perm_fix -m 700 -o 0 -g 0' {} +
+#
+# Debian-based distros exclusive: APT keyrings
+if [[ "${os_info[ID]}" == debian || "${os_info[ID]}" == ubuntu ]]; then
+	[[ -d /etc/apt/trusted.gpg.d ]] && find /etc/apt/trusted.gpg.d -type f -exec bash -c 'perm_fix -m 644 -o 0 -g 0' {} +
+	[[ -d /usr/share/keyrings ]] && find /usr/share/keyrings -type f -exec bash -c 'perm_fix -m 644 -o 0 -g 0' {} +
+fi

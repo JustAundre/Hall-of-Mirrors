@@ -4,10 +4,7 @@
 #
 # Determine whether the system uses...
 # 0:shadow or 0:0 for the system
-is_shadow="$(
-	getent group shadow |
-		cut -d':' -f1
-)"
+is_shadow="$(getent group shadow | cut -d':' -f1)"
 is_shadow="${is_shadow:-root}"
 #
 # Helper function to (mod)ify file (meta)data
@@ -24,14 +21,11 @@ metamod() {
 filemon() {
 	# Setup iNotify
 	inotifywait --includei "$2" --format '%w%f%0' -qmrP -e attrib -e move -e create -- "$1" |
-		while
-			read -r file
-		do
+		while read -r file; do
 			# Ensure the path isn't a directory
 			# Ampersand (&) placed at the end of...
 			# ...metamod to prevent it from bottle-necking.
-			[[ -f "${file}" ]] &&
-				metamod "${file}" "$3" "$4" "$5" &
+			[[ -f "${file}" ]] && metamod "${file}" "$3" "$4" "$5" &
 		done
 }
 

@@ -6,7 +6,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 #
 # Regex to isolate uncommented URLs
-url_chk='^[^#]*https?://'
+url_chk='https?://[^/ ]+'
 #
 # Function to check for URLs sharing a domain.
 domain_compare() {
@@ -45,7 +45,7 @@ while read -r repo_file; do
 		if domain_compare "${repo_url}" "${os_info[HOME_URL]}"; then echo "i: URL \"${repo_url}\" was identified."
 		elif [[ -n "${repo_url}" ]]; then echo "W: URL with foreign domain \"${repo_url}\" found in \"${repo_file}\"."
 		fi | tee -a "flagged-pkg-repos-${i}.log"
-	done < <(grep -oE 'https?://[^/ ]+' "${repo_file}" | sort -ux)
+	done < <(grep -oE "${url_chk}" "${repo_file}" | sort -ux)
 done < <(
 	find /etc/yum.repos.d/ -mindepth 1 ! -type d
 	find /etc/apt/sources.list.d/ -mindepth 1 ! -type d

@@ -9,9 +9,14 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 # Prompt for users to ...
 # Delete, remove password, lock, reshell, reUID & regroup.
 for user in "${all_users[@]}"; do
-	id -a
+	id -a "${user}"
 done
 mapfile -t users_del < <(checklist 'Select users to delete' checklist "${all_users[@]}")
+mapfile -t users_nullpass < <(checklist 'Select users to remove passwords from' checklist "${all_users[@]}")
+mapfile -t users_lock < <(checklist 'Select users to lock' checklist "${all_users[@]}")
+mapfile -t users_reshell < <(checklist 'Select users to select a new shell for' checklist "${all_users[@]}")
+mapfile -t users_reuid < <(checklist 'Select users to assign a new UID' checklist "${all_users[@]}")
+mapfile -t users_regroup < <(checklist 'Select users to reassign groups for' checklist "${all_users[@]}")
 
 
 
@@ -61,7 +66,7 @@ for u in "${users_regroup[@]}"; do
 		read -erp 'Enter new supplemental groups (space-separated): ' -a supplemental_groups
 		stop=i
 		for group in "${supplemental_groups[@]}"; do
-			grep -qE "^[^:]+:[^:]+:${primary_group}" /etc/group || stop=
+			grep -qE "^[^:]+:[^:]+:${group}" /etc/group || stop=
 		done
 	done
 	#

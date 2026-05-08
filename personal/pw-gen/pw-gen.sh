@@ -97,8 +97,8 @@ word_pull() {
 }
 #
 # Parse CLI arguments
-while getopts 's:m:M:c:a:p:hv' flag; do
-	case "${flag}" in
+while getopts 's:m:M:c:a:p:hv' arg; do
+	case "${arg}" in
 		s) separator="${OPTARG}";;
 		m) min="${OPTARG}";;
 		M) max="${OPTARG}";;

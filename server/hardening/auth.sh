@@ -77,7 +77,7 @@ login_defs=(
 )
 #
 # Apply global defaults via login.defs
-for entry in "${login_def_configs[@]}"; do
+for entry in "${login_defs[@]}"; do
 	safe_add "${entry}" /etc/login.defs
 done
 

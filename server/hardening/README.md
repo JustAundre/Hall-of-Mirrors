@@ -9,8 +9,12 @@ Works best on a headless Linux servers—may break casual desktop users.
 ## Script Execution Flow
 
 > [!WARNING]
-> This section is obsolete because of a recent rescript.
+> This section is obsolete because of a recent re-script.
 > Appologies for the inconvienence, I intend to get this rewritten with haste.
+
+> [!WARNING]
+> The new `firewall.sh` & `sysctl.sh` scripts are extremely bare bones,
+> & a section in `audit-perms.sh` is only just a stub.
 
 - Run `forensics.sh`
 - Review `forensic.sh`'s log file

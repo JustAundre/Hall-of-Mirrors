@@ -27,7 +27,7 @@ motds=(
 cat <<-EOF
 	i: You'll be put into a text editor to review a MOTD file template."
 	i: Revise it as needed, then it'll be installed to the following files:
-	${motds[*]}
+	${motd} ${motds[*]}
 EOF
 pause
 install -m 640 -o root -g root -D general-confs/motd "${motd}"
