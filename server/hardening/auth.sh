@@ -44,7 +44,8 @@ then
 	#
 	# Update PAM configurations
 	pam-auth-update --force --package
-else echo 'E: Your PAM configuration setup is unsupported.'
+else
+	echo 'E: Your PAM configuration setup is unsupported.'
 fi
 #
 # Enforce password age policies (to users w/ UID 1000=<)

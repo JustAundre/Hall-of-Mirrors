@@ -126,8 +126,8 @@ perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 #
 # World-Writable Paths
 #
-# A stub. Needs to be finished.
 # Find world-writable paths
+# WIP
 mapfile -t world_writables < <(find / -xdev -perm -0002)
 
 

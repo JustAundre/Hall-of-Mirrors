@@ -10,6 +10,10 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 
 
+#
+# Base Ruleset
+#
+# Sets default rules based on the installed firewall
 if hash firewall-cmd; then
 	# (--permanent: Modifies on-disk configuration, not in-memory configuration.)
 	# Start the firewall
@@ -46,3 +50,12 @@ else
 	echo 'E: This script requires either UFW or FirewallD installed.'
 	exit 1
 fi
+
+
+
+
+
+#
+# TUI Firewall Configuration
+#
+# WIP
