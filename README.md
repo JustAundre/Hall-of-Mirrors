@@ -50,8 +50,7 @@ shfmt -d .
 Error & best practices checks
 - Run the below & implement fixes to oversights & best practices as needed.
 ```bash
-find . -type f -name '*.sh' |
-	xargs shellcheck -x
+find . -type f -name '*.sh' -exec shellcheck -x {} +
 ```
 
 
