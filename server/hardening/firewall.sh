@@ -113,9 +113,9 @@ class="$(checklist "What are we ${action_type,,}ing?" radiolist "${classes[@]}")
 #
 # Assemble the command
 if hash firewall-cmd; then
-	echo "${persistence}" | grep -q 'on-disk' && args+=('--permanent')
+	[[ "${persistence,,}" =~ 'on-disk' ]] && args+=('--permanent')
 	# WIP
-	echo "${persistence}" | grep -q 'in-memory' && firewall-cmd --reload
+	[[ "${persistence,,}" =~ 'in-memory' ]] && firewall-cmd --reload
 elif hash ufw; then
 	args+=('ufw')
 fi
