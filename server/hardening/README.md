@@ -57,7 +57,7 @@ Check users, user groups, shells, passwords & user IDs.
 - Ensure `root` user is locked with no password.
 - Ensure users have only the neccessary permissions
 - Ensure users have only the neccessary groups
-- Ensure only `root` has `UID 0`
+- No UID 0 users aside from `root`.
 - Ensure only recognized users are on the systemctl
 - Ensure passwords are as documented
 - Ensure passwords (including MySQL/MariaDB/PostgreSQL user passwords) are secure & not in wordlists like `rockyou.txt` or can be cracked with a dictionary attack
@@ -70,9 +70,9 @@ Check users, user groups, shells, passwords & user IDs.
 Ensure all directories & files have correct permissions
 - `/boot/` is preferably mounted as read-only (AFTER YOU RUN UPDATES.)
 - `/usr/` is preferably is mounted as read-only (AFTER YOU RUN UPDATES.)
-- `/etc/shadow` & `/etc/gshadow` are `600` & owned by `root:shadow`
-- `/etc/passwd`, `/etc/group` & `/etc/sshd_config` are `644` & owned by `root:root`
-- `/etc/ssh/sshd_config.d` should be `700` & owned by `root:root`
+- `/etc/shadow` & `/etc/gshadow` are `600` & owned by `0:shadow`
+- `/etc/passwd`, `/etc/group` & `/etc/sshd_config` are `644` & owned by `0:0`
+- `/etc/ssh/sshd_config.d` should be `700` & owned by `0:0`
 
 Check the firewall
 - Ensure it's active
