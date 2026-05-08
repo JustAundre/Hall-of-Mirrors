@@ -38,7 +38,7 @@ perm_fix() {
 		return 254
 	elif
 		[[ -n "${group}" && ! "${group}" =~ ${num_chk} ]] ||
-		! getent passwd "${group}" >/dev/null
+		! getent group "${group}" >/dev/null
 	then
 		echo "E: ${group} is an invalid group."
 		return 253
