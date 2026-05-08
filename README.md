@@ -1,8 +1,15 @@
 # Hall of Mirrors
 
+> [!IMPORTANT]
+>
+> Certain tools here depend on the active security of your system to be safely deployed.
+
 > [!CAUTION]
+>
 > This is a highly experimental and fluid project, I am ***not*** responsible for data loss.
-> *Certain tools here depend on the active security of your system to be safely deployed.*
+> Better pull up a zfs/btrfs/VM/Proxmox/Timeshift snapshot,
+> cause if you aren't using those and trying to use hardening scripts...
+> ***It's no-one's fault but your own.***
 
 ## Download
 
@@ -51,8 +58,3 @@ find . -type f -name '*.sh' |
 ## Next up:
 
 1. Scripts in `hardening/service-scripts/` need serious refactoring, reorganization & rescripting.
-
-2. I need to implement a backup system for scripts in `hardening/` which:
-- Does not need to be manually hardcoded into scripts
-- Is opt-in
-- Has a consistent backup pattern
