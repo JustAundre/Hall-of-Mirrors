@@ -2,30 +2,29 @@
 
 Over-engineered script for securing Linux machines
 
-## Notes
-
-Works best on a headless Linux servers—may break casual desktop users.
-
 ## Script Execution Flow
 
-> [!WARNING]
+> [!CAUTION]
 >
-> This section is obsolete because of a recent re-script.
-> Appologies for the inconvienence, I intend to get this rewritten with haste.
+> Works best on headless Linux servers—may break home desktops.
 
-> [!WARNING]
+> [!NOTE]
 >
 > Incomplete and indev scripts;
 > The `firewall.sh` & `sysctl.sh` scripts are extremely bare bones.
 
-- Run `forensics.sh`
-- Review `forensic.sh`'s log file
-- Run `attr-mgr.sh` (select remove mode)
-- Run `general.sh`
-- Run scripts inside `service-scripts` where applicable
-- Run `attr-mgr.sh` (select restore mode)
-- Run `forensics.sh`
-- Review `forensic.sh`'s log file (again)
+- Run `attr-mgr.sh` (Removal mode)
+- Run `audit-repo.sh`
+- Run `audit-cron.sh`
+- Run `software.sh`
+- Run `kernel.sh`
+- Run `audit-perms.sh`
+- Run `audit-users.sh`
+- Run `auth.sh`
+- Run `firewall.sh`
+- Run `limit-resources.sh`
+- Run `install-motd.sh`
+- Run `attr-mgr.sh` (Restoration mode)
 
 ## Manual Auditing
 
@@ -50,12 +49,12 @@ Ensure your shell isn't compromised
 
 Secure Kernel Configurations
 - Enable `SYN cookies` to prevent a form of DoS
-- Log martian IPs ("Impossible" IPs)
+- Log martian IPs ("*Impossible*" IPs)
 - Disable `IPv6` if it's not needed
 - Disable `IP forwarding` if it's not needed
 
 Check users, user groups, shells, passwords & user IDs.
-- Ensure `root` user is disabled.
+- Ensure `root` user is locked with no password.
 - Ensure users have only the neccessary permissions
 - Ensure users have only the neccessary groups
 - Ensure only `root` has `UID 0`
@@ -103,4 +102,4 @@ Restrict systemd service units with only the neccessary permissions
 
 PAM configuration
 - Ensure `PAM` uses proper password quality checks, (i.e. cannot reuse the past 3 passwords, has to have `x` amount of symbols/numbers/uppercases/lowercases, etc.)
-- Ensure `PAM` is not hooked with a malicious module / malicious `pam_exec.so` script
+- Ensure `PAM` is not hooked with a malicious backdoor module / malicious `pam_exec.so` script
