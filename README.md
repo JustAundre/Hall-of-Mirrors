@@ -56,7 +56,3 @@ find . -type f -name '*.sh' |
 - Does not need to be manually hardcoded into scripts
 - Is opt-in
 - Has a consistent backup pattern
-
-## Credits
-
-Special thanks to Benct Philip Jonsson & Albert Krewinkel for their creation of `pagebreak.lua`.
