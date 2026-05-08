@@ -6,21 +6,15 @@
 cd "$(dirname "${BASH_SOURCE[0]}")"
 . .allrc
 #
-# Helper function
+# Function to assist with verbosity and uniformity
 perm_fix() {
 	# Parse arguments
 	local before after
 	while getopts 'm:o:g:' arg; do
 		case "${arg}" in
-			m)
-				mode="${OPTARG}"
-			;;
-			o)
-				owner="${OPTARG}"
-			;;
-			g)
-				group="${OPTARG}"
-			;;
+			m) mode="${OPTARG}";;
+			o) owner="${OPTARG}";;
+			g) group="${OPTARG}";;
 			*)
 				echo "E: Invalid argument." >&2
 				exit 255
@@ -60,6 +54,8 @@ perm_fix() {
 		#
 		# Save stats for file pre-change
 		before="$(stat -c '%a %u/%U:%g/%G')"
+		#
+		# Attempt the change
 		chown -hP "${owner}:${group}" "${path}"
 		[[ -n "${mode}" ]] && chmod -hP "${mode}" "${path}"
 		#
@@ -75,6 +71,51 @@ perm_fix() {
 # Let subshells use this function
 # (needed for the find command)
 export -f perm_fix
+#
+# Choices for remediation when encountering a path owned by a non-system user in /etc/
+# Note: There's 3 empty choices to act as a buffer for fat-fingering "Delete the path".
+# Function to deal with manual remediation
+fixes=(
+	'Change ownership'
+	'Change permissions'
+	'' '' ''
+	'Delete the path.'
+)
+select_fix() {
+	# Prompt for action
+	mapfile -t choices < <(checklist "$1 is owned by $(stat -c '%U:%G/%u:%g' "$1") with permissions $(stat -c '%a' "$1"). What do you want to do?" checklist "${fixes[@]}")
+	#
+	# Act on selections
+	for choice in "${choices[@]}"; do
+		# Prompt for new ownership
+		# Validate given user and group
+		# Change the ownership
+		if [[ "${choice}" == 'Change ownership' ]]; then
+			(
+			until getent passwd "${user}" &>/dev/null && [[ -n "${user}" ]]
+			do read -rp 'Enter the new user owner: ' user
+			done
+			until getent group "${group}" &>/dev/null && [[ -n "${group}" ]]
+			do read -rp 'Enter the new group owner: ' group
+			done
+			chown -hc "${user}:${group}" "$1"
+			)
+		#
+		# Prompt for new permissions
+		elif [[ "${choice}" == 'Change permissions' ]]; then
+			(
+			until [[ "${perm}" =~ ^[1234567]{3,4}$ ]]
+			do read -rp 'Enter the octal permission: ' perm
+			done
+			chmod -c "${perm}" "$1"
+			)
+		#
+		# Delete the path
+		elif [[ "${choice}" == 'Delete the path.' ]]; then
+			rm -rfv "$1"
+		fi
+	done
+}
 
 
 
@@ -84,10 +125,9 @@ export -f perm_fix
 # Invalid Ownership
 #
 # Map out files /w broken ownership.
-(
-mapfile -t broken_ownership < <(find / -xdev \( -nouser -o -nogroup \))
-for path in "${broken_ownership[@]}"; do
+while IFS=$'\n' read -r path; do
 	# Verbosity: note invalidities, their type, and the UID/GID.
+	(
 	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && bad_uid=true
 	[[ "$(stat -c '%G' "${path}")" == UNKNOWN ]] && bad_gid=true
 	if [[ -n "${bad_uid}" && -z "${bad_gid}" ]]; then invalid_type=UID
@@ -96,8 +136,8 @@ for path in "${broken_ownership[@]}"; do
 	fi
 	echo "i: ${path} has an invalid owner ${invalid_type}; changed owners to 0:0."
 	chown -h 0:0 "${path}"
-done
-)
+	)
+done < <(find / -xdev \( -nouser -o -nogroup \))
 
 
 
@@ -116,7 +156,7 @@ find / -xdev -xtype l -exec echo 'i: {} is a broken symlink; removing...' \; -ex
 #
 # Sticky Temps
 #
-# Check if the below directories are world-writable /w sticky-bit
+# Ensure temporary data directories are world-writable /w sticky-bit.
 perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 
 
@@ -126,9 +166,10 @@ perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 #
 # World-Writable Paths
 #
-# Find world-writable paths
-# WIP
-mapfile -t world_writables < <(find / -xdev -perm -0002)
+# Prompt for manual review for world-writable directories
+while IFS=$'\n' read -r path; do
+	select_fix "${path}"
+done < <(find / -xdev -perm -0002)
 
 
 
@@ -137,58 +178,14 @@ mapfile -t world_writables < <(find / -xdev -perm -0002)
 #
 # /etc/ Ownerships
 #
-# Choices for remediation when encountering a path owned by a non-system user in /etc/
-# Note: There's 3 empty choices to act as a buffer for fat-fingering "Delete the path".
-fixes=(
-	'Change ownership'
-	'Change permissions'
-	'' '' ''
-	'Delete the path.'
-)
-# Find paths in /etc/ with ownership that is not 0:0
-while IFS= read -rd'' file; do
+# Prompt for manual review for paths in /etc/ which aren't owned by a system user.
+while IFS=$'\n' read -r path; do
 	# If the owners are system users/groups, it's probably fine.
-	if [[
-		"$(stat -c %g "${file}")" -ge 1000 ||
-		"$(stat -c %u "${file}")" -ge 1000
-	]]; then
-		# Prompt for action
-		mapfile -t choices < <(checklist "${file} is owned by $(stat -c '%U:%G/%u:%g' "${file}") with permissions $(stat -c '%A/%a' "${file}"). What do you want to do?" checklist "${fixes[@]}")
-		#
-		# Act on selections
-		for choice in "${choices[@]}"; do
-			# Prompt for new ownership
-			# Validate given user and group
-			# Change the ownership
-			if [[ "${choice}" == 'Change ownership' ]]; then
-				(
-				until
-					getent passwd "${user}" &>/dev/null &&
-					getent group "${group}" &>/dev/null &&
-					[[ -u "${user}" && -u "${group}" ]]
-				do
-					read -rp 'Enter the new user owner: ' user
-					read -rp 'Enter the new group owner: ' group
-				done
-				chown -hc "${user}:${group}" "${file}"
-				)
-			#
-			# Prompt for new permissions
-			elif [[ "${choice}" == 'Change permissions' ]]; then
-				(
-				until [[ "${perm}" =~ ^[1234567]{3,4}$ ]]; do
-					read -rp 'Enter the octal permission: ' perm
-				done
-				chmod -c "${perm}" "${file}"
-				)
-			#
-			# Delete the path
-			elif [[ "${choice}" == 'Delete the path.' ]]; then
-				rm -rfv "${file}"
-			fi
-		done
+	if [[ "$(stat -c %g "${path}")" -ge 1000 || "$(stat -c %u "${path}")" -ge 1000 ]]
+	then select_fix "${path}"
+	else echo "i: ${path} isn't owned by 0:0 but marked as likely safe as the owners are system users."
 	fi
-done < <(find /etc \( ! -group root -o ! -user root \) -print0)
+done < <(find /etc \( ! -group 0 -o ! -user 0 \))
 
 
 
