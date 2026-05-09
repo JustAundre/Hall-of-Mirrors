@@ -18,7 +18,8 @@
 
 > [!IMPORTANT]
 >
-> You need to escape certain special characters that Regex usually interprets with *backslashes* `\` to interpret them literally, such as parenthesis `()`, square brackets `[]`, curly brackets `{}`, the up caret `^`, or a literal backslash `\`, etc.
+> You need to escape certain special characters that Regex usually interprets with *backslashes* `\` to interpret them literally (i.e. `\.` matches a literal period)
+> such as parenthesis `()`, square brackets `[]`, curly brackets `{}`, the up caret `^`, or a literal backslash `\`, etc.
 
 > [!NOTE]
 >
@@ -29,11 +30,11 @@
 
 `\s` - **`!!!`** A backslashed lowercase `s` which matches all *whitespace* characters.
 
-\w - **`!!!`** A backslashed lowercase `w` and is the equivalent of `[a-zA-Z0-9_]` which matches any character that is a standard English alphabetical character, a number, or underscore `_`. 
+`\w` - **`!!!`** A backslashed lowercase `w` and is the equivalent of `[a-zA-Z0-9_]` which matches any character that is a standard English alphabetical character, a number, or underscore `_`. 
 
 `\d` - **`!!!`** A backslashed lowercase `d` and is the equivalent of `[0-9]` which matches any character which is a number.
 
-`\b` - Indicates a word boundary; used to look for the explicit end or start of a word usually.
+`\b` - **`!!!`** Indicates a word boundary; used to look for the explicit end or start of a word usually.
 
 - Example: `\bTEST\b` matches exactly the word `TEST` with no other word characters around it.
 
@@ -47,10 +48,10 @@
 
 `[A-Z]` - Match any uppercase character A through Z.
 
-- > [!NOTE]
-	>
-	> You usually avoid using `[A-z]` as it it contains non-alphabetical characters between uppercase `Z` and lowercase `a`.
-	> You also avoid using `[a-Z]` because lowercase characters come *after* uppercase characters in the ASCII table.
+> [!NOTE]
+>
+> You usually avoid using `[A-z]` as it it contains non-alphabetical characters between uppercase `Z` and lowercase `a`.
+> You also avoid using `[a-Z]` because lowercase characters come *after* uppercase characters in the ASCII table.
 
 `[0-9]` - Match any numerical character 0 through 9.
 
@@ -64,16 +65,16 @@
 
 `?` - 1 or none of the preceding selector.
 
+`{n₁,n₂}` - `n₁` to `n₂` amounts of the preceding selector, where `n₁` and `n₂` are *non-negative integers*.
+
 ### Greedy Quantifiers
 
 > [!NOTE]
 >
 > These guys like to take as much as possible.
 >
-> Say if you wanted everything up until the **first** forward slash `/`, you would *not* use `^.+/$`.
-> You would either use `^[^/]+$` or `^.+?/$`, where the former selects everything that isn't a forward slash, and the latter matches everything before the 1st forward slash, where the bad example selects everything up until the *last* forward slash.
-
-`{n₁,n₂}` - `n₁` to `n₂` amounts of the preceding selector, where `n₁` and `n₂` are *non-negative integers*.
+> Say if you wanted everything up until the **first** forward slash `/`, you would *not* use `.+/`.
+> You would either use `[^/]+`, which selects anything that isn't a forward slash or `.+?/`; which selects the fewest amount of any characters preceding a forward slash.
 
 `*` - None to infinite amounts of the preceding selector.
 
