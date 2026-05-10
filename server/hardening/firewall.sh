@@ -79,10 +79,10 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && until [[ -n "${exit
 		echo 'Start typing to edit. Backspace to delete, [ENTER] for next field.'
 		input=(
 			'ipv4' # IP version
-			'192.168.1.255' # Source IP
-			'3000' # Source port
-			'127.0.0.0/8' # Destination IP
-			'6000' # Destination port
+			'1.0.0.0' # Source IP
+			'30' # Source port
+			'2.0.0.0/8' # Destination IP
+			'60' # Destination port
 			'tcp' # Protocol
 			'drop' # Action
 		)
