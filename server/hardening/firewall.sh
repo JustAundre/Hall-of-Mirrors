@@ -76,7 +76,6 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && until [[ -n "${exit
 	# Gather the IP version, source/destination IPs and ports, the protocol, and the action.
 	# (Subshell for variable clearing again.)
 	(
-		[[ "${persistence,,}" =~ 'on-disk' ]] && firewall_cmd_args+=('--permanent')
 		echo 'Start typing to edit. Backspace to delete, [ENTER] for next field.'
 		input=(
 			'ipv4' # IP version
@@ -119,9 +118,13 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && until [[ -n "${exit
 		done
 		firewall_cmd_args+=("${rich_rule}")
 		echo "firewall-cmd ${firewall_cmd_args[*]}"
+		#
+		# Stop execution if the rule is incorrect
 		confirm 'Is this correct' || exit 255
-		firewall-cmd "${firewall_cmd_args[@]}"
-		[[ "${persistence,,}" =~ 'in-memory' && "${persistence,,}" =~ 'on-disk' ]] && firewall-cmd --reload
+		#
+		# Commit rule to disk/memory respectively if selected.
+		[[ "${persistence,,}" =~ 'in-memory' ]] && firewall-cmd "${firewall_cmd_args[@]}"
+		[[ "${persistence,,}" =~ 'on-disk' ]] && firewall_cmd_args+=('--permanent'); firewall-cmd "${firewall_cmd_args[@]}"
 	)
 	#
 	# Is it time to exit?
