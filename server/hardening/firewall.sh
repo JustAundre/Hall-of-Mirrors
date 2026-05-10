@@ -89,7 +89,7 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && until [[ -n "${exit
 		)
 		target=0
 		while true; do
-			# Show the live rich rule composition 
+			# Show the composition of the rule live
 			clear
 			rich_rule=$'--add-rich-rule=\''
 			[[ -n "${input[0]}" ]] && rich_rule+="rule family=\"${input[0]}\" "
