@@ -101,10 +101,9 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && until [[ -n "${exit
 			[[ -n "${input[6]}" ]] && rich_rule+="${input[6]}"
 			rich_rule+=\'
 			echo "${rich_rule}"
-			for x in "${!input[@]}"; do
-				# Print current working field in emboldened green
-				[[ "${x}" -eq "${target}" ]] && echo -e "\e[1;32m> ${input["${x}"]}\e[0m"
-			done
+			#
+			# Print current working field in emboldened green
+			echo -e "\e[1;32m> ${input["${target}"]}\e[0m"
 			#
 			# Read input character by character
 			# Backspace works as backspace.
