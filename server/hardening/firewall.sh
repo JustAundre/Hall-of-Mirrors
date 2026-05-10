@@ -70,9 +70,6 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && until [[ -n "${exit
 	else persistence='On-disk & in-memory'
 	fi
 	#
-	# Check for the exit signal
-	[[ -n "${exit}" ]] && continue
-	#
 	# Gather the IP version, source/destination IPs and ports, the protocol, and the action.
 	# (Subshell for variable clearing again.)
 	(
