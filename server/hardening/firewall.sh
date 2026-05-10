@@ -56,69 +56,77 @@ fi
 
 
 #
-# TUI Firewall Configuration
+# TUI FirewallD
 #
-# (this while true; is too small to warrant indentation)
-confirm 'Enter TUI firewall configuration' && until [[ -n "${exit}" ]]; do
-# A way to exit the loop
-trap $'
-	exit=true
-	echo "W: You\'ve hit [CTRL] + C or sent SIGINT; closing after this run finishes..."
-' SIGINT
-echo 'i: Hit [CTRL] + C/send SIGINT on your last run to exit TUI firewall configuration.'
-#
-# Available options:
-# Persistence state
-# Action types (FirewallD can block ICMP-type requests)
-persistences=(
-	'On-disk'
-	'In-memory'
-	'On-disk & in-memory'
-)
-directions=(
-	'Incoming traffic'
-	'Outgoing traffic'
-)
-action_types=(
-	'Allow'
-	'Drop'
-	'Reject'
-)
-classes=(
-	'ICMP type'
-	'IP'
-	'Port'
-	'IP:port'
-)
-hash firewall-cmd && action_types+=('Disallow ICMP type')
-#
-# Get the persistence type of the rule
-# FirewallD has options
-# ...and UFW doesn't.
-if hash firewall-cmd; then persistence="$(checklist 'Where should this rule go?' radiolist "${persistences[@]}")"
-else persistence='On-disk & in-memory'
-fi
-#
-# Get the direction of the rule
-direction="$(checklist 'Set a rule for...' radiolist "${directions[@]}")"
-#
-# Get the type of the rule
-action_type="$(checklist 'Do what with captured requests?' radiolist "${action_types[@]}")"
-#
-# Get the class of the target requests
-class="$(checklist "What are we ${action_type,,}ing?" radiolist "${classes[@]}")"
-#
-# Check for the exit signal
-[[ -n "${exit}" ]] && continue
-#
-# Assemble the command
-if hash firewall-cmd; then
-	[[ "${persistence,,}" =~ 'on-disk' ]] && args+=('--permanent')
-	# WIP
-	[[ "${persistence,,}" =~ 'in-memory' ]] && firewall-cmd --reload
-elif hash ufw; then
-	args+=('ufw')
-fi
+# Confirmation
+hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && until [[ -n "${exit}" ]]; do
+	# Get persistence state
+	persistences=(
+		'On-disk'
+		'In-memory'
+		'On-disk & in-memory'
+	)
+	if hash firewall-cmd; then persistence="$(checklist 'Where should this rule go?' radiolist "${persistences[@]}")"
+	else persistence='On-disk & in-memory'
+	fi
+	#
+	# Check for the exit signal
+	[[ -n "${exit}" ]] && continue
+	#
+	# Gather the IP version, source/destination IPs and ports, the protocol, and the action.
+	# (Subshell for variable clearing again.)
+	(
+		[[ "${persistence,,}" =~ 'on-disk' ]] && firewall_cmd_args+=('--permanent')
+		echo 'Start typing to edit. Backspace to delete, [ENTER] for next field.'
+		input=(
+			'ipv4' # IP version
+			'192.168.1.255' # Source IP
+			'3000' # Source port
+			'127.0.0.0/8' # Destination IP
+			'6000' # Destination port
+			'tcp' # Protocol
+			'drop' # Action
+		)
+		target=0
+		while true; do
+			# Show the live rich rule composition 
+			clear
+			rich_rule=$'--add-rich-rule=\''
+			[[ -n "${input[0]}" ]] && rich_rule+="rule family=\"${input[0]}\" "
+			[[ -n "${input[1]}" ]] && rich_rule+="source address=\"${input[1]}\" "
+			[[ -n "${input[2]}" ]] && rich_rule+="source-port port=\"${input[2]}\" "
+			[[ -n "${input[3]}" ]] && rich_rule+="destination address=\"${input[3]}\" "
+			[[ -n "${input[4]}" ]] && rich_rule+="port port=\"${input[4]}\" "
+			[[ -n "${input[5]}" ]] && rich_rule+="protocol=\"${input[5]}\" "
+			[[ -n "${input[6]}" ]] && rich_rule+="${input[6]}"
+			rich_rule+=\'
+			echo "${rich_rule}"
+			for x in "${!input[@]}"; do
+				# Print current working field in emboldened green
+				[[ "${x}" -eq "${target}" ]] && echo -e "\e[1;32m> ${input["${x}"]}\e[0m"
+			done
+			#
+			# Read input character by character
+			# Backspace works as backspace.
+			# Change fields with [ENTER].
+			IFS= read -rn1 char
+			if [[ "${char}" == $'\x7f' || "${char}" == $'\b' ]]; then input["${target}"]="${input[${target}]%?}"
+			elif [[ -z "${char}" ]]; then (( target++ ))
+			else input["${target}"]+="${char}"
+			fi
+			#
+			# Exit once all fields are filled
+			[[ "${target}" -ge "${#input[@]}" ]] && break
+		done
+		firewall_cmd_args+=("${rich_rule}")
+		echo "firewall-cmd ${firewall_cmd_args[*]}"
+		confirm 'Is this correct' || exit 255
+		firewall-cmd "${firewall_cmd_args[@]}"
+		[[ "${persistence,,}" =~ 'in-memory' && "${persistence,,}" =~ 'on-disk' ]] && firewall-cmd --reload
+	)
+	#
+	# Is it time to exit?
+	confirm 'Make another rule' || break
 done
 
 
