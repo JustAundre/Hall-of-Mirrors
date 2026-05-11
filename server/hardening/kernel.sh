@@ -39,4 +39,4 @@ mapfile -t mods_desc < <(modinfo "${mods_id[@]}" | grep -E '^description:' | sed
 for (( x=0; x < "${#mods_id[@]}"; x++ )); do
 	mods_id_desc+=("${mods_id[${x}]}: ${mods_desc[${x}]}")
 done
-mapfile -t mods_disable < <(checklist 'Select kernel modules to disable.' checklist "${mods_id_desc[@]}")
+mapfile -t mods_disable < <(checklist 'Select kernel modules to disable.' checklist "${mods_id_desc[@]}" | cut -d: -f1)
