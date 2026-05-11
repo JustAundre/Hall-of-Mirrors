@@ -30,4 +30,13 @@ sysctl --system
 #
 # Module Management
 #
-# WIP
+# Grab loaded kernel modules
+# Grab descriptions for loaded kernel modukes
+# Combine both
+# Prompt for ones to disable.
+mapfile -t mods_id < <(cat /proc/modules | grep -Eo '^[^ ]+')
+mapfile -t mods_desc < <(modinfo "${mods_id[@]}" | grep -E '^description:' | sed 's/^[^ ]* *//')
+for (( x=0; x < "${#mods_id[@]}"; x++ )); do
+	mods_id_desc+=("${mods_id[${x}]}: ${mods_desc[${x}]}")
+done
+mapfile -t mods_disable < <(checklist 'Select kernel modules to disable.' checklist "${mods_id_desc[@]}")
