@@ -17,17 +17,6 @@ general_hardening=/etc/nginx/conf.d/99-hardening.conf
 
 
 #
-# Integrity Check
-#
-# Refresh Nginx
-secure_install nginx ||
-	exit 2
-
-
-
-
-
-#
 # Configuration
 #
 # Remove overlapping configuration values from nginx.conf
