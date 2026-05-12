@@ -35,7 +35,7 @@ mapfile -t mods_disable < <(checklist 'These are active kernel modules; select t
 modprobe -r "${mods_disable[@]}"
 #
 # Disable 'em.
-install -m 644 -o 0 -g 0 /dev/null /etc/modprobe.d/hardening.conf
+perm_fix -m 644 -o 0 -g 0 /dev/null /etc/modprobe.d/hardening.conf
 for mod in "${mods_disable[@]}"; do
 	echo "install ${mod} /bin/false" >>/etc/modprobe.d/hardening.conf
 done
