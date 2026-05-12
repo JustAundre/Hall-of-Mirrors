@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#!/usr/bin/env bash
 #
 # Environment Setup
 #
@@ -12,31 +11,84 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 
 #
+# Active Module Management
+#
+# Fetch loaded kernel modules'...
+while IFS= read -r mod; do
+	# Descriptions
+	desc="$(modinfo -d "${mod}" | tr -d '\n')"
+	[[ -z "${desc}" ]] && desc='No description.'
+	#
+	# Dependencies
+	deps="$(modinfo "${mod}" -F depends)"
+	[[ "${deps}" =~ ^\w+$ ]] && deps=nothing.
+	#
+	# Combine.
+	echo 'i: Compiling selections for a checklist...'
+	readable+=("${mod}: ${desc} - Depends on ${deps}")
+done < <(cat /proc/modules | grep -Eo '^[^ ]+' | sort)
+#
+# Prompt for ones to disable.
+mapfile -t mods_disable < <(checklist 'These are active kernel modules; select those to unload and disable.' checklist "${readable[@]}" | cut -d: -f1)
+#
+# Unload 'em.
+modprobe -r "${mods_disable[@]}"
+#
+# Disable 'em.
+install -m 644 -o 0 -g 0 /dev/null /etc/modprobe.d/hardening.conf
+for mod in "${mods_disable[@]}"; do
+	echo "install ${mod} /bin/false" >>/etc/modprobe.d/hardening.conf
+done
+
+
+
+
+
+#
+# Inactive Module Management
+#
+# Block unloaded modules from being loaded ever
+confirm 'Prevent currently unused kernel modules from ever being loaded' && while IFS= read -r mod; do
+	echo "install ${mod} /bin/false" >>/etc/modprobe.d/hardening.conf
+done < <(find /lib/modules/"$(uname -r)" -type f -name '*.ko*' -print0 | xargs -0n1 basename | cut -d. -f1 | sort)
+
+
+
+
+
+#
 # Kernel Parameters
 #
-# General hardening
-install -m 640 -o root -g root -D general-confs/kernel.conf /etc/sysctl.d/99-security.conf
-sysctl -f /etc/sysctl.d/99-security.conf
+(
+# Snapshot sysctl params pre-application
+before="$(sysctl -a)"
 #
-# Disable IPv6
-install -m 640 -o root -g root -D general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
-sysctl -f /etc/sysctl.d/99-disable-ipv6.conf
+# Load general sysctl hardening profile
+# Load Anti-IPv6 sysctl profile
+install -m 640 -o 0 -g 0 general-confs/kernel.conf /etc/sysctl.d/99-security.conf
+install -m 640 -o 0 -g 0 general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
+#
+# Apply changes
 sysctl --system
+#
+# Snapshot sysctl params post-application
+after="$(sysctl -a)"
+#
+# Check for changes
+if diff -u <(echo -- "${before}") <(echo -- "${after}"); then
+	echo 'i: Your sysctl parameters already meet best practice security standards; nothing has changed.'
+	rm /etc/sysctl.d/99-security.conf /etc/sysctl.d/99-disable-ipv6.conf
+fi
+)
 
 
 
 
 
 #
-# Module Management
+# Exit
 #
-# Grab loaded kernel modules
-# Grab descriptions for loaded kernel modukes
-# Combine both
-# Prompt for ones to disable.
-mapfile -t mods_id < <(cat /proc/modules | grep -Eo '^[^ ]+' | sort)
-mapfile -t mods_desc < <(modinfo "${mods_id[@]}" | grep -E '^description:' | sed 's/^[^ ]* *//')
-for (( x=0; x < "${#mods_id[@]}"; x++ )); do
-	mods_id_desc+=("${mods_id[${x}]}: ${mods_desc[${x}]}")
-done
-mapfile -t mods_disable < <(checklist 'Select kernel modules to disable.' checklist "${mods_id_desc[@]}" | cut -d: -f1)
+# Print success message
+echo 'i: You can find blocked kernel modules @ "/etc/modprobe.d/hardening.conf"'
+pause
+success
