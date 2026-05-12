@@ -17,18 +17,6 @@ divider='='
 
 
 #
-# Integrity Check
-#
-# Force-reinstall/instal VSFTPD.
-echo 'i: Refreshing VSFTPD...'
-secure_install vsftpd openssl ||
-	exit 2
-
-
-
-
-
-#
 # Configuration
 #
 # Generate a TLS certificate if not present.

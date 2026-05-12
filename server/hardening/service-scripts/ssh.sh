@@ -18,17 +18,13 @@ divider=' '
 #
 # Integrity Check
 #
-# Refresh SSHD
-secure_install openssh-server
-#
 # Reset SSHD keys
 (
 	set -e
 	ssh-keygen -A
 	ssh-keygen -f /root/.ssh/known_hosts -R localhost
-	systemctl restart sshd
-) ||
-	exit 2
+	systemctl restart ssh sshd
+) || exit 2
 
 
 
