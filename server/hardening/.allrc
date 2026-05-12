@@ -162,11 +162,67 @@ checklist() {
 	done
 }
 #
-# Force-reinstall/install "$@", preffering new configurations over local changes
-secure_install() {
-	env DEBIAN_FRONTEND=noninteractive apt-get install --fix-broken -yf --reinstall --no-install-recommends -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef -o DPkg::Lock::Timeout=-1 "$@"
-	dpkg --configure -a
+# Function to assist with verbosity and uniformity
+# (Can be accessed via subshells)
+perm_fix() {
+	# Parse arguments
+	local before after
+	while getopts 'm:o:g:' arg; do
+		case "${arg}" in
+			m) mode="${OPTARG}";;
+			o) owner="${OPTARG}";;
+			g) group="${OPTARG}";;
+			*)
+				echo "E: Invalid argument." >&2
+				exit 255
+			;;
+		esac
+	done
+	#
+	# Validate user:group
+	# Validate permissions
+	if
+		[[ -n "${owner}" && ! "${owner}" =~ ${num_chk} ]] ||
+		! getent passwd "${owner}" >/dev/null
+	then
+		echo "E: ${owner} is an invalid user."
+		return 254
+	elif
+		[[ -n "${group}" && ! "${group}" =~ ${num_chk} ]] ||
+		! getent group "${group}" >/dev/null
+	then
+		echo "E: ${group} is an invalid group."
+		return 253
+	elif [[ -n "${mode}" && ! "${mode}" =~ ^[01234567]{3,4} ]]; then
+		echo "E: ${mode} is an invalid mode."
+		return 252
+	fi
+	#
+	# Shift by the amount of getopts to get our paths
+	shift "$(( OPTIND - 1 ))"
+	#
+	# Iterate over every path
+	for path in "$@"; do
+		# Create non-existent files
+		mkdir -p "$(dirname "${path}")"
+		touch "${path}"
+		#
+		# Save stats for file pre-change
+		before="$(stat -c '%a %u/%U:%g/%G')"
+		#
+		# Attempt the change
+		chown -hP "${owner}:${group}" "${path}"
+		[[ -n "${mode}" ]] && chmod -hP "${mode}" "${path}"
+		#
+		# Check stats for file post-change
+		after="$(stat -c '%a %u/%U:%g/%G')"
+		#
+		# Log diffs bewteen pre and post stats
+		[[ "${before}" != "${after}" ]] &&
+			echo "W: ${path} with \"${before}\" deviated from, and was restored to \"${after}\"."
+	done
 }
+export -f perm_fix
 #
 # Pause the execution of the script
 pause() {
