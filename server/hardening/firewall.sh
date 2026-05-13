@@ -114,7 +114,7 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && while true; do
 			# Interprets the source port
 			# The lowest port number is 0 (exclusive) and 2^16 - 1 (inclusive).
 			[[ -n "${input[2]}" ]] && rich_rule+="source-port port=\"${input[2]}\" "
-			if [[ "${input[2]}" -gt 0 && "${input[2]}" -le 65535 ]]; then readable+="port ${input[2]}, "
+			if [[ "${input[4]}" =~ ^[0-9]{1,5}$ && "${input[2]}" -gt 0 && "${input[2]}" -le 65535 ]]; then readable+="port ${input[2]}, "
 			elif [[ -z "${input[2]}" ]]; then readable+="coming from any port, "
 			else readable+="port N/A, "
 			fi
@@ -124,7 +124,7 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && while true; do
 			# [3] is partially parsed here and [4] is partially parsed below because-
 			# the ip/port format is flipped to port/ip in the English transcription in favor of sentence flow.
 			[[ -n "${input[3]}" ]] && rich_rule+="destination address=\"${input[3]}\" "
-			if [[ "${input[4]}" -gt 0 && "${input[4]}" -le 65535 ]]; then readable+="en route to port ${input[4]} "
+			if [[ "${input[4]}" =~ ^[0-9]{1,5}$ && "${input[4]}" -gt 0 && "${input[4]}" -le 65535 ]]; then readable+="en route to port ${input[4]} "
 			elif [[ -z "${input[4]}" ]]; then readable+="en route to any port "
 			else readable+="en route to port N/A "
 			fi
