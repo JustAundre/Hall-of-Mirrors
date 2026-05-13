@@ -75,10 +75,7 @@ sysctl --system
 after="$(sysctl -a)"
 #
 # Check for changes
-if diff -u <(echo -- "${before}") <(echo -- "${after}"); then
-	echo 'i: Your sysctl parameters already meet best practice security standards; nothing has changed.'
-	rm /etc/sysctl.d/99-security.conf /etc/sysctl.d/99-disable-ipv6.conf
-fi
+diff -u <(echo -- "${before}") <(echo -- "${after}") && echo 'i: Your sysctl parameters already meet best practice security standards; nothing has changed.'
 )
 
 
