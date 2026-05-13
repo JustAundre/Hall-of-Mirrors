@@ -65,11 +65,10 @@ before="$(sysctl -a)"
 #
 # Load general sysctl hardening profile
 # Load Anti-IPv6 sysctl profile
+# Apply changes
 install -m 640 -o 0 -g 0 general-confs/kernel.conf /etc/sysctl.d/99-security.conf
 install -m 640 -o 0 -g 0 general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
-#
-# Apply changes
-sysctl --system
+sysctl --system >/dev/null
 #
 # Snapshot sysctl params post-application
 after="$(sysctl -a)"
