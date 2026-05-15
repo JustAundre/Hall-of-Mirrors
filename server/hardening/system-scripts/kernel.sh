@@ -66,15 +66,5 @@ after="$(sysctl -a)"
 # Check for changes
 diff -u <(echo -- "${before}") <(echo -- "${after}") && echo 'i: Your sysctl parameters already meet best practice security standards; nothing has changed.'
 )
-
-
-
-
-
-#
-# Exit
-#
-# Print success message
 echo 'i: You can find blocked kernel modules @ "/etc/modprobe.d/hardening.conf"'
 pause
-success

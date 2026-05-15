@@ -173,12 +173,3 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && while true; do
 	# Is it time to exit?
 	confirm 'Make another rule' || break
 done
-
-
-
-
-#
-# Exit
-#
-# Display success message and exit.
-success
