@@ -23,3 +23,12 @@ done < <(find . -name '*.sh' ! -name 'main.sh')
 # List them off--select 1.
 # shellcheck disable=SC1090
 . "${options["$(checklist "Choose a script to run." radiolist "${!options[@]}")"]}"
+
+
+
+
+
+#
+# Exit
+#
+success
