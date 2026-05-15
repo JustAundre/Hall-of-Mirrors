@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
+### A script to review nearly every path for permissions & ownership which are insecure/not as secure as can be.
 #
 # Environment Setup
-#
-# Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
 #
 # Choices for remediation when encountering a path owned by a non-system user in /etc/
 # Note: There's 3 empty choices to act as a buffer for fat-fingering "Delete the path".

@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-#
-# Environment Setup
-#
-# Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
-
-
-
-
-
+### Lets you review active kernel modules, keep unloaded kernel modules unloaded, and installs highly hardened sysctl.d profiles.
 #
 # Active Module Management
 #

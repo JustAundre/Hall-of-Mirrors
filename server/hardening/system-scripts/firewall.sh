@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-#
-# Environment Setup
-#
-# Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
-
-
-
-
-
+### Applies a base ruleset to your firewall and even has a TUI rule maker for FirewallD.
 #
 # Base Ruleset
 #

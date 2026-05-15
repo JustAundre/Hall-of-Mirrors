@@ -245,10 +245,10 @@ environ_chk() {
 	local exit
 	#
 	# Start the check
-	# 1. Is this running in Bash; & am I sourced?
-	# 2. Am I running as root?
-	# 3. Is this system using SystemD?
-	# 4. Can I connect to the APT repositories?
+	# 1. Is this running in Bash & NOT sourced?
+	# 2. Does this script have root permissions?
+	# 3. Is the active init. system SystemD?
+	# 4. Is the terminal ?
 	if [[ -z "${BASH_SOURCE[0]}" ]]; then
 		echo 'E: Script must be ran by Bash intepreter & must NOT be sourced.'
 		exit=1
@@ -264,7 +264,7 @@ environ_chk() {
 	fi
 	#
 	# If the exit variable is set, exit.
-	[[ -n "${exit}" ]] && exit 1
+	[[ -n "${exit}" ]] && confirm 'Failed startup checks; would you like to continue anyway' || exit 1
 }
 #
 # Remove existing values for a configuration & add your own
@@ -276,7 +276,7 @@ safe_add() {
 	#
 	# Remove any existing keys & then add the new entry
 	sed -i "/^[\s#]*${key}/d" "${file}"
-	echo -e "${key}${divider}${value}" >>"${file}"
+	printf -- '%s' "${key}${divider}${value}" >>"${file}"
 }
 
 
@@ -300,7 +300,7 @@ exec &> >(tee -a "$(basename "$0")-master-${i}.log")
 # Check for a supported environment
 environ_chk
 #
-# Fetch log files from current script session
+# Function to fetch log files from the current script session
 get_logs(){
 	mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*${i}.log")
 	[[ -z "${log_files[*]}" ]] && log_files=('E: Failed to fetch log files.')

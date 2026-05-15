@@ -1,17 +1,7 @@
 #!/usr/bin/env bash
+### A script to comprehensively review many types of scheduled tasks.
 #
-# Environment Setup
-#
-# Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
-
-
-
-
-
-#
-# Cron* files
+# Cron files
 #
 # Check /etc/cron* files
 cat <<-'EOF'
@@ -28,16 +18,9 @@ find /etc/cron* -maxdepth 2 -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
 #
 # Crontabs
 #
-# Enumerates all users on the system
-mapfile -t all_usernames < <(
-	cat /etc/passwd |
-		cut -d: -f1
-)
-#
 # Prompt to review/edit the crontab of each user
 # Prompt to delete the crontab of each user
-for u in "${all_usernames[@]}"
-do
+for u in "${all_users[@]}"; do
 	crontab -eu "${u}"
 	crontab -riu "${u}"
 done
@@ -65,9 +48,7 @@ EOF
 pause
 for trigger in "${triggers[@]}"; do
 	"${EDITOR}" "${trigger}"
-	confirm "Delete ${trigger}" &&
-		systemctl disable --now "${trigger}" &&
-		rm -v "${trigger}"
+	confirm "Delete ${trigger}" && systemctl disable --now "${trigger}" && rm -v "${trigger}"
 done
 #
 # Render the changes effective

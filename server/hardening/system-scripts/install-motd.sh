@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
+### Pretty simple; just gives you a premade MOTD file to install.
 #
 # Environment Setup
-#
-# Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
 #
 # Primary MOTD file
 motd=/etc/issue
@@ -30,7 +27,7 @@ cat <<-EOF
 	${motd} ${motds[*]}
 EOF
 pause
-install -m 640 -o root -g root -D general-confs/motd "${motd}"
+install -m 640 -o root -g root -D cnf/motd/motd "${motd}"
 #
 # Hardlink to other likely MOTD file locations
 for path in "${motds[@]}"; do link "${motd}" "${path}"; done

@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
+### Grants you a quick overview of every local user and a way to make quick remedies to them.
 #
 # Environment Setup
-#
-# Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
 #
 # Prompt for users to ...
 # Delete, remove password, lock, reshell, reUID & regroup.

@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
+### Checks your package repositories for URLs to repositories which don't match the domain of your distribution's main page.
 #
 # Environment Setup
-#
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
 #
 # Regex to isolate uncommented URLs
 url_chk='https?://[^/ ]+'

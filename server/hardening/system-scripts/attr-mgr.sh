@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-#
-# Environment Setup
-#
-# Source helper functions & variables
-cd "$(dirname "${BASH_SOURCE[0]}")"
-. .allrc
-
-
-
-
-
+### A compact script to remove immutable and append-only bits and save them to a file to restore at a later time.
 #
 # Attribute Manager
 #
