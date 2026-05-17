@@ -27,6 +27,9 @@ html {
 	height: 100%;
 	margin: 0;
 	padding: 0;
+	font-size: 1.2rem;
+	font-family: 'Ubuntu', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+	color: var(--text-1);
 }
 
 body {
@@ -36,14 +39,25 @@ body {
 	background: var(--bg-1);
 	display: grid;
 	grid-template-rows: var(--header-height) 1fr var(--footer-height);
-	font-size: 1.2rem;
-	font-family: 'Ubuntu', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-	color: var(--text-1);
+}
+
+@font-face {
+	font-family: 'OpenDyslexic';
+	src: url('/assets/OpenDyslexic-Regular.otf') format('opentype');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+[data-dyslexic='true'] {
+	font-family: 'OpenDyslexic', 'Comic Sans MS', 'Comic Sans', 'Ubuntu', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+	font-size: .8rem;
+	letter-spacing: -.1rem;
 }
 
 .subtext {
 	color: var(--text-2);
-	font-size: .8rem;
+	font-size: .8em;
 }
 
 #config-menu[open] {
@@ -69,8 +83,8 @@ body {
 	form {
 		display: grid;
 		width: 25vw;
-		min-width: 15rem;
-		max-width: 25rem;
+		min-width: 15em;
+		max-width: 25em;
 		height: fit-content;
 		max-height: 100%;
 		.option {
@@ -78,7 +92,7 @@ body {
 			height: fit-content;
 			display: grid;
 			margin-top: 20px;
-			grid-template-columns: 2rem 1fr 4rem;
+			grid-template-columns: 2em 1fr 4em;
 			> *:not(.switch) {
 				display: inline-flex;
 				align-items: center;
@@ -90,7 +104,6 @@ body {
 		margin-top: 20px;
 		padding: 12px 24px;
 		background-color: oklch(55% 0.1 145);
-		color: white;
 		border: none;
 		border-radius: 8px;
 		cursor: pointer;
@@ -136,7 +149,7 @@ header {
 	[data-theme='light'] &::before {
 		opacity: .4;
 	}
-	.allows-motion &::before {
+	[data-motion='true'] &::before {
 		animation: background-slide 8s linear infinite;
 	}
 }

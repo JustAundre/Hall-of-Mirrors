@@ -13,15 +13,15 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 
 		if (!toggleMotion.checked) {
-			root.classList.add('allows-motion');
+			root.setAttribute('data-motion', 'true');
 		} else {
-			root.classList.remove('allows-motion');
+			root.setAttribute('data-motion', 'false');
 		}
 
 		if (toggleDyslexic.checked) {
-			root.classList.add('is-dyslexic');
+			root.setAttribute('data-dyslexic', 'true');
 		} else {
-			root.classList.remove('is-dyslexic');
+			root.setAttribute('data-dyslexic', 'false');
 		}
 	});
 });
