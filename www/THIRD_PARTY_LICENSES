@@ -1,0 +1,127 @@
+THIRD-PARTY SOFTWARE NOTICES AND LICENSES
+
+This project contains third-party software components. This file acknowledges the
+use of the following third-party software components under their respective licenses.
+
+Component Name    | License      | Project URL
+------------------|--------------|-----------------------------------------
+Lucide Icons      | ISC          | https://github.com/lucide-icons/lucide
+Ubuntu Font       | Ubuntu Font  | https://design.ubuntu.com/font/
+                  | License 1.0  |
+Normalize.css     | MIT          | https://github.com/necolas/normalize.css
+
+================================================================================
+DETAILED LICENSES
+================================================================================
+
+--------------------------------------------------------------------------------
+Lucide Icons
+License: ISC
+Origin: https://github.com/lucide-icons/lucide
+--------------------------------------------------------------------------------
+
+Copyright (c) Lucide Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+--------------------------------------------------------------------------------
+Normalize.css
+License: MIT
+Origin: https://github.com/necolas/normalize.css
+--------------------------------------------------------------------------------
+
+Copyright (c) Nicolas Gallagher and Jonathan Neal
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+--------------------------------------------------------------------------------
+Ubuntu Font
+License: Ubuntu Font License v1.0
+Origin: https://design.ubuntu.com/font/
+--------------------------------------------------------------------------------
+
+UBUNTU FONT LICENCE Version 1.0
+
+PREAMBLE
+This licence allows the licensed fonts to be used, studied, modified and
+redistributed freely. The fonts, including any derivative works, can be
+bundled, embedded, and redistributed provided the terms of this licence
+are met. The fonts and derivatives, however, cannot be released under
+any other licence. The requirement for fonts to remain under this licence
+does not apply to any document created using the fonts or their derivatives.
+
+TERMS AND CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of the Font Software, to use, reproduce, display, perform, modify,
+redistribute and sell the Font Software subject to the following conditions:
+
+1. Neither the Font Software nor any of its individual components, in
+Original or Modified Versions, may be sold by itself.
+
+2. Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this licence. These can be
+included either as stand-alone text files, human-readable headers or in
+the appropriate machine-readable metadata fields within text or binary
+files as long as those fields can be easily viewed by the user.
+
+3. Modification of Original Version.
+3.1 Status of Licence. Modified Versions must be distributed under the
+terms of this licence and no other licence.
+3.2 Naming.
+3.2.1 Modified Versions must not use the name "Ubuntu" or "Canonical"
+or any name combinations including these phrases, unless prior written
+permission has been granted by Canonical Ltd.
+3.2.2 The name "Ubuntu" and "Canonical" can be used to indicate that the
+Font Software is a Modified Version of the Original Version or that it has
+been modified from the Original Version (e.g. "Based on the Ubuntu font
+family" or "Modified from the Ubuntu font software").
+3.2.3 The name "Ubuntu" and "Canonical" must not be used to promote,
+endorse or advertise any Modified Version without prior written permission
+from Canonical Ltd.
+3.3 Changes. Modified Versions must be dynamically or textually distinct
+from any Original Version, and must not contain any subset of the Original
+Version character set or glyphs, or any elements from the original font,
+intended to masquerade as the Original Version.
+
+4. The Font Software, modify or unmodified, in part or in whole, must
+not be distributed under any other licence.
+
+5. Termination. This licence becomes null and void if any of the above
+conditions are not met.
+
+6. DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL
+CANONICAL LTD OR EACH COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES
+OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT
+SOFTWARE OR FROM OTHER DEALINGS IN THE SOFTWARE.
