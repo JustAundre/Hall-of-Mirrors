@@ -70,7 +70,7 @@ body {
 	max-width: unset;
 	box-sizing: border-box;
 	color: white;
-	background: oklch(0 0 0 / .5);
+	background: oklch(0 0 0 / .8);
 	backdrop-filter: grayscale(.5);
 	border: unset;
 	transition: opacity 1s ease-out, border-radius 1s ease-out, translate 1s ease-out;
