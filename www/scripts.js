@@ -29,6 +29,7 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 		root.setAttribute('data-dyslexic', 'false');
 		configModal.showModal();
+		configModal.setAttribute('open', '');
 	}
 
 	configModal.addEventListener('close', () => {

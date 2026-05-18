@@ -59,22 +59,30 @@ body {
 	font-size: .8em;
 }
 
-#config-menu[open] {
+#config-menu {
 	position: fixed;
-	top: 0;
-	left: 0;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	width: 100vw;
-	height: 100vh;
+	height: 100dvh;
+	max-height: unset;
+	max-width: unset;
+	box-sizing: border-box;
 	color: white;
-	background: none;
-	border: none;
+	background: oklch(0 0 0 / .5);
+	backdrop-filter: grayscale(.5);
+	border: unset;
+	transition: all 1s ease-out;
 
-	&::backdrop {
-		background-color: oklch(0 0 0 / .5);
-		backdrop-filter: grayscale(.5);
+	[data-motion='false'] & {
+		transition: unset;
+	}
+
+	&:not([open]) {
+		opacity: 0;
+		border-radius: 128px;
+		translate: 0 100%;
 	}
 
 	h1 {
