@@ -18,7 +18,7 @@
 	<dialog id="config-menu" data-theme='dark'>
 		<form method="dialog">
 			<h1>Which do you prefer?</h1>
-			<label class="option" aria-label="Enable light mode">
+			<label class="option" aria-label="Enable light mode" onclick="updateTheme()">
 				<i class="icon-sun-moon"></i>
 				<span>Enable light mode</span>
 				<div class="switch">
@@ -29,7 +29,7 @@
 					</div>
 				</div>
 			</label>
-			<label class="option" aria-label="Enable motion" aria-describedby="motion-performance-warning">
+			<label class="option" aria-label="Enable motion" aria-describedby="motion-performance-warning" onclick="updateMotion()">
 				<i class="icon-move"></i>
 				<span>Enable motion</span>
 				<div class="switch">
@@ -41,7 +41,7 @@
 				</div>
 			</label>
 			<span class="subtext" id="motion-performance-warning">* Impacts performance with software rendering.</span>
-			<label class="option" aria-label="Use a dyslexic-friendly font">
+			<label class="option" aria-label="Use a dyslexic-friendly font" onclick="updateDyslexic()">
 				<i class="icon-type-outline"></i>
 				<span data-dyslexic="true">Enable dyslexia-friendly font</span>
 				<div class="switch">
@@ -52,7 +52,7 @@
 					</div>
 				</div>
 			</label>
-			<button type="submit" id="enter-site">Continue</button>
+			<button type="submit" id="enter-site" onclick="commitConfig()">Continue</button>
 		</form>
 	</dialog>
 	<header>

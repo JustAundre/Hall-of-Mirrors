@@ -1,9 +1,14 @@
-const root = document.documentElement;
-const configModal = document.querySelector('#config-menu');
-const toggleTheme = document.querySelector('#toggle-theme');
-const toggleMotion = document.querySelector('#toggle-motion');
-const toggleDyslexic = document.querySelector('#toggle-dyslexic');
-const savedConfig = JSON.parse(localStorage.getItem('userConfig'));
+const root = document.documentElement,
+	configModal = document.querySelector('#config-menu'),
+	toggleTheme = document.querySelector('#toggle-theme'),
+	toggleMotion = document.querySelector('#toggle-motion'),
+	toggleDyslexic = document.querySelector('#toggle-dyslexic'),
+	savedConfig = JSON.parse(localStorage.getItem('userConfig'));
+
+let config,
+	theme,
+	motion,
+	dyslexic;
 
 function openConfig() {
 	configModal.showModal();
@@ -35,16 +40,22 @@ if (savedConfig) {
 	openConfig()
 }
 
-configModal.addEventListener('close', () => {
-	const theme = toggleTheme.checked ? 'light' : 'dark';
-	const motion = toggleMotion.checked ? 'true' : 'false';
-	const dyslexic = toggleDyslexic.checked ? 'true' : 'false';
-
-	root.setAttribute('data-theme', theme);
-	root.setAttribute('data-motion', motion);
-	root.setAttribute('data-dyslexic', dyslexic);
-
-	const config = { theme, motion, dyslexic };
-
+function commitConfig() {
+	config = { theme, motion, dyslexic };
 	localStorage.setItem('userConfig', JSON.stringify(config));
-});
+}
+
+function updateTheme() {
+	theme = toggleTheme.checked ? 'light' : 'dark';
+	root.setAttribute('data-theme', theme);
+}
+
+function updateMotion() {
+	motion = toggleMotion.checked ? 'true' : 'false';
+	root.setAttribute('data-motion', motion);
+}
+
+function updateDyslexic() {
+	dyslexic = toggleDyslexic.checked ? 'true' : 'false';
+	root.setAttribute('data-dyslexic', dyslexic);
+}
