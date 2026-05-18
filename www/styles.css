@@ -1,9 +1,10 @@
-[data-theme='dark'] {
+:root {
 	--header-height: 56px;
 	--footer-height: 52px;
-	
 	--accent-hue: 20;
+}
 
+[data-theme='dark'] {
 	--bg-1: oklch(0.2 0.0125 var(--accent-hue));
 	--bg-2: oklch(0.15 0.00625 var(--accent-hue));
 	--bg-3: oklch(0.5 0.125 var(--accent-hue));
