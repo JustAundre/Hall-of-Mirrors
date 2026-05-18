@@ -9,8 +9,8 @@
 	--bg-2: oklch(0.15 0.00625 var(--accent-hue));
 	--bg-3: oklch(0.5 0.125 var(--accent-hue));
 	--text-1: oklch(0.9 0.0625 var(--accent-hue));
-	--text-2: oklch(0.8 0.0125 var(--accent-hue));
-	--text-3: oklch(0.7 0.0125 var(--accent-hue));
+	--text-2: oklch(0.8 0.0625 var(--accent-hue));
+	--text-3: oklch(0.7 0.0625 var(--accent-hue));
 }
 
 [data-theme='light'] {
@@ -141,13 +141,19 @@ header {
 	border-bottom: var(--bg-3) 1px solid;
 	padding: 12px;
 	> button {
-		width: 2em;
+		height: 2em;
 		aspect-ratio: 1/1;
-		height: fit-content;
 		background: var(--bg-1);
 		color: var(--text-1);
+		border: var(--text-1) solid 2px;
 		border-radius: calc(1px/0);
-		border: var(--text-1) solid 1px;
+		outline: transparent solid 0;
+
+		&:hover, &:focus-visible {
+			outline: var(--text-3) solid 2px;
+			outline-offset: 2px;
+			border-width: 0;
+		}
 	}
 }
 
