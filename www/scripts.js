@@ -28,9 +28,9 @@ window.addEventListener('DOMContentLoaded', () => {
 			root.setAttribute('data-motion', 'false');
 		}
 		root.setAttribute('data-dyslexic', 'false');
+		configModal.showModal();
 	}
 
-	configModal.showModal();
 	configModal.addEventListener('close', () => {
 		const theme = toggleTheme.checked ? 'light' : 'dark';
 		const motion = toggleMotion.checked ? 'true' : 'false';
