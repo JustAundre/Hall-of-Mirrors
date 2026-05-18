@@ -73,7 +73,7 @@ body {
 	background: oklch(0 0 0 / .5);
 	backdrop-filter: grayscale(.5);
 	border: unset;
-	transition: all 1s ease-out;
+	transition: opacity 1s ease-out, border-radius 1s ease-out, translate 1s ease-out;
 
 	[data-motion='false'] & {
 		transition: unset;
