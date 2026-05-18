@@ -113,7 +113,9 @@ body {
 		margin-top: 20px;
 		border: none;
 		border-radius: 8px;
-		&:hover {
+		&:hover, &:focus-visible {
+			outline: white solid 2px;
+			outline-offset: 2px;
 			cursor: pointer;
 		}
 	}
@@ -234,7 +236,7 @@ footer {
 
 	input:hover + .slider, input:focus-visible + .slider {
 		outline: 2px solid oklch(55% 0.1 145);
-		outline-offset: 1px;
+		outline-offset: 2px;
 	}
 
 	.state-text {
