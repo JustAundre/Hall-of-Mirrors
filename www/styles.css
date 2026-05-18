@@ -80,6 +80,11 @@ body {
 		text-align: center;
 	}
 
+	.subtext {
+		margin-top: 10px;
+		max-width: calc(100% - 4rem);
+	}
+
 	form {
 		display: grid;
 		width: 25vw;
