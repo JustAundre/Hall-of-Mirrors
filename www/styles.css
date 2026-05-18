@@ -2,8 +2,9 @@
 	--header-height: 56px;
 	--footer-height: 52px;
 	--accent-hue: 20;
-	--accent: oklch(.8 2 var(--accent-hue));
+	--accent: hsl(var(--accent-hue), 100%, 50%);
 }
+
 
 [data-theme='dark'] {
 	--bg-1: oklch(0.2 0.0125 var(--accent-hue));
