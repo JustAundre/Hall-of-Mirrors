@@ -5,67 +5,69 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Hall of Mirrors</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
-	<link rel="preconnect" href="https://unpkg.com" crossorigin>
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&amp;display=swap" rel="stylesheet">
+	<link rel="preconnect" href="https://unpkg.com" crossorigin="">
 	<link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
-	<link rel="preconnect" href="https://necolas.github.io" crossorigin>
+	<link rel="preconnect" href="https://necolas.github.io" crossorigin="">
 	<link rel="stylesheet" href="https://necolas.github.io/normalize.css/8.0.1/normalize.css">
 	<link rel="stylesheet" href="styles.css">
-	<script src="scripts.js" defer></script>
+	<script src="scripts.js" defer=""></script>
 </head>
 <body>
-	<dialog id="config-menu" data-theme='dark'>
-		<form method="dialog">
-			<h1>Which do you prefer?</h1>
-			<label class="option" aria-label="Enable light mode" onclick="updateTheme()">
-				<i class="icon-sun-moon"></i>
-				<span>Enable light mode</span>
-				<div class="switch">
-					<input type="checkbox" id="toggle-theme">
-					<div class="slider">
-					<i class="icon-check state-text"></i>
-					<i class="icon-x state-text"></i>
-					</div>
-				</div>
-			</label>
-			<label class="option" aria-label="Enable motion" aria-describedby="motion-performance-warning" onclick="updateMotion()">
-				<i class="icon-move"></i>
-				<span>Enable motion</span>
-				<div class="switch">
-					<input type="checkbox" id="toggle-motion">
-					<div class="slider">
-					<i class="icon-check state-text"></i>
-					<i class="icon-x state-text"></i>
-					</div>
-				</div>
-			</label>
-			<span class="subtext" id="motion-performance-warning">* Impacts performance with software rendering.</span>
-			<label class="option" aria-label="Use a dyslexic-friendly font" onclick="updateDyslexic()">
-				<i class="icon-type-outline"></i>
-				<span data-dyslexic="true">Enable dyslexia-friendly font</span>
-				<div class="switch">
-					<input type="checkbox" id="toggle-dyslexic">
-					<div class="slider">
-					<i class="icon-check state-text"></i>
-					<i class="icon-x state-text"></i>
-					</div>
-				</div>
-			</label>
-			<button type="submit" id="enter-site" onclick="commitConfig()">Continue</button>
-		</form>
-	</dialog>
-	<header>
-		<button aria-label="Open Settings" onclick="openConfig()"><i class="icon-settings"></i></button>
-	</header>
-	<main>
-		<article>
-			<span>Lorem Ipsum</span>
-		</article>
-		<div id="background"></div>
-	</main>
-	<footer>
 
-	</footer>
+<dialog id="config-menu" data-theme="dark">
+	<form method="dialog">
+		<h1>Which do you prefer?</h1>
+		<label class="option" aria-label="Enable light mode" onclick="updateTheme()">
+			<i class="icon-sun-moon"></i>
+			<span>Enable light mode</span>
+			<div class="switch">
+				<input type="checkbox" id="toggle-theme">
+				<div class="slider">
+				<i class="icon-check state-text"></i>
+				<i class="icon-x state-text"></i>
+				</div>
+			</div>
+		</label>
+		<label class="option" aria-label="Enable motion" aria-describedby="motion-performance-warning" onclick="updateMotion()">
+			<i class="icon-move"></i>
+			<span>Enable motion</span>
+			<div class="switch">
+				<input type="checkbox" id="toggle-motion">
+				<div class="slider">
+				<i class="icon-check state-text"></i>
+				<i class="icon-x state-text"></i>
+				</div>
+			</div>
+		</label>
+		<span class="subtext" id="motion-performance-warning">* Impacts performance with software rendering.</span>
+		<label class="option" aria-label="Use a dyslexic-friendly font" onclick="updateDyslexic()">
+			<i class="icon-type-outline"></i>
+			<span data-dyslexic="true">Enable dyslexia-friendly font</span>
+			<div class="switch">
+				<input type="checkbox" id="toggle-dyslexic">
+				<div class="slider">
+				<i class="icon-check state-text"></i>
+				<i class="icon-x state-text"></i>
+				</div>
+			</div>
+		</label>
+		<button type="submit" id="enter-site" onclick="commitConfig()">Continue</button>
+	</form>
+</dialog>
+<header>
+	<button aria-label="Open Settings" onclick="openConfig()"><i class="icon-settings"></i></button>
+</header>
+<main>
+	<article>
+		<span>Lorem Ipsum</span>
+	</article>
+	<div id="background"></div>
+</main>
+<footer>
+
+</footer>
+
 </body>
 </html>
