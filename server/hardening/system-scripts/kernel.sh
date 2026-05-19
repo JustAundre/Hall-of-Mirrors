@@ -62,12 +62,19 @@ echo 'i: You can find blocked kernel modules @ "/etc/modprobe.d/hardening.conf"'
 before="$(sysctl -a)"
 #
 # Load general sysctl hardening profile
-# Load Anti-IPv6 sysctl profile
-# Apply changes
 [[ -f /etc/sysctl.d/99-security.conf ]] ||
-	install -m 640 -o 0 -g 0 general-confs/kernel.conf /etc/sysctl.d/99-security.conf
-[[ -f /etc/sysctl.d/99-disable-ipv6.conf ]] || confirm 'Disable IPv6' &&
-	install -m 640 -o 0 -g 0 general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
+	install -m 640 -o 0 -g 0 cnf/sysctl/kernel.conf /etc/sysctl.d/99-security.conf
+#
+# Load Anti-IPv6 sysctl profile
+[[ -f /etc/sysctl.d/99-disable-ipv6.conf ]] || confirm 'Disable IPv6 @ kernel level' &&
+	install -m 640 -o 0 -g 0 cnf/sysctl/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
+#
+# Install service to disable mutability of kernel modules 10 seconds after boot.
+confirm 'Disable the loading or unloading of kernel modules 10 seconds after boot' &&
+	install -m 600 -o 0 -g 0 cnf/sysctl/immutable-modules.service /etc/systemd/system/immutable-modules.service &&
+	systemctl enable --now
+#
+# Apply changes
 sysctl --system >/dev/null
 #
 # Snapshot sysctl params post-application
