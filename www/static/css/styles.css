@@ -75,7 +75,6 @@ a {
 	justify-content: center;
 	align-items: center;
 	backdrop-filter: grayscale(.5);
-	transition: opacity 1s ease-out, border-radius 1s ease-out, translate 1s ease-out;
 	box-sizing: border-box;
 	border: unset;
 	background: oklch(0 0 0 / .8);
@@ -85,8 +84,8 @@ a {
 	max-height: unset;
 	color: white;
 
-	[data-motion='false'] & {
-		transition: unset;
+	[data-motion='true'] & {
+		transition: opacity 1s ease-out, border-radius 1s ease-out, translate 1s ease-out;
 	}
 
 	&:not([open]) {
