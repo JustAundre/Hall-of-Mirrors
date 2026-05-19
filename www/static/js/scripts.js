@@ -41,21 +41,12 @@ if (savedConfig) {
 }
 
 function commitConfig() {
+	theme = toggleTheme.checked ? 'light' : 'dark';
+	motion = toggleMotion.checked ? 'true' : 'false';
+	dyslexic = toggleDyslexic.checked ? 'true' : 'false';
+	root.setAttribute('data-theme', theme);
+	root.setAttribute('data-motion', motion);
+	root.setAttribute('data-dyslexic', dyslexic);
 	config = { theme, motion, dyslexic };
 	localStorage.setItem('userConfig', JSON.stringify(config));
-}
-
-function updateTheme() {
-	theme = toggleTheme.checked ? 'light' : 'dark';
-	root.setAttribute('data-theme', theme);
-}
-
-function updateMotion() {
-	motion = toggleMotion.checked ? 'true' : 'false';
-	root.setAttribute('data-motion', motion);
-}
-
-function updateDyslexic() {
-	dyslexic = toggleDyslexic.checked ? 'true' : 'false';
-	root.setAttribute('data-dyslexic', dyslexic);
 }
