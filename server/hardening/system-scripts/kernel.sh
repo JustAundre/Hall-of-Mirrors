@@ -66,7 +66,7 @@ before="$(sysctl -a)"
 # Apply changes
 [[ -f /etc/sysctl.d/99-security.conf ]] ||
 	install -m 640 -o 0 -g 0 general-confs/kernel.conf /etc/sysctl.d/99-security.conf
-[[ -f /etc/sysctl.d/99-disable-ipv6.conf ]] ||
+[[ -f /etc/sysctl.d/99-disable-ipv6.conf ]] || confirm 'Disable IPv6' &&
 	install -m 640 -o 0 -g 0 general-confs/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
 sysctl --system >/dev/null
 #
@@ -75,5 +75,5 @@ after="$(sysctl -a)"
 #
 # Check for changes
 diff -u <(echo -- "${before}") <(echo -- "${after}") &&
-	echo 'i: Your sysctl parameters already meet best practice security standards; nothing has changed.'
+	echo 'i: Nothing has changed, meaning your sysctl is likely already sufficiently hardened.'
 )
