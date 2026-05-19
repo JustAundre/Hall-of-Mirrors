@@ -8,11 +8,6 @@ Over-engineered script for securing Linux machines
 >
 > Works best on headless Linux servers—may break home desktops.
 
-> [!NOTE]
->
-> Incomplete and indev scripts;
-> The `firewall.sh` & `sysctl.sh` scripts are extremely bare bones.
-
 - Run `attr-mgr.sh` (Removal mode)
 - Run `audit-repo.sh`
 - Run `audit-cron.sh`
@@ -28,15 +23,8 @@ Over-engineered script for securing Linux machines
 
 ## Manual Auditing
 
-Software Updates
-- Ensure your repositories are secure & untampered
-- Update repository cache
-- Upgrade packages
-- Upgrade snaps & flatpaks (if applicable)
-- Remove unpermitted software as directed by your scenario/documentation
-- Ensure there are no unfamiliar/unnecessary scripts being ran via crontabs, cron, or SystemD timers & services.
+### Secure Your Environment
 
-Ensure your shell isn't compromised
 - Backslash escape, quote, or use absolute paths to binaries for important commands
 - Check the below files for suspicious commands
 	- `/etc/bashrc`
@@ -47,13 +35,24 @@ Ensure your shell isn't compromised
 	- `~/.bash_profile`
 	- `~/.bash_logout`
 
-Secure Kernel Configurations
+### Software Updates
+
+- Ensure your repositories are secure & untampered
+- Update repository cache
+- Upgrade packages
+- Upgrade snaps & flatpaks (if applicable)
+- Remove unpermitted software as directed by your scenario/documentation
+- Ensure there are no unfamiliar/unnecessary scripts being ran via crontabs, cron, or SystemD timers & services.
+
+### Kernel Configurations
+
 - Enable `SYN cookies` to prevent a form of DoS
 - Log martian IPs ("*Impossible*" IPs)
 - Disable `IPv6` if it's not needed
 - Disable `IP forwarding` if it's not needed
 
-Check users, user groups, shells, passwords & user IDs.
+### Authorization/Authentication Stack
+
 - Ensure `root` user is locked with no password.
 - Ensure users have only the neccessary permissions
 - Ensure users have only the neccessary groups
@@ -63,18 +62,26 @@ Check users, user groups, shells, passwords & user IDs.
 - Ensure passwords (including MySQL/MariaDB/PostgreSQL user passwords) are secure & not in wordlists like `rockyou.txt` or can be cracked with a dictionary attack
 - Ensure ALL password hashes are in `/etc/shadow` & **NOT** `/etc/passwd`
 
-`/etc/login.defs` configurations
+#### PAM
+
+- Ensure `PAM` uses proper password quality checks, (i.e. cannot reuse the past 3 passwords, has to have `x` amount of symbols/numbers/uppercases/lowercases, etc.)
+- Ensure `PAM` is not hooked with a malicious backdoor module / malicious `pam_exec.so` script
+
+### `/etc/login.defs`
+
 - Set `UMASK` to `077` (`027` if `077` is too strict, & `022` if `027` is too strict).
 - Set `ENCRYPT_METHOD` to `YESCRYPT` (`SHA-512` if `YESCRYPT` isn't available)
 
-Ensure all directories & files have correct permissions
+### Access Control
+
 - `/boot/` is preferably mounted as read-only (AFTER YOU RUN UPDATES.)
 - `/usr/` is preferably is mounted as read-only (AFTER YOU RUN UPDATES.)
 - `/etc/shadow` & `/etc/gshadow` are `600` & owned by `0:shadow`
 - `/etc/passwd`, `/etc/group` & `/etc/sshd_config` are `644` & owned by `0:0`
 - `/etc/ssh/sshd_config.d` should be `700` & owned by `0:0`
 
-Check the firewall
+### Firewall
+
 - Ensure it's active
 - Ensure outgoing packets are allowed by default
 	- Denied by default is great but also is prone to breakage & hassle.
@@ -83,12 +90,14 @@ Check the firewall
 - Block ICMP pings & ICMP timestamp request & reply requests
 	- Do **NOT** block all ICMP requests in general; breaks basic networking.
 
-Check `/etc/ssh/sshd_config` for secure configurations
-- Disable root login
+### `/etc/ssh/sshd_config`
+
+- Disable `root` login
 - Disable `X11 forwarding`
 - In competition environments its preferable to keep `PasswordAuthentication on`, however, realistically you should use GPG keys & keep `PasswordAuthentication off`.
 
-Web server vulnerabilities
+### WWW
+
 - Is there a password field, or a commenting function? Test it for common injection vulnerabilities
 - Disable PHP file parsing on your webserver if not needed
 - Ensure the webserver does NOT show a file tree &/or enumerate files in a directory when there no `index.html`
@@ -96,10 +105,6 @@ Web server vulnerabilities
 - Ensure the webserver does not follow symlinks
 - Update Wordpress themes & external plugins (if applicable)
 
-Restrict systemd service units with only the neccessary permissions
-- Just apply sandboxing in general.
-- See [this page](https://docs.rockylinux.org/9/guides/security/systemd_hardening) for more information
+### Services
 
-PAM configuration
-- Ensure `PAM` uses proper password quality checks, (i.e. cannot reuse the past 3 passwords, has to have `x` amount of symbols/numbers/uppercases/lowercases, etc.)
-- Ensure `PAM` is not hooked with a malicious backdoor module / malicious `pam_exec.so` script
+- See [this page](https://docs.rockylinux.org/9/guides/security/systemd_hardening) for more information regarding SystemD unit file hardening.
