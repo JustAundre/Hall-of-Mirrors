@@ -264,7 +264,7 @@ environ_chk() {
 	fi
 	#
 	# If the exit variable is set, exit.
-	[[ -n "${exit}" ]] && confirm 'Failed startup checks; would you like to continue anyway' || exit 1
+	[[ -n "${exit}" ]] && confirm 'One or more startup checks failed; continue anyway' || exit 1
 }
 #
 # Remove existing values for a configuration & add your own
