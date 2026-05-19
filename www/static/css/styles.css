@@ -48,7 +48,7 @@ body {
 @font-face {
 	font-style: normal;
 	font-weight: normal;
-	src: url('/assets/OpenDyslexic-Regular.otf') format('opentype');
+	src: url('/static/fonts/OpenDyslexic-Regular.otf') format('opentype');
 	font-family: 'OpenDyslexic';
 	font-display: swap;
 }
