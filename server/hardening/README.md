@@ -17,7 +17,7 @@ graph LR
 	end
 
 	subgraph Secure Authentication/Authorization
-		4(auth.sh) --> 5(perms.sh) --> 6(users.sh) --> 7(limit-resources.sh) --> 8(install-motd.sh)
+		4(auth.sh) --> 5(perms.sh) --> 6(users.sh) --> 7(limit-resources.sh) --> 8(motd.sh)
 	end
 
 	subgraph Misc. System Hardening
