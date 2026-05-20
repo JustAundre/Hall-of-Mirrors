@@ -51,5 +51,5 @@ for trigger in "${triggers[@]}"; do
 	confirm "Delete ${trigger}" && systemctl disable --now "${trigger}" && rm -v "${trigger}"
 done
 #
-# Render the changes effective
+# Pushes changes into SystemD
 systemctl daemon-reload
