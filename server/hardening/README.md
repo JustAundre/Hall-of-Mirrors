@@ -60,10 +60,10 @@ graph LR
 
 ### Service Scripts
 
-#### SSHD
+#### sshd.sh
 
-#### VSFTPD
+#### vsftpd.sh
 
-#### Nginx
+#### nginx.sh
 
-#### Apache
+#### apache.sh
