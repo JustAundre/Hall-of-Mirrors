@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > Certain tools here depend on the active security of your system to be safely deployed.
-\
+---
 > [!CAUTION]
 > This is a highly experimental and fluid project, I am ***not*** responsible for data loss.
 > Better pull up a zfs/btrfs/VM/Proxmox/Timeshift snapshot,
@@ -19,11 +19,11 @@ git clone https://github.com/JustAundre/Hall-of-Mirrors.git
 
 ## Global Dependencies
 
-Must be running `Linux`
+Must be running *`Linux`
 
-- `MacOS` doesn't count.
+- *`MacOS` doesn't count.
 
-Must have/use
+Must have/use:
 
 - `GNU Coreutils`
 - `inotify-tools`
@@ -40,7 +40,7 @@ Basically everything here will also depend on the installation of `/server/gener
 
 ## Installation
 
-Refer to the respective `README.md`s for each of the subdirectories in this root directory.
+Refer to the respective `README.md`s for each of the subdirectories here for usage and installation instructions.
 
 ## Repository Development
 
