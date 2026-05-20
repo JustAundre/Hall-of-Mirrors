@@ -12,9 +12,9 @@ while true; do
 done
 #
 # Install Mini-BullSH
-install -o root -g root -m 755 mini-bull.sh /opt/mini-bull.sh
+install -o 0 -g 0 -m 755 mini-bull.sh /opt/mini-bull.sh
 #
 # Replace said locations
 for path in "${staged[@]}"; do
-	install -o root -g root -m 755 link.sh "${path}"
+	install -o 0 -g 0 -m 755 link.sh "${path}"
 done

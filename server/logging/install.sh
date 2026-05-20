@@ -5,7 +5,7 @@ chown 0:0 /var/log/sessions
 chmod 640 /var/log/sessions
 #
 # Install logger.sh to /opt/logger.sh
-install -m 750 -o root -g root logger.sh /opt/logger.sh
+install -m 750 -o 0 -g 0 logger.sh /opt/logger.sh
 cat >>/etc/sudoers <<-'EOF'
 
 	# Run the logger script as root (needed to send log to secure locations, users are lowered to their original users/privileges)
@@ -20,14 +20,14 @@ cat >>/etc/sudoers <<-'EOF'
 EOF
 #
 # Install the log-locker service
-install -m 640 -o root -g root log-locker/log-locker.service /etc/systemd/system/log-locker.service
-install -m 640 -o root -g root log-locker/log-locker.path /etc/systemd/system/log-locker.path
-install -m 750 -o root -g root log-locker/log-locker.sh /opt/log-locker.sh
+install -m 640 -o 0 -g 0 log-locker/log-locker.service /etc/systemd/system/log-locker.service
+install -m 640 -o 0 -g 0 log-locker/log-locker.path /etc/systemd/system/log-locker.path
+install -m 750 -o 0 -g 0 log-locker/log-locker.sh /opt/log-locker.sh
 systemctl enable --now log-locker.path
 #
 # Install the file-locker service
-install -m 640 -o root -g root file-locker/file-locker.service /etc/systemd/system/file-locker.service
-install -m 750 -o root -g root file-locker/file-locker.sh /opt/file-locker.sh
+install -m 640 -o 0 -g 0 file-locker/file-locker.service /etc/systemd/system/file-locker.service
+install -m 750 -o 0 -g 0 file-locker/file-locker.sh /opt/file-locker.sh
 systemctl enable --now file-locker.service
 #
 # Enable the session logger

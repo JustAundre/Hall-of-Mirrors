@@ -27,7 +27,7 @@ cat <<-EOF
 	${motd} ${motds[*]}
 EOF
 pause
-install -m 640 -o root -g root -D cnf/motd/motd "${motd}"
+install -m 640 -o 0 -g 0 -D cnf/motd/motd "${motd}"
 #
 # Hardlink to other likely MOTD file locations
 for path in "${motds[@]}"; do link "${motd}" "${path}"; done

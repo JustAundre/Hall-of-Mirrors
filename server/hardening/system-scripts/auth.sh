@@ -4,13 +4,15 @@
 # PAM Configuration
 #
 # RHEL-like distros
-if hash authselect && [[
-	-d /etc/authselect/ &&
-	-d /usr/share/authselect/default/
-]]; then
+if
+	hash authselect && [[
+		-d /etc/authselect/ &&
+		-d /usr/share/authselect/default/
+	]];
+then
 	# Configure PAM /w secure defaults enabled & further configure password QA
 	authselect select sssd with-faillock with-pamaccess with-pwhistory with-pwquality with-mkhomedir with-sudo without-nullok --force
-	install -m 640 -o root -g root -D cnf/auth/pwquality.conf /etc/security/pwquality.conf
+	install -m 640 -o 0 -g 0 -D cnf/auth/pwquality.conf /etc/security/pwquality.conf
 	#
 	# Regenerate PAM configurations /w previous configuration
 	authselect apply-changes
@@ -21,13 +23,13 @@ elif
 	[[ -d /usr/share/pam-configs/ ]]
 then
 	# Insert password QA configuration
-	install -m 640 -o root -g root -D cnf/auth/pwquality /usr/share/pam-configs/pwquality
-	install -m 640 -o root -g root -D cnf/auth/pwquality.conf /etc/security/pwquality.conf
+	install -m 640 -o 0 -g 0 -D cnf/auth/pwquality /usr/share/pam-configs/pwquality
+	install -m 640 -o 0 -g 0 -D cnf/auth/pwquality.conf /etc/security/pwquality.conf
 	#
 	# Insert faillock configuration
-	install -m 640 -o root -g root -D cnf/auth/faillock /usr/share/pam-configs/faillock
-	install -m 640 -o root -g root -D cnf/auth/faillock_reset /usr/share/pam-configs/faillock_reset
-	install -m 640 -o root -g root -D cnf/auth/faillock_notify /usr/share/pam-configs/faillock_notify
+	install -m 640 -o 0 -g 0 -D cnf/auth/faillock /usr/share/pam-configs/faillock
+	install -m 640 -o 0 -g 0 -D cnf/auth/faillock_reset /usr/share/pam-configs/faillock_reset
+	install -m 640 -o 0 -g 0 -D cnf/auth/faillock_notify /usr/share/pam-configs/faillock_notify
 	#
 	# Reject logins for users with no password
 	sed -i 's/\s*nullok//g' /usr/share/pam-configs/unix
