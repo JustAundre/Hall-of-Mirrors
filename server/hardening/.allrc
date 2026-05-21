@@ -11,8 +11,8 @@ umask 077
 # Find a valid file name for the log file
 # Log to master a log file
 i=1
-while compgen -G "*-${i}.log" >/dev/null; do (( i++ )) done
-exec &> >(tee -a "$(basename "$0")-master-${i}.log")
+while compgen -G "*-${session_id}.log" >/dev/null; do (( i++ )) done
+exec &> >(tee -a "$(basename "$0")-master-${session_id}.log")
 #
 # Include hidden directories when globbing
 # Trying to avoid errors when globbing results in nothing, & set case insensitivity for responses.

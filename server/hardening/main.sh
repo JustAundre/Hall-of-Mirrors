@@ -34,7 +34,7 @@ done < <(find . -name '*.sh' ! -name 'main.sh')
 # Fetch log files
 # Clear the screen
 # Print the summary
-mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*${i}.log")
+mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*${session_id}.log")
 clear
 printf '%b' "$(
 	cat <<-EOF

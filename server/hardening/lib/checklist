@@ -9,9 +9,9 @@ items=("$@")
 clear >&2
 echo "${title}" >&2
 for item in "${items[@]}"; do
-	item="${i}) ${item}"
+	item="${x}) ${item}"
 	printf '\t%s\n' "${item}" >&2
-	i="$((i + 1))"
+	x="$((x + 1))"
 done
 #
 # Prompt the user for their answer via the read command
