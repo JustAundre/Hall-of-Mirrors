@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Prompt for action
+fixes=(
+	'Change ownership'
+	'Change permissions'
+	'' '' ''
+	'Delete the path.'
+)
+mapfile -t choices < <(checklist "$1 is owned by $(stat -c '%U:%G/%u:%g' "$1") with permissions $(stat -c '%a' "$1"). What do you want to do?" checklist "${fixes[@]}")
+#
+# Act on selections
+for choice in "${choices[@]}"; do
+	# Prompt for new ownership
+	# Validate given user and group
+	# Change the ownership
+	if [[ "${choice}" == 'Change ownership' ]]; then
+		until [[ "${user}" =~ ${num_chk} ]] || getent passwd "${user}" &>/dev/null && [[ -n "${user}" ]]; do
+			[[ -n "${x}" ]] && log w 'Invalid username/UID provided.' || x=true
+			read -rp 'Enter the new user owner: ' user
+		done
+		until [[ "${user}" =~ ${num_chk} ]] || getent group "${group}" &>/dev/null && [[ -n "${group}" ]]; do
+			[[ -n "${y}" ]] && log w 'Invalid username/UID provided.' || y=true
+			read -rp 'Enter the new group owner: ' group
+		done
+		chown -hc "${user}:${group}" "$1"
+	#
+	# Prompt for new permissions
+	elif [[ "${choice}" == 'Change permissions' ]]; then
+		until [[ "${perm}" =~ ^[1234567]{3,4}$ ]]
+		do read -rp 'Enter the octal permission: ' perm
+		done
+		chmod -c "${perm}" "$1"
+	#
+	# Delete the path
+	elif [[ "${choice}" == 'Delete the path.' ]]; then
+		rm -rfv "$1"
+	fi
+done

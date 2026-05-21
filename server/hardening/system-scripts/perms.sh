@@ -1,58 +1,6 @@
 #!/usr/bin/env bash
 ### A script to review nearly every path for permissions & ownership which are insecure/not as secure as can be.
 #
-# Environment Setup
-#
-# Choices for remediation when encountering a path owned by a non-system user in /etc/
-# Note: There's 3 empty choices to act as a buffer for fat-fingering "Delete the path".
-# Function to deal with manual remediation
-fixes=(
-	'Change ownership'
-	'Change permissions'
-	'' '' ''
-	'Delete the path.'
-)
-select_fix() {
-	# Prompt for action
-	mapfile -t choices < <(checklist "$1 is owned by $(stat -c '%U:%G/%u:%g' "$1") with permissions $(stat -c '%a' "$1"). What do you want to do?" checklist "${fixes[@]}")
-	#
-	# Act on selections
-	for choice in "${choices[@]}"; do
-		# Prompt for new ownership
-		# Validate given user and group
-		# Change the ownership
-		if [[ "${choice}" == 'Change ownership' ]]; then
-			(
-			until getent passwd "${user}" &>/dev/null && [[ -n "${user}" ]]
-			do read -rp 'Enter the new user owner: ' user
-			done
-			until getent group "${group}" &>/dev/null && [[ -n "${group}" ]]
-			do read -rp 'Enter the new group owner: ' group
-			done
-			chown -hc "${user}:${group}" "$1"
-			)
-		#
-		# Prompt for new permissions
-		elif [[ "${choice}" == 'Change permissions' ]]; then
-			(
-			until [[ "${perm}" =~ ^[1234567]{3,4}$ ]]
-			do read -rp 'Enter the octal permission: ' perm
-			done
-			chmod -c "${perm}" "$1"
-			)
-		#
-		# Delete the path
-		elif [[ "${choice}" == 'Delete the path.' ]]; then
-			rm -rfv "$1"
-		fi
-	done
-}
-
-
-
-
-
-#
 # Invalid Ownership
 #
 # Map out files /w broken ownership.

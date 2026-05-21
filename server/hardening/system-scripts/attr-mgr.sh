@@ -3,13 +3,11 @@
 #
 # Attribute Manager
 #
-# Choices for attribute manager.
+# Act based on selected mode
 options=(
 	remove
 	restore
 )
-#
-# Act based on selected mode
 if [[ "$(checklist 'Attribute manager' radiolist "${options[@]}")" == remove ]]; then
 	# Alert the user of the possible lengthy scan
 	log i $'This will take a second; if you ask, no the script didn\'t hang.'
