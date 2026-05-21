@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Grab the title, checklist type & the options for the checklist.
+title="$1"
+type="$2"
+shift 2
+items=("$@")
+#
+# Give the user their options
+clear >&2
+echo "${title}" >&2
+for item in "${items[@]}"; do
+	item="${i}) ${item}"
+	printf '\t%s\n' "${item}" >&2
+	i="$((i + 1))"
+done
+#
+# Prompt the user for their answer via the read command
+if [[ "${type}" == checklist ]]; then
+	cat >&2 <<-'EOF'
+		Enter your selections—separated by spaces.
+		(i.e. "1 4 6 9")
+	EOF
+elif [[ "${type}" == radiolist ]]; then
+	cat >&2 <<-'EOF'
+		Enter a single selection
+		(i.e. "5")
+	EOF
+else
+	cat >&2 <<-EOF
+		Incorrect usage of the checklist function;
+		"${type}" was given as the 2nd argument, but the only valid options are (checklist) OR (radiolist).
+	EOF
+	return 1
+fi
+read -erp 'Type your selection(s) then press [ENTER] to submit: ' -a selections >&2
+#
+# Do nothing with empty responses
+# Validate user choices & return the choices
+[[ "${#selections[@]}" -eq 0 ]] && return 0
+for choice in "${selections[@]}"; do
+	[[ "${choice}" =~ ${num_chk} && "${choice}" -lt "${#items[@]}" ]] && echo "${items[${choice}]}"
+done

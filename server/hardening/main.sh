@@ -31,4 +31,30 @@ done < <(find . -name '*.sh' ! -name 'main.sh')
 #
 # Exit
 #
-success
+# Fetch log files
+# Clear the screen
+# Print the summary
+mapfile -t log_files < <(timeout 5 find . -maxdepth 1 -type f -name "*${i}.log")
+clear
+printf '%b' "$(
+	cat <<-EOF
+		  ---{=========}###[@]###{===========}---
+		        WINDOWS AT LOSS AT THE
+		           AGAPE FREEDOM OF LINUX
+		  ---{=========}###[@]###{===========}---
+		
+		      Cybersecurity is great; though,
+		    people often have their priorities
+		       mixed up. Make sure you have
+		        good password hygiene and
+		         a good password manager.
+
+		-----<============>{x}<============>-----
+
+		Here are the log files from this session:
+		$(if [[ -n "${log_files[*]}" ]]; then for path in "${log_files[@]}"; do echo "${path}"; done
+		else log w 'No logs found.'
+		fi)
+	EOF
+)"
+exit 0

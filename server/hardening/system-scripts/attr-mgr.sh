@@ -12,17 +12,17 @@ options=(
 # Act based on selected mode
 if [[ "$(checklist 'Attribute manager' radiolist "${options[@]}")" == remove ]]; then
 	# Alert the user of the possible lengthy scan
-	echo $'i: This will take a second; if you ask, no the script didn\'t hang.'
+	log i $'This will take a second; if you ask, no the script didn\'t hang.'
 	#
 	# Removes the (i)mmutable & (a)ppend-only attributes from all files
 	find / -xdev -type f -exec lsattr -d {} + 2>/dev/null | while read -r attrs file; do
 		if [[ "${attrs}" == *i* ]]; then
 			echo "${file}" >>immutable-files.txt
-			echo "i: Found immutable file: ${file}"
+			log i "Found immutable file: ${file}"
 		fi
 		if [[ "${attrs}" == *a* ]]; then
 			echo "${file}" >>append-only-files.txt
-			echo "i: Found append-only file: ${file}"
+			log i "Found append-only file: ${file}"
 		fi
 	done
 	[[ -s immutable-files.txt ]] && xargs chattr -- -i <immutable-files.txt

@@ -4,9 +4,9 @@
 # Cron files
 #
 # Check /etc/cron* files
-cat <<-'EOF'
-	i: You'll be put into a text editor to review/edit crontab files;
-	i: You'll be prompted to delete the file or not.
+log i <<-'EOF'
+	You'll be put into a text editor to review/edit crontab files;
+	You'll be prompted to delete the file or not.
 EOF
 pause
 find /etc/cron* -maxdepth 2 -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
@@ -41,9 +41,9 @@ mapfile -t triggers < <(
 )
 #
 # Audit them & act accordingly.
-cat <<-'EOF'
-	i: You'll be put into a text editor to review/edit SystemD .timer/.path files;
-	i: You'll be prompted to delete the file or not.
+log i <<-'EOF'
+	You'll be put into a text editor to review/edit SystemD .timer/.path files;
+	You'll be prompted to delete the file or not.
 EOF
 pause
 for trigger in "${triggers[@]}"; do

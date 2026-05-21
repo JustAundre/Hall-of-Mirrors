@@ -129,7 +129,7 @@ for service in "${risky_svcs[@]}"; do decommission "${service}"; done
 # Service Audit
 #
 # Baseline /etc/systemd/system/ from /lib/systemd/system/
-echo 'i: Baselining /etc/systemd/system/ from /lib/systemd/system/'
+log i 'Baselining "/etc/systemd/system/" from "/lib/systemd/system/"...'
 while read -r svc_path; do
 	# Handle symlinks
 	if [[ -h "${svc_path}" ]]; then
@@ -144,9 +144,9 @@ while read -r svc_path; do
 			"${real_path}" == /usr/lib/systemd/system/*
 		]]; then
 			# Generally most services fall under the above condition.
-			echo "i: ${svc_path} is likely a vendor provided service that has been enabled."
+			log i "${svc_path} is likely a vendor provided service that has been enabled."
 		elif [[ "${real_path}" == /dev/null ]]; then
-			echo "i: ${svc_path} is a masked service pointing to /dev/null."
+			log i "${svc_path} is a masked service pointing to /dev/null."
 		else
 			# Never actually seen this happen,
 			# which makes it all the more suspicious if it does occur.
@@ -160,10 +160,10 @@ while read -r svc_path; do
 	# Handle directories
 	# Delete the directory if it is empty.
 	elif [[ -d "${svc_path}" ]]; then
-		if [[ "${svc_path}" == *.d ]]; then echo "i: ${svc_path} is just an overrides directory."
+		if [[ "${svc_path}" == *.d ]]; then log i "${svc_path} is just an overrides directory."
 		else confirm "${svc_path} doesn't end in .d; review its contents" && find "${svc_path}" -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
 		fi
-		[[ "$(find "${svc_path}" -mindepth 1)" == '' ]] && rm -vdi "${svc_path}"
+		[[ -z "$(find "${svc_path}" -mindepth 1)" ]] && rm -vdi "${svc_path}"
 	#
 	# Prompt to audit files
 	# If yes; audit files, then ask whether to delete the file.

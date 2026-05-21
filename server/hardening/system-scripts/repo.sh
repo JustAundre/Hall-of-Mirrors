@@ -40,9 +40,9 @@ while read -r repo_file; do
 		# Compare the domains of the newly found URL with the URL from the /etc/os-release file.
 		# If the domains match, just log it.
 		# If they don't match and the "newly found URL" actually exists, flag it.
-		if domain_compare "${repo_url}" "${os_info[HOME_URL]}"; then echo "i: URL \"${repo_url}\" was identified."
-		elif [[ -n "${repo_url}" ]]; then echo "W: URL with foreign domain \"${repo_url}\" found in \"${repo_file}\"."
-		fi | tee -a "flagged-pkg-repos-${i}.log"
+		if domain_compare "${repo_url}" "${os_info[HOME_URL]}"; then log i "URL \"${repo_url}\" was identified."
+		elif [[ -n "${repo_url}" ]]; then log w "URL with foreign domain \"${repo_url}\" found in \"${repo_file}\"."
+		fi
 	done < <(grep -oE "${url_chk}" "${repo_file}" | sort -ux)
 done < <(
 	find /etc/yum.repos.d/ -mindepth 1 ! -type d

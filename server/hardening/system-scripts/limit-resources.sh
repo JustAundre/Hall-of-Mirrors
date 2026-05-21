@@ -15,11 +15,11 @@ do
 	if [[ -z "${ran}" ]]; then
 		ran=true
 	else
-		echo 'W: SystemD found issue(s) with your configuration.'
-		echo $'i: After you resume, you\'ll be made to revise your configurations again.'
+		log w 'SystemD found issue(s) with your configuration.'
+		log i $'After you resume, you\'ll be made to revise your configurations again.'
 		pause
 	fi
-	"${EDITOR}" cnf/rsc-caps/slice-individual.conf cnf/rsc-caps/slice-shared.conf cnf/rsc-caps/limits.conf
+	"${EDITOR}" cnf/rsc-caps/slice-individual.slice cnf/rsc-caps/slice-shared.conf cnf/rsc-caps/limits.slice
 done)
 #
 # Edit/validify limits.conf
@@ -35,9 +35,11 @@ until [[ "${pass}" == true ]]; do
 			break
 		fi
 	done < <(grep -Ev '^\s*(#|$)' cnf/rsc-caps/limits.conf)
-	if [[ "${pass}" == false ]];
-	then echo 'W: There was a syntax error in your limits.conf.'
-	else pass=true
+	if [[ "${pass}" == false ]]; then
+		log w 'There was a syntax error in your limits.conf.'
+		pause
+	else
+		pass=true
 	fi
 done
 

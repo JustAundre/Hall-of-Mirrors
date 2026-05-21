@@ -14,9 +14,8 @@ while IFS= read -r mod; do
 	[[ "${deps}" =~ ^\w+$ ]] && deps=nothing.
 	#
 	# Combine.
-	echo 'i: Compiling selections for a checklist...'
 	readable+=("${mod}: ${desc} - Depends on ${deps}")
-done < <(cat /proc/modules | grep -Eo '^[^ ]+' | sort)
+done < <(grep -Eo '^[^ ]+' /proc/modules | sort)
 #
 # Prompt for ones to disable.
 mapfile -t mods_disable < <(checklist 'These are active kernel modules; select those to unload and disable.' checklist "${readable[@]}" | cut -d: -f1)
@@ -29,7 +28,7 @@ perm_fix -m 644 -o 0 -g 0 /dev/null /etc/modprobe.d/hardening.conf
 for mod in "${mods_disable[@]}"; do
 	echo "install ${mod} /bin/false" >>/etc/modprobe.d/hardening.conf
 done
-echo 'i: You can find blocked kernel modules @ "/etc/modprobe.d/hardening.conf"'
+log i 'You can find blocked kernel modules @ "/etc/modprobe.d/hardening.conf"'
 
 
 
@@ -46,9 +45,9 @@ confirm 'Prevent currently unused kernel modules from ever being loaded' && whil
 done < <(sort | uniq -u < <(
 	# Combine results from active modules and ALL modules.
 	find /lib/modules/"$(uname -r)" -type f -name '*.ko*' -print0 | xargs -0n1 basename | cut -d. -f1
-	cat /proc/modules | grep -Eo '^[^ ]+'
+	grep -Eo '^[^ ]+' /proc/modules
 ))
-echo 'i: You can find blocked kernel modules @ "/etc/modprobe.d/hardening.conf"'
+log i 'You can find blocked kernel modules @ "/etc/modprobe.d/hardening.conf"'
 
 
 
@@ -72,7 +71,7 @@ before="$(sysctl -a)"
 # Install service to disable mutability of kernel modules 10 seconds after boot.
 confirm 'Disable the loading or unloading of kernel modules 10 seconds after boot' &&
 	install -m 600 -o 0 -g 0 cnf/sysctl/immutable-modules.service /etc/systemd/system/immutable-modules.service &&
-	systemctl enable --now
+	systemctl reload && systemctl enable --now immutable-modules.service
 #
 # Apply changes
 sysctl --system >/dev/null
@@ -82,5 +81,5 @@ after="$(sysctl -a)"
 #
 # Check for changes
 diff -u <(echo -- "${before}") <(echo -- "${after}") &&
-	echo 'i: Nothing has changed, meaning your sysctl is likely already sufficiently hardened.'
+	log i 'Nothing has changed, meaning your sysctl is likely already sufficiently hardened.'
 )

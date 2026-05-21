@@ -228,7 +228,8 @@ if [[
 	dict_location='en_US-dict.txt'
 	#
 	# if there's a terminal.
-	if [[ -t 0 ]]; then read -erp "Download a dictionary from '${dict_url}' to '$(pwd)/${dict_location}? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
+	if [[ -t 0 ]]; then
+		read -erp "Download a dictionary from '${dict_url}' to '$(pwd)/${dict_location}? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
 	else
 		cat >&4 <<-'EOF'
 			E: As this is non-interactive,

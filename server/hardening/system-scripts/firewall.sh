@@ -10,28 +10,26 @@ if hash firewall-cmd; then
 	{
 	systemctl unmask firewalld
 	systemctl enable --now firewalld
-	} && echo 'i: Restarted FirewallD.'
+	} && log i 'Restarted FirewallD.'
 	#
 	# Reset the firewall
-	firewall-cmd --reset-to-defaults &&
-		echo 'i: Successfully reset FirewallD.'
+	firewall-cmd --reset-to-defaults && log i 'Successfully reset FirewallD.'
 	#
 	# Deny all incoming, allow all outgoing.
 	{
 	firewall-cmd --set-default-zone public
 	firewall-cmd --permanent --load-zone-defaults public
-	} && echo 'i: Set FirewallD to zone "public". Deny incoming by default, allow outgoing by default.'
+	} && log i 'Set FirewallD to zone "public". Deny incoming by default, allow outgoing by default.'
 	#
 	# Block ICMP echo requests & timestamp requests/replies
 	{
 	firewall-cmd --permanent --add-icmp-block echo-request
 	firewall-cmd --permanent --add-icmp-block timestamp-reply
 	firewall-cmd --permanent --add-icmp-block timestamp-request
-	} && echo 'i: Blocked ICMP echos/pings and timestamp requests.'
+	} && log i 'Blocked ICMP echos/pings and timestamp requests.'
 	#
 	# Push on-disk configuration into in-memory configuration
-	firewall-cmd --reload &&
-		echo 'i: Loaded on-disk FirewallD configuration into running configuration.'
+	firewall-cmd --reload && log i 'Loaded on-disk FirewallD configuration into running configuration.'
 elif hash ufw; then
 	# Start the firewall
 	systemctl unmask ufw
@@ -45,7 +43,7 @@ elif hash ufw; then
 	ufw default deny incoming
 	ufw default allow outgoing
 else
-	echo 'E: This script requires either UFW or FirewallD installed.'
+	log e 'This script requires either UFW or FirewallD installed.'
 	exit 1
 fi
 
@@ -153,7 +151,7 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && while true; do
 			if [[ "${char}" == $'\x7f' || "${char}" == $'\b' ]]; then input["${target}"]="${input[${target}]%?}"
 			elif [[ -z "${char}" ]]; then (( target++ ))
 			elif [[ "${char}" =~ ^[a-zA-Z0-9.:/]$ ]]; then input["${target}"]+="${char}"
-			else echo "W: Invalid character \"${char}\"" && pause
+			else log w "Invalid character \"${char}\"" && pause
 			fi
 			#
 			# Exit once all fields are filled

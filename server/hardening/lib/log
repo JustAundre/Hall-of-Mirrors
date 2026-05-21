@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+type="$1"
+shift 1
+case "${type}" in
+	i) printf "\x1b[48;5;18mℹ: %s\n\x1b[0m" "$*";;
+	w) printf "\x1b[48;5;58mW: %s\n\x1b[0m" "$*" >&2;;
+	e) printf "\x1b[48;5;88mE: %s\n\x1b[0m" "$*" >&2;;
+	*) ;;
+esac
