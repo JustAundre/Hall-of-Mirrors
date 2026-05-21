@@ -1,26 +1,23 @@
 #!/usr/bin/env bash
-# Grab the title, checklist type & the options for the checklist.
-title="$1"
-type="$2"
-shift 2
-items=("$@")
-#
+# $1 - The title.
+# $2 - The mode of selection.
+# $@:3 - The options.
 # Give the user their options
 clear >&2
-echo "${title}" >&2
-for item in "${items[@]}"; do
+echo "$1" >&2
+for item in "$@:3"; do
 	x="$((x + 1))"
 	item="${x}) ${item}"
 	printf '\t%s\n' "${item}" >&2
 done
 #
 # Prompt the user for their answer via the read command
-if [[ "${type}" == checklist ]]; then
+if [[ "$2" == checklist ]]; then
 	cat >&2 <<-'EOF'
 		Enter your selections—separated by spaces.
 		(i.e. "1 4 6 9")
 	EOF
-elif [[ "${type}" == radiolist ]]; then
+elif [[ "$2" == radiolist ]]; then
 	cat >&2 <<-'EOF'
 		Enter a single selection
 		(i.e. "5")
@@ -28,7 +25,7 @@ elif [[ "${type}" == radiolist ]]; then
 else
 	cat >&2 <<-EOF
 		Incorrect usage of the checklist function;
-		"${type}" was given as the 2nd argument, but the only valid options are (checklist) OR (radiolist).
+		"$2" was given as the 2nd argument, but the only valid options are "checklist" OR "radiolist".
 	EOF
 	return 1
 fi
@@ -38,5 +35,9 @@ read -erp 'Type your selection(s) then press [ENTER] to submit: ' -a selections 
 # Validate user choices & return the choices
 [[ "${#selections[@]}" -eq 0 ]] && return 0
 for choice in "${selections[@]}"; do
-	[[ "${choice}" =~ ${num_chk} && "${choice}" -gt 0 && "${choice}" -le "${#items[@]}" ]] && echo "${items["$(( choice - 1 ))"]}"
+	[[
+		"${choice}" =~ ${num_chk} &&
+		"${choice}" -gt 0 &&
+		"${choice}" -le "${#@:3}"
+	]] && echo "${@:3["$(( choice - 1 ))"]}"
 done
