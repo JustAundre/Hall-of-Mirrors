@@ -63,3 +63,7 @@ find . -type f -name '*.sh' -exec shellcheck -x {} +
 ## Roadmap
 
 1. Scripts in `service-scripts/` need serious refactoring, reorganization & rescripting.
+
+## Transparency
+
+While AIs/LLMs were utilized in the process of making the code contained in this repository, such AI/LLMs ***did not directly write any of the code present.*** The AI/LLMs only were utilized in my learning process and were not prompted to directly provide a fix to an issue or write new functionality; only put enlighten me on why something wasn't working.
