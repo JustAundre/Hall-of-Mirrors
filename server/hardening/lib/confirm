@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-clear
-answer
 while [[ ! "${answer}" =~ ^[YyNn]$ ]]; do
 	printf "\n%s\n%s? [y/n]: \n" "$2" "$1"
 	read -er answer

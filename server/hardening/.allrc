@@ -3,7 +3,7 @@
 #
 # Environment Setup
 #
-# Secure path variable
+# Add custom commands to PATH
 # Secure UMASK
 declare -rx PATH="$(pwd)/lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin"
 umask 077
@@ -84,9 +84,9 @@ fi
 #
 # If the exit variable is set, exit.
 if [[ -n "${errors[*]}" ]]; then
-	for error in "${errors[@]}"; do error "${error}"; done
+	for error in "${errors[@]}"; do log e "${error}"; done
 	log w 'One or more startup checks failed.'
 	confirm 'Continue' || exit 1
 else
-	info "No errors!"
+	log i "No errors!"
 fi

@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 mapfile -t height < <(seq 1 "$(tput lines)")
 printf '\n%.0s' "${height[@]}"
-command clear -x
+tput home
