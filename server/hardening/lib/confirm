@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 while [[ ! "${answer}" =~ ^[YyNn]$ ]]; do
-	printf "\n%s\n%s? [y/n]: \n" "$2" "$1"
+	printf "%s? [y/n]: \n" "$1"
 	read -er answer
 	answer="${answer:0:1}"
 done
