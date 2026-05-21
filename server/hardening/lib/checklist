@@ -9,9 +9,9 @@ items=("$@")
 clear >&2
 echo "${title}" >&2
 for item in "${items[@]}"; do
+	x="$((x + 1))"
 	item="${x}) ${item}"
 	printf '\t%s\n' "${item}" >&2
-	x="$((x + 1))"
 done
 #
 # Prompt the user for their answer via the read command
@@ -38,5 +38,5 @@ read -erp 'Type your selection(s) then press [ENTER] to submit: ' -a selections 
 # Validate user choices & return the choices
 [[ "${#selections[@]}" -eq 0 ]] && return 0
 for choice in "${selections[@]}"; do
-	[[ "${choice}" =~ ${num_chk} && "${choice}" -lt "${#items[@]}" ]] && echo "${items[${choice}]}"
+	[[ "${choice}" =~ ${num_chk} && "${choice}" -gt 0 && "${choice}" -le "${#items[@]}" ]] && echo "${items["$(( choice - 1 ))"]}"
 done
