@@ -42,14 +42,14 @@ for path in "$@"; do
 	touch "${path}"
 	#
 	# Save stats for file pre-change
-	before="$(stat -c '%a %u/%U:%g/%G')"
+	before="$(stat -c '%a %u/%U:%g/%G' "${path}")"
 	#
 	# Attempt the change
 	chown -hP "${owner}:${group}" "${path}"
 	[[ -n "${mode}" ]] && chmod -hP "${mode}" "${path}"
 	#
 	# Check stats for file post-change
-	after="$(stat -c '%a %u/%U:%g/%G')"
+	after="$(stat -c '%a %u/%U:%g/%G' "${path}")"
 	#
 	# Log diffs bewteen pre and post stats
 	[[ "${before}" != "${after}" ]] &&
