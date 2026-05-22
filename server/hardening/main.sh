@@ -13,12 +13,6 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 declare -rx PATH="$(pwd)/lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin"
 umask 077
 #
-# Find a valid file name for the log file
-# Log to master a log file
-session_id=1
-while compgen -G "*-${session_id}.log" >/dev/null; do (( session_id++ )) done
-exec &> >(tee -a "$(basename "$0")-master-${session_id}.log")
-#
 # Include hidden directories when globbing
 # Trying to avoid errors when globbing results in nothing, & set case insensitivity for responses.
 # Unset aliases & disable alias expansion
@@ -110,11 +104,27 @@ fi
 declare -A options
 while read -r script; do
 	options["$(basename "${script}"): $(grep '^### ' "${script}" | sed 's/### //')"]="${script}"
-done < <(find sys svc -name '*.sh' | sort)
+done < <(find sys svc -name '*.sh')
 #
 # List them off--select 1.
-# shellcheck disable=SC1090
-. "${options["$(checklist "Choose a script to run." radiolist "${!options[@]}")"]}"
+script="${options["$(checklist "Choose a script to run." radiolist "${!options[@]}")"]}"
+if [[ -x "${script}" ]]; then
+	# Find a valid file name for the log file
+	# Log to master a log file
+	session_id=1
+	while compgen -G "*-${session_id}.log" >/dev/null; do (( session_id++ )) done
+	exec &> >(tee -a "$(basename "${script}" | sed 's/.sh//')-${session_id}.log")
+	#
+	# Execute the script
+	. "${script}"
+else
+	log e <<-EOF
+		A fatal error occured:
+		    Attempted executable path - ${script}
+		    Path $([[ -f "${script}" ]] || printf 'does not') exist or is a directory.
+		    Path is $([[ -x "${script}" ]] || printf 'not') executable.
+	EOF
+fi
 
 
 
