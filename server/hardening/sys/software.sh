@@ -4,8 +4,10 @@
 # Software Updates
 #
 # Run updates for all major package distrobuters.
-apt-get update
-apt-get full-upgrade --no-install-recommends -y
+if hash apt-get; then apt-get update && apt-get full-upgrade --no-install-recommends -y
+elif hash pacman; then pacman -Syuu
+elif hash dnf; then dnf upgrade --refresh
+fi
 hash flatpak && flatpak update -y
 hash snap && snap refresh
 
@@ -22,10 +24,12 @@ while read -r svc_path; do
 	# Handle symlinks
 	if [[ -h "${svc_path}" ]]; then
 		# Handle broken symlinks
-		[[ ! -e "${svc_path}" ]] && confirm "${svc_path} is a broken symlink. Remove" && unlink "${svc_path}"
+		[[ ! -e "${svc_path}" ]] &&
+			confirm "${svc_path} is a broken symlink. Remove" &&
+			unlink "${svc_path}"
 		#
-		# Checks if a service is a symlink to a file in...
-		# .../lib/systemd/system/ or /usr/lib/systemd/system/.
+		# Checks if a service is a symlink to a file in
+		# /lib/systemd/system/ or /usr/lib/systemd/system/.
 		real_path="$(readlink "${svc_path}")"
 		if [[
 			"${real_path}" == /lib/systemd/system/* ||
