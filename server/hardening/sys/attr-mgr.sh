@@ -26,7 +26,7 @@ if [[ "$(checklist 'Attribute manager' radiolist "${options[@]}")" == remove ]];
 	[[ -s immutable-files.txt ]] && xargs chattr -- -i <immutable-files.txt
 	[[ -s append-only-files.txt ]] && xargs chattr -- -a <append-only-files.txt
 else
-	while IFS= read -r path; do
+	[[ -s append-only-files.txt ]] && while IFS= read -r path; do
 		if [[ -f "${path}" ]]; then
 			chattr +a "${path}"
 			log i "Restored append-only to \"${path}\"."
@@ -34,7 +34,7 @@ else
 			log w "\"${path}\" previously had an attribute but no longer exists and so cannot have append-only restored."
 		fi
 	done <append-only-files.txt
-	while IFS= read -r path; do
+	[[ -s immutable-files.txt ]] && while IFS= read -r path; do
 		if [[ -f "${path}" ]]; then
 			chattr +i "${path}"
 			log i "Restored immutability to \"${path}\"."
