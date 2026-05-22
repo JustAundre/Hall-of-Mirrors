@@ -52,8 +52,13 @@ while read -r svc_path; do
 	# Handle directories
 	# Delete the directory if it is empty.
 	elif [[ -d "${svc_path}" ]]; then
-		if [[ "${svc_path}" == *.d ]]; then log i "${svc_path} is just an overrides directory."
-		else confirm "${svc_path} doesn't end in .d; review its contents" && find "${svc_path}" -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
+		if [[ "${svc_path}" == *.d ]]; then
+			log i "${svc_path} is just an overrides directory."
+		else
+			confirm "${svc_path} doesn't end in .d; review its contents" && find "${svc_path}" -type f \
+				-exec "${EDITOR}" {} \; \
+				-exec rm -vi {} \; \
+				</dev/tty
 		fi
 		[[ -z "$(find "${svc_path}" -mindepth 1)" ]] && rm -vdi "${svc_path}"
 	#
@@ -81,7 +86,10 @@ done
 # Audit /etc/init.d/
 [[ -d /etc/init.d/ ]] &&
 	confirm 'It is concerning that /etc/init.d/ is present. Review its contents' &&
-	find /etc/init.d/ -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
+	find /etc/init.d/ -type f \
+		-exec "${EDITOR}" {} \; \
+		-exec rm -vi {} \; \
+		</dev/tty
 [[ -z "$(find /etc/init.d/ -type f)" ]] && confirm '/etc/init.d/ is now empty. Remove it' && rm -vdi /etc/init.d/
 #
 # Reload SystemD
