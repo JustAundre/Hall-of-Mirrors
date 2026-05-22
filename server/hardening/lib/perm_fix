@@ -38,7 +38,6 @@ shift "$(( OPTIND - 1 ))"
 # Iterate over every path
 for path in "$@"; do
 	# Create non-existent files
-	mkdir -p "$(dirname "${path}")"
 	touch "${path}"
 	#
 	# Save stats for file pre-change

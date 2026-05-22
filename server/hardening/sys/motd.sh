@@ -30,7 +30,7 @@ done
 log i <<-EOF
 	Files in "/etc/update-motd.d/" may leak information;
 	    Here's all the files found in the directory:
-	    $(find /etc/update-motd.d/ | xargs -n1 printf '    %s\n')
+	$(find /etc/update-motd.d/ -print0 | xargs -0n1 printf '    %s\n')
 EOF
 confirm 'Delete /etc/update-motd.d/ and its contents' && rm -rfv /etc/update-motd.d/
 }

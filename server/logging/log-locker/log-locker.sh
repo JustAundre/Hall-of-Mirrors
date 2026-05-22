@@ -30,7 +30,7 @@ for file in "${log_dir}"/*; do
 	# Check if this specific file is in our list (or is being prepared for logging)
 	if
 		printf '%s' "${is_open}" | grep -qx "${file}" ||
-		[[ "$(stat -c %s "${file}")" == 0 ]];
+		[[ "$(stat -c %s "${file}")" == 0 ]]
 	#
 	# File is actively being logged to
 	# Add append-only (+a)
