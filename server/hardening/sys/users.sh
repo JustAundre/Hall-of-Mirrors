@@ -38,7 +38,7 @@ done
 for u in "${users_reuid[@]}"; do
 	while
 		[[ "${uid}" =~ ^[0-9]+$ ]] &&
-		grep -qE "^[^:]+:[^:]+:${uid}" /etc/passwd
+		! grep -qE "^[^:]+:[^:]+:${uid}" /etc/passwd
 	do
 		read -erp 'Enter the new UID: ' uid
 	done
