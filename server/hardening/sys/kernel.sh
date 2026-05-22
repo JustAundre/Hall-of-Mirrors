@@ -83,3 +83,17 @@ after="$(sysctl -a)"
 diff -u <(echo -- "${before}") <(echo -- "${after}") &&
 	log i 'Nothing has changed, meaning your sysctl is likely already sufficiently hardened.'
 )
+
+
+
+
+
+#
+# SystemD Configuration
+#
+# Disable core dumping
+(
+	declare -x target_file=/etc/systemd/coredump.conf divider=\=
+	reconfig Storage none
+	reconfig ProcessSizeMax 0
+)
