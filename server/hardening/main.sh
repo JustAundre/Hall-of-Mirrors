@@ -67,7 +67,7 @@ while IFS=\= read -r key value; do
 done < /etc/os-release
 #
 # The variable which decides what delimitates a key/value pair when using the reconfig library command.
-declare -x divider=' '
+declare -x delimiter=' '
 
 
 

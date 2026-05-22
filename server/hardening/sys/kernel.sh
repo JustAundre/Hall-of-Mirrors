@@ -93,7 +93,7 @@ diff -u <(echo -- "${before}") <(echo -- "${after}") &&
 #
 # Disable core dumping
 (
-	declare -x target_file=/etc/systemd/coredump.conf divider=\=
+	declare -x target_file=/etc/systemd/coredump.conf delimiter=\=
 	reconfig Storage none
 	reconfig ProcessSizeMax 0
 )

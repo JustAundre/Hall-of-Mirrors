@@ -4,5 +4,6 @@
 # Defined via an environment variable to avoid extreme repetition.
 # Remove any existing keys & then add the new entry
 touch "${target_file}"
-sed -i "/^[ #]*$1/d" "${target_file}"
-echo -- "$1${divider}$2" >>"${target_file}"
+grep -qE "^[^#].*$1${delimiter}.*$" "${target_file}" &&
+	sed -i "s/^[^#]*$1.*$/$1${delimiter}$2/" "${target_file}" ||
+	echo -- "$1${delimiter}$2" >>"${target_file}"
