@@ -142,16 +142,13 @@ find /etc/profile /etc/bashrc /etc/bash.bashrc /etc/profile.d/ -type d -exec per
 #
 # Secure local home directories
 # (including root's home @ /root)
-# (Subshell for variable cleanup)
-(
 # Iterate over all interactive users'...
-for user in "${int_users[@]}"; do
+(for user in "${int_users[@]}"; do
 	# Home directories.
 	home="$(grep "^${user}:" | tail -n1 | cut -d: -f6)"
 	find "${home}" -type f -exec perm_fix -m 600 -o "${user}" -g "${user}" {} +
 	find "${home}" -type d -exec perm_fix -m 700 -o "${user}" -g "${user}" {} +
-done
-)
+done)
 find /root -type f -exec perm_fix -m 600 -o 0 -g 0 {} +
 find /root -type d -exec perm_fix -m 700 -o 0 -g 0 {} +
 #

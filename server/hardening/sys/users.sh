@@ -22,22 +22,19 @@ mapfile -t users_regroup < <(checklist 'Select users to reassign groups for' che
 #
 # Main Logic
 #
-# Delete users flagged as to be deleted
+# Delete users flagged as to be deleted.
+# Delete passwords of users flagged to have their password removed.
+# Lock users flagged to be locked.
+# Prompt to change the shell for users flagged to be reshelled.
+# Prompt to change the UID of users flagged to be reUIDed.
+# Promot to change the primary & supplementary groups of users flagged to be regrouped.
 for u in "${users_del[@]}"; do userdel -rf "${u}"; done
-#
-# Delete passwords of users flagged to have their password removed
 for u in "${users_nullpass[@]}"; do passwd "${u}" -d; done
-#
-# Lock users flagged to be locked
 for u in "${users_lock[@]}"; do passwd "${u}" -l; done
-#
-# Prompt to change the shell for users flagged to be reshelled
 for u in "${users_reshell[@]}"; do
 	while [[ ! -x "${shell}" ]]; do read -erp 'Enter the path to the new shell: ' shell; done
 	usermod -s "${shell}" "${u}"
 done
-#
-# Prompt to change the UID of users flagged to be reUIDed
 for u in "${users_reuid[@]}"; do
 	while
 		[[ "${uid}" =~ ^[0-9]+$ ]] &&
@@ -47,8 +44,6 @@ for u in "${users_reuid[@]}"; do
 	done
 	usermod -s "${uid}" "${u}"
 done
-#
-# Change the primary & supplementary groups
 for u in "${users_regroup[@]}"; do
 	# Prompt for the new primary group
 	while

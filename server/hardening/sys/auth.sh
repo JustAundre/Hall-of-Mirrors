@@ -56,23 +56,19 @@ done
 
 
 #
-# Login.defs
+# login.defs
 #
-# Define the settings to update
-login_defs=(
-	'PASS_MAX_DAYS 90'
-	'PASS_MIN_DAYS 7'
-	'PASS_WARN_AGE 14'
-	'ENCRYPT_METHOD YESCRYPT'
-	'UMASK 077'
-	'CREATE_HOME yes'
-	'USERGROUPS_ENAB yes'
+# Configure secure defaults fore login.defs
+(
+target_file=/etc/login.defs
+reconfig PASS_MAX_DAYS 90
+reconfig PASS_MIN_DAYS 7
+reconfig PASS_WARN_AGE 14
+reconfig ENCRYPT_METHOD YESCRYPT
+reconfig UMASK 077
+reconfig CREATE_HOME yes
+reconfig USERGROUPS_ENAB yes
 )
-#
-# Apply global defaults via login.defs
-for entry in "${login_defs[@]}"; do
-	safe_add "${entry}" /etc/login.defs
-done
 
 
 
@@ -114,8 +110,9 @@ fi
 #
 # Display Manager
 #
-# Disable guest and automatic logins
-if [[ -f /etc/lightdm/lightdm.conf ]]; then
-	safe_add 'allow-guest false' /etc/lightdm/lightdm.conf
-	safe_add 'AutomaticLogin false' /etc/lightdm/lightdm.conf
-fi
+# Disable guest and automatic logins for LightDM
+(
+	target_file=/etc/lightdm/lightdm.conf
+	reconfig allow-guest false
+	reconfig AutomaticLogin false
+)

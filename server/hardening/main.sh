@@ -60,11 +60,14 @@ mapfile -t all_users < <(cut -d: -f1 </etc/passwd)
 #
 # Store OS details in an associative array.
 declare -A os_info
-while IFS='=' read -r key value; do
+while IFS=\= read -r key value; do
 	value="${value%\"}"
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
 done < /etc/os-release
+#
+# The variable which decides what delimitates a key/value pair when using the reconfig library command.
+declare -x divider=' '
 
 
 

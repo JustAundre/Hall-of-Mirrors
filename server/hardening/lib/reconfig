@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2154
+# The divider used to delimitate the key and value; and the target file.
+# Defined via an environment variable to avoid extreme repetition.
+# Remove any existing keys & then add the new entry
+sed -i "/^[ #]*$1/d" "${target_file}"
+echo -- "$1${divider}$2" >>"${target_file}"
