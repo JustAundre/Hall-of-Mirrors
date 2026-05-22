@@ -1,15 +1,28 @@
 #!/usr/bin/env bash
 ### A script to comprehensively review many types of scheduled tasks.
 #
-# Cron files
+# Opening Heads Up
 #
-# Check /etc/cron* files
 log i <<-'EOF'
-	You'll be put into a text editor to review/edit crontab files;
+	You'll be put into a text editor to review/edit scheduled tasks;
 	    You'll be prompted to delete the file or not.
 EOF
 pause
-find /etc/cron* -maxdepth 2 -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
+
+
+
+
+
+#
+# Cron files
+#
+# Check /etc/cron* files
+hash crond && find /etc/cron* -maxdepth 2 -type f \
+	-exec log i 'Reviewing cron file "{}"...' \; \
+	-exec sleep 2.5 \; \
+	-exec "${EDITOR}" {} \; \
+	-exec rm -vi {} \; \
+	</dev/tty
 
 
 
@@ -20,10 +33,44 @@ find /etc/cron* -maxdepth 2 -type f -exec "${EDITOR}" {} \; -exec rm -vi {} \;
 #
 # Prompt to review/edit the crontab of each user
 # Prompt to delete the crontab of each user
-for u in "${all_users[@]}"; do
+hash crontab && for u in "${all_users[@]}"; do
+	log i "Reviewing the crontab for user \"${u}\"..."
+	sleep 2.5
 	crontab -eu "${u}"
 	crontab -riu "${u}"
 done
+
+
+
+
+
+#
+# AtD Jobs
+#
+# AtD does not have a standardized directory where
+# it stores Atd jobs, so you have to dig deep into its binary for it.
+if hash atd; then
+	while read -r path; do
+		echo "${path}"
+		[[ -d "${path}" && -x "${path}" ]] && atd_dir="${path}" || break
+		find "${atd_dir}" ! -name '.SEQ' -type f \
+			-exec sleep 2.5 \; \
+			-exec "${EDITOR}" {} \; \
+			-exec rm -vi {} \; \
+			</dev/tty
+		break
+	done < <(strings "$(which atd)" | grep -Eo '/var/spool/.+')
+	[[ -z "${atd_dir}" ]] && log w $'AtD is installed, but the directory where AtD jobs are stored couldn\'t be located.'
+fi
+
+
+
+
+
+#
+# Anacron Jobs
+#
+# TODO
 
 
 
@@ -41,11 +88,6 @@ mapfile -t triggers < <(
 )
 #
 # Audit them & act accordingly.
-log i <<-'EOF'
-	You'll be put into a text editor to review/edit SystemD .timer/.path files;
-	    You'll be prompted to delete the file or not.
-EOF
-pause
 for trigger in "${triggers[@]}"; do
 	"${EDITOR}" "${trigger}" &&
 		confirm "Delete ${trigger}" &&
