@@ -5,7 +5,7 @@
 # Give the user their options
 clear >&2
 echo "$1" >&2
-for item in "$@:3"; do
+for item in "${@:3}"; do
 	x="$((x + 1))"
 	item="${x}) ${item}"
 	printf '\t%s\n' "${item}" >&2
