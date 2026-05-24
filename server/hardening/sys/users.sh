@@ -32,13 +32,15 @@ for u in "${users_del[@]}"; do userdel -rf "${u}"; done
 for u in "${users_nullpass[@]}"; do passwd "${u}" -d; done
 for u in "${users_lock[@]}"; do passwd "${u}" -l; done
 for u in "${users_reshell[@]}"; do
-	while [[ ! -x "${shell}" ]]; do read -erp 'Enter the path to the new shell: ' shell; done
+	while [[ ! -x "${shell}" ]]; do
+		read -erp 'Enter the path to the new shell: ' shell;
+	done
 	usermod -s "${shell}" "${u}"
 done
 for u in "${users_reuid[@]}"; do
 	while
 		[[ "${uid}" =~ ^[0-9]+$ ]] &&
-		! grep -qE "^[^:]+:[^:]+:${uid}" /etc/passwd
+		getent passwd "${uid}" /etc/passwd &>/dev/null
 	do
 		read -erp 'Enter the new UID: ' uid
 	done
@@ -48,7 +50,7 @@ for u in "${users_regroup[@]}"; do
 	# Prompt for the new primary group
 	while
 		[[ -z "${primary_group}" ]] ||
-		! grep -qE "^[^:]+:[^:]+:${primary_group}" /etc/group
+		getent "^[^:]+:[^:]+:${primary_group}" /etc/group &>/dev/null
 	do
 		read -erp 'Enter new primary group: ' primary_group
 	done
@@ -69,4 +71,4 @@ done
 #
 # Secures root user
 # (L)ocks user (root) & (d)eletes their password
-confirm 'Lock & remove password for user (root)' && passwd root -ld
+confirm "Lock & remove password for UID 0 user ($(id -nu 0))" && passwd root -ld

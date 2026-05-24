@@ -6,13 +6,12 @@
 # Map out files /w broken ownership.
 while IFS=$'\n' read -r path; do (
 	# Verbosity: note invalidities, their type, and the UID/GID.
-	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && bad_uid=true
-	[[ "$(stat -c '%G' "${path}")" == UNKNOWN ]] && bad_gid=true
-	if [[ -n "${bad_uid}" && -z "${bad_gid}" ]]; then invalid_type=UID
-	elif [[ -n "${bad_gid}" && -z "${bad_uid}" ]]; then invalid_type=GID
-	elif [[ -n "${bad_uid}" && -n "${bad_gid}" ]]; then invalid_type='UID & GID'
-	fi
-	log i "${path} has an invalid owner ${invalid_type}; changed owners to 0:0."
+	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && invalid_type+=UID
+	[[ "$(stat -c '%G' "${path}")" == UNKNOWN ]] && {
+		[[ -n "${invalid_type}" ]] && invalid_type+=' & '
+		invalid_type+=GID
+	}
+	log i "${path} has an invalid owner ${invalid_type}; changed ownership to 0:0."
 	chown -h 0:0 "${path}"
 ) done < <(find / -xdev \( -nouser -o -nogroup \))
 
@@ -124,7 +123,7 @@ find /var/log/ -mindepth 1 -type d -exec perm_fix -m 750 {} +
 #
 # Some distros use the adm user for these logs
 (
-auditd_log_dir="$(dirname "$(awk -F'=' '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs)")"
+auditd_log_dir="$(dirname "$(awk -F\= '/^\s*log_file/ {print $2}' /etc/audit/auditd.conf | xargs)")"
 if [[ "${os_info[ID]}" =~ ^(ubuntu|almalinux)$ && -d "${auditd_log_dir}" ]]
 then find "${auditd_log_dir}" -type f -exec perm_fix -m 640 -o 0 -g adm {} +
 else find "${auditd_log_dir}" -type f -exec perm_fix -m 0600 -o 0 -g 0 {} +
