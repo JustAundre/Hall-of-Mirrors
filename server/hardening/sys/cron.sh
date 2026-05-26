@@ -14,10 +14,10 @@ pause
 
 
 #
-# Cron files
+# (Ana)Cron files
 #
 # Check /etc/cron* files
-hash crond && find /etc/cron* -maxdepth 2 -type f \
+hash crond && find /etc/cron* /var/spool/anacron/cron* /etc/anacrontab -type f \
 	-exec log i 'Reviewing cron file "{}"...' \; \
 	-exec sleep 2.5 \; \
 	-exec "${EDITOR}" {} \; \
@@ -51,7 +51,6 @@ done
 # it stores Atd jobs, so you have to dig deep into its binary for it.
 if hash atd; then
 	while read -r path; do
-		echo "${path}"
 		[[ -d "${path}" && -x "${path}" ]] && atd_dir="${path}" || break
 		find "${atd_dir}" ! -name '.SEQ' -type f \
 			-exec sleep 2.5 \; \
@@ -62,15 +61,6 @@ if hash atd; then
 	done < <(strings "$(which atd)" | grep -Eo '/var/spool/.+')
 	[[ -z "${atd_dir}" ]] && log w $'AtD is installed, but the directory where AtD jobs are stored couldn\'t be located.'
 fi
-
-
-
-
-
-#
-# Anacron Jobs
-#
-# TODO
 
 
 
