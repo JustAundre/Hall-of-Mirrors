@@ -4,7 +4,7 @@
 #
 # File name/location of dictionary file...
 # ...and URL to fallback dictionary.
-dict_location="$(find /usr/share/dict -type f,l -readable | head -n1)"
+IFS= read -rd '' -a dict_location < <(find /usr/share/dict -type f,l -readable -print0)
 dict_url='https://www.mit.edu/~ecprice/wordlist.10000'
 #
 # The help menu
@@ -262,7 +262,7 @@ fi
 # Generate password(s)
 echo 'Generated password(s):' >&4
 for (( x=0; x < password_amount; x++ )); do
-	result=
+	unset result
 	for (( y=0; y < ${#pattern}; y++ )); do
 		char="${pattern:${y}:1}"
 		case "${char}" in

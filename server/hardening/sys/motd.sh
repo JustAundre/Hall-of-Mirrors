@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-### Pretty simple; just gives you a premade MOTD file to install.
 #
 # Install MOTDs
 #

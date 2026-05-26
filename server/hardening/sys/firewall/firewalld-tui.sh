@@ -1,60 +1,8 @@
 #!/usr/bin/env bash
-### Applies a base ruleset to your firewall and even has a TUI rule maker for FirewallD.
-#
-# Base Ruleset
-#
-# Sets default rules based on the installed firewall
-if hash firewall-cmd; then
-	# (--permanent: Modifies on-disk configuration, not in-memory configuration.)
-	# Start the firewall
-	systemctl unmask firewalld &&
-		systemctl enable --now firewalld &&
-		log i 'Restarted FirewallD.'
-	#
-	# Reset the firewall
-	firewall-cmd --reset-to-defaults &&
-		log i 'Successfully reset FirewallD.'
-	#
-	# Deny all incoming, allow all outgoing.
-	firewall-cmd --set-default-zone public &&
-		firewall-cmd --permanent --load-zone-defaults public &&
-		log i 'Set FirewallD to zone "public". Deny incoming by default, allow outgoing by default.'
-	#
-	# Block ICMP echo requests & timestamp requests/replies
-	firewall-cmd --permanent --add-icmp-block echo-request &&
-		firewall-cmd --permanent --add-icmp-block timestamp-reply &&
-		firewall-cmd --permanent --add-icmp-block timestamp-request &&
-		log i 'Blocked ICMP echos/pings and timestamp requests.'
-	#
-	# Push on-disk configuration into in-memory configuration
-	firewall-cmd --reload &&
-		log i 'Loaded on-disk FirewallD configuration into running configuration.'
-elif hash ufw; then
-	# Start the firewall
-	systemctl unmask ufw
-	systemctl enable --now ufw
-	ufw --force enable
-	#
-	# Reset the firewall
-	ufw reset
-	#
-	# Deny all incoming, allow all outgoing.
-	ufw default deny incoming
-	ufw default allow outgoing
-else
-	log e 'This script requires either UFW or FirewallD installed.'
-	exit 1
-fi
-
-
-
-
-
 #
 # FirewallD TUI
 #
-# Confirmation
-hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && while true; do
+hash firewall-cmd && while true; do
 	# Get persistence state
 	persistences=(
 		'On-disk'

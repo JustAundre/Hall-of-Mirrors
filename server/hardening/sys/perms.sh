@@ -1,10 +1,9 @@
-#!/usr/bin/env bash
-### A script to review nearly every path for permissions & ownership which are insecure/not as secure as can be.
 #
-# Invalid Ownership
+# Invalidities
 #
 # Map out files /w broken ownership.
-while IFS=$'\n' read -r path; do (
+IFS= read -rd '' -a paths < <(find / -xdev \( -nouser -o -nogroup \) -print0)
+for path in "${paths[@]}"; do (
 	# Verbosity: note invalidities, their type, and the UID/GID.
 	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && invalid_type+=UID
 	[[ "$(stat -c '%G' "${path}")" == UNKNOWN ]] && {
@@ -13,26 +12,12 @@ while IFS=$'\n' read -r path; do (
 	}
 	log i "${path} has an invalid owner ${invalid_type}; changed ownership to 0:0."
 	chown -h 0:0 "${path}"
-) done < <(find / -xdev \( -nouser -o -nogroup \))
-
-
-
-
-
-#
-# Invalid Symlinks
+) done
 #
 # Remove invalid symlinks
 find / -xdev -xtype l -exec log i '{} is a broken symlink; removing...' \; -exec unlink {} +
-
-
-
-
-
 #
-# Sticky Temps
-#
-# Ensure temporary data directories are world-writable /w sticky-bit.
+# Ensure FHS temp directories are world-writable /w sticky-bit.
 perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 
 
@@ -40,28 +25,23 @@ perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 
 
 #
-# World-Writable Paths
-#
-# Prompt for manual review for world-writable directories
-while IFS=$'\n' read -r path; do
-	select_fix "${path}"
-done < <(find / -xdev -perm -0002)
-
-
-
-
-
-#
-# /etc/ Ownerships
+# Abiguous Path Audit
 #
 # Prompt for manual review for paths in /etc/ which aren't owned by a system user.
-while IFS=$'\n' read -r path; do
+IFS= read -rd '' -a paths < <(find /etc \( ! -group 0 -o ! -user 0 \) -print0)
+for path in "${paths[@]}"; do
 	# If the owners are system users/groups, it's probably fine.
 	if [[ "$(stat -c %g "${path}")" -ge 1000 || "$(stat -c %u "${path}")" -ge 1000 ]]
 	then select_fix "${path}"
 	else log i "${path} isn't owned by 0:0 but marked as likely safe as the owners are system users."
 	fi
-done < <(find /etc \( ! -group 0 -o ! -user 0 \))
+done
+#
+# Prompt for manual review for paths which are world-writable.
+IFS= read -rd '' -a paths < <(find / -xdev -perm -0002 -print0)
+for path in "${paths[@]}"; do
+	select_fix "${path}"
+done
 
 
 

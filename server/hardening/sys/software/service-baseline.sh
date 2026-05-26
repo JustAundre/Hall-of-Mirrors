@@ -1,26 +1,10 @@
-#!/usr/bin/env bash
-### Runs updates, flags risky packages, and baselines/audits SystemD services.
 #
-# Software Updates
-#
-# Run updates for all major package distrobuters.
-if hash apt-get; then apt-get update && apt-get full-upgrade --no-install-recommends -y
-elif hash pacman; then pacman -Syuu
-elif hash dnf; then dnf upgrade --refresh
-fi
-hash flatpak && flatpak update -y
-hash snap && snap refresh
-
-
-
-
-
-#
-# Service Audit
+# SystemD Baselining
 #
 # Baseline /etc/systemd/system/ from /lib/systemd/system/
 log i 'Baselining "/etc/systemd/system/" from "/lib/systemd/system/"...'
-while read -r svc_path; do
+IFS= read -rd '' -a paths < <(find /etc/systemd/system -maxdepth 1 -mindepth 1 -print0)
+for svc_path in "${paths[@]}"; do
 	# Handle symlinks
 	if [[ -h "${svc_path}" ]]; then
 		# Handle broken symlinks
@@ -68,29 +52,4 @@ while read -r svc_path; do
 		"${EDITOR}" "${svc_path}"
 		rm -vi "${svc_path}"
 	fi
-done < <(find /etc/systemd/system -maxdepth 1 -mindepth 1)
-#
-# Enumerate services
-# Check for services to remove
-mapfile -t services < <(TERM=dumb systemctl list-unit-files --type=service --no-legend --plain | awk '{ print $1 }')
-mapfile -t flagged_services < <(checklist 'Select services to REMOVE' checklist "${services[@]}")
-#
-# Remove selected services
-for flagged_service in "${flagged_services[@]}"; do
-	# Attempt to remove package behind service
-	# Will just decommission service file if cannot locate resposible package.
-	apt-get remove --purge -y "$(dpkg -S "/etc/systemd/system/${flagged_service}.service" | cut -d: -f1)" ||
-	decommission "${flagged_service}"
 done
-#
-# Audit /etc/init.d/
-[[ -d /etc/init.d/ ]] &&
-	confirm 'It is concerning that /etc/init.d/ is present. Review its contents' &&
-	find /etc/init.d/ -type f \
-		-exec "${EDITOR}" {} \; \
-		-exec rm -vi {} \; \
-		</dev/tty
-[[ -z "$(find /etc/init.d/ -type f)" ]] && confirm '/etc/init.d/ is now empty. Remove it' && rm -vdi /etc/init.d/
-#
-# Reload SystemD
-systemctl daemon-reload

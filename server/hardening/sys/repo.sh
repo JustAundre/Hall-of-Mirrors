@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-### Checks your package repositories for URLs to repositories which don't match the domain of your distribution's main page.
 #
 # Repository URL Checks
 #

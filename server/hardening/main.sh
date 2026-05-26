@@ -37,7 +37,7 @@ num_chk='^[0-9]+$'
 # Load the PATH variable into an array
 # Load all executables in the PATH into an array
 mapfile -t paths < <(printf '%s' "${PATH}" | tr ':' '\n')
-mapfile -t binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable)
+read -rd '' -a binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable)
 #
 # Load all interactive users into an array
 # Load all non-interactvie users into an array

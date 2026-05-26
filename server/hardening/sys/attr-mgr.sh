@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-### A compact script to remove immutable and append-only bits and save them to a file to restore at a later time.
 #
 # Attribute Manager
 #

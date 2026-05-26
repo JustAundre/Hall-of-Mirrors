@@ -6,7 +6,7 @@ fixes=(
 	'' '' ''
 	'Delete the path.'
 )
-mapfile -t choices < <(checklist "$1 is owned by $(stat -c '%U:%G/%u:%g' "$1") with permissions $(stat -c '%a' "$1"). What do you want to do?" checklist "${fixes[@]}")
+preprompt_msg="\"$1\" is owned by $(stat -c '%U:%G/%u:%g' "$1") with permissions $(stat -c '%a' "$1")" mapfile -t choices < <(checklist 'What do you want to do?' checklist "${fixes[@]}")
 #
 # Act on selections
 for choice in "${choices[@]}"; do

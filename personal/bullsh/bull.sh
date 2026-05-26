@@ -90,7 +90,7 @@ annoyance() {
 	esac
 	#
 	# Mark the end of the function
-	annoying=
+	unset annoying
 	return
 }
 #

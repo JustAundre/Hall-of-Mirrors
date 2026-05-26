@@ -8,6 +8,10 @@ Over-engineered script for securing Linux machines
 
 ## Recommended Execution Flow
 
+> [!WARNING]
+>
+> Graph is currently obsolete due to restructuring.
+
 ```mermaid
 graph LR
 	1{attr-mgr.sh <br><i>Removal Mode</i>}
@@ -31,39 +35,3 @@ graph LR
 	8 ~~~ 9
 	11 ~~~ 12
 ```
-
-## Detailed Write-ups
-
-### System Scripts
-
-#### attr-mgr.sh
-
-#### repo.sh
-
-#### software.sh
-
-#### auth.sh
-
-#### perms.sh
-
-#### users.sh
-
-#### limit-resources.sh
-
-#### motd.sh
-
-#### kernel.sh
-
-#### firewall.sh
-
-#### cron.sh
-
-### Service Scripts
-
-#### sshd.sh
-
-#### vsftpd.sh
-
-#### nginx.sh
-
-#### apache.sh
