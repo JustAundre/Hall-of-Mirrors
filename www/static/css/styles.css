@@ -1,7 +1,7 @@
 /* Change initial-value to change the default accent hue. */
 @property --accent-hue {
 	syntax: '<number>';
-	initial-value: 50;
+	initial-value: 200;
 	inherits: false;
 }
 
