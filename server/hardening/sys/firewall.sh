@@ -101,7 +101,7 @@ hash firewall-cmd && confirm 'Configure FirewallD /w TUI' && while true; do
 			# Interprets the source port
 			# The lowest port number is 0 (exclusive) and 2^16 - 1 (inclusive).
 			[[ -n "${input[2]}" ]] && rich_rule+="source-port port=\"${input[2]}\" "
-			if [[ "${input[4]}" =~ ^[0-9]{1,5}$ && "${input[2]}" -gt 0 && "${input[2]}" -le 65535 ]]; then readable+="port ${input[2]}, "
+			if [[ "${input[2]}" =~ ^[0-9]{1,5}$ && "${input[2]}" -gt 0 && "${input[2]}" -le 65535 ]]; then readable+="port ${input[2]}, "
 			elif [[ -z "${input[2]}" ]]; then readable+="coming from any port, "
 			else readable+="port N/A, "
 			fi
