@@ -1,7 +1,7 @@
 /* Change initial-value to change the default accent hue. */
 @property --accent-hue {
 	syntax: '<number>';
-	initial-value: 80;
+	initial-value: 50;
 	inherits: false;
 }
 
@@ -76,7 +76,9 @@ a {
 	}
 }
 
+@keyframes dummy { 0% {} }
 button {
+	--anim-length: 150ms;
 	display: flex;
 	text-align: center;
 	align-items: center;
@@ -88,14 +90,19 @@ button {
 		outline: var(--accent) solid 2px;
 		filter: brightness(1.25);
 	}
-	&:active {
+	&.active, &:active {
+		animation: dummy 150ms linear;
 		scale: 0.95;
 		outline: transparent solid 2px;
 		outline-offset: 8px;
 		filter: brightness(1.5) saturate(.8) contrast(.8);
 	}
 	[data-motion='true'] & {
-		transition: scale 150ms linear, outline 100ms linear, outline-offset 100ms linear, filter 150ms linear;
+		transition:
+			scale var(--anim-length) linear,
+			outline var(--anim-length) linear,
+			outline-offset var(--anim-length) linear,
+			filter var(--anim-length) linear;
 	}
 }
 
@@ -136,7 +143,10 @@ article {
 	color: white;
 
 	[data-motion='true'] & {
-		transition: opacity 1s ease-out, border-radius 1s ease-out, translate 1s ease-out;
+		transition:
+			opacity 1s ease-out,
+			border-radius 1s ease-out,
+			translate 1s ease-out;
 	}
 
 	&:not([open]) {
