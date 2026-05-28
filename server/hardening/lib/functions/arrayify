@@ -39,18 +39,12 @@ arrayify() {
 	# The wonderful "while read ...;" loop is great,
 	# but drops the last line of a file if there is no trailing delim.
 	# Because the -d (delimiter) condition is no longer true.
-	for path in "${@:2}"; do
-		if [[ ! -f "${path}" ]]; then
-			log e "\"${path}\" is not a valid filepath."
-			exit=255
+	[[ -n "${exit}" ]] && return "${exit}"
+	while read -rd "${IFS}" line || [[ -n "${line}" ]]; do
+		if [[ -n "${truncate}" && -n "${IFS}" ]]; then internal_array+=("${line}")
+		else internal_array+=("${line}${IFS}")
 		fi
-		[[ -n "${exit}" ]] && return "${exit}"
-		while read -rd "${IFS}" line || [[ -n "${line}" ]]; do
-			if [[ -n "${truncate}" && -n "${IFS}" ]]; then internal_array+=("${line}")
-			else internal_array+=("${line}${IFS}")
-			fi
-		done </dev/stdin
-	done
+	done </dev/stdin
 }
 #
 # Replace builtins.
