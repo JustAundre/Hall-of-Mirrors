@@ -16,7 +16,7 @@ echo "${title}" >&"${ui}"
 for item in "${@}"; do
 	x="$((x + 1))"
 	item="${x}) ${item}"
-	printf '\t%s\n' "${item}" >&"${ui}"
+	printf '    %s\n' "${item}" >&"${ui}"
 done
 #
 # Determinte selection mode & grab selection(s)
