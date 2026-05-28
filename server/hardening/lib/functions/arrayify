@@ -4,7 +4,7 @@
 # Post-option Positional Argument 1 || Which variable name to map the values to.
 #
 arrayify() {
-	local exit args IFS truncate IFS=$'\n'
+	local exit args truncate IFS=$'\n'
 	args="$(getopt --options 'td:' --longoptions 'truncate,delimiter:' --name "$0" -- "$@")" || return 252
 	eval set -- "${args}"
 	while true; do
