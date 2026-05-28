@@ -31,7 +31,7 @@ elif [[ "${type}" == radiolist ]]; then
 		(i.e. "5")
 	EOF
 else
-	cat >&"${ui}" <<-EOF
+	log e <<-EOF
 		Incorrect usage of the checklist function;
 		"${type}" was given as the 2nd argument, but the only valid options are "checklist" OR "radiolist".
 	EOF
