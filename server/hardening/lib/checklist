@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# TODO: Switch to getopt
 # Open a fd for UI text
 exec {ui}>&2
 #
@@ -10,7 +11,7 @@ opts=("$@")
 #
 # Display options
 clear >&"${ui}"
-[[ -z "${preprompt_msg}" ]] && echo -- "${preprompt_msg}" >&"${ui}"
+[[ -n "${preprompt_msg}" ]] && echo -- "${preprompt_msg}" >&"${ui}"
 echo "${title}" >&"${ui}"
 for item in "${@}"; do
 	x="$((x + 1))"
