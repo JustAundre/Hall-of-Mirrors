@@ -11,7 +11,7 @@ if [[ "$(checklist 'Attribute manager' radiolist "${options[@]}")" == remove ]];
 	log i $'This will take a second; if you ask, no the script didn\'t hang.'
 	#
 	# Removes the (i)mmutable & (a)ppend-only attributes from all files
-	find / -xdev -type f -exec lsattr -d {} + 2>/dev/null | while read -r attrs file; do
+	xfind / -xdev -type f -exec lsattr -d {} + 2>/dev/null | while read -r attrs file; do
 		if [[ "${attrs}" == *i* ]]; then
 			echo "${file}" >>immutable-files.txt
 			log i "Found immutable file: ${file}"
