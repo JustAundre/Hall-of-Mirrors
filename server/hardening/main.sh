@@ -6,7 +6,7 @@
 #
 # CD into the script's parent directory;
 # Source global functions and variables.
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 #
 # Add custom commands to PATH
 # Secure UMASK
@@ -18,7 +18,6 @@ umask 077
 # Unset aliases & disable alias expansion
 # Make a pipeline's exit code the exit code of the last failed command of the pipelines
 shopt -s dotglob nullglob nocasematch
-shopt -u expand_aliases
 unalias -a
 set -o pipefail
 
@@ -37,7 +36,7 @@ num_chk='^[0-9]+$'
 # Load the PATH variable into an array
 # Load all executables in the PATH into an array
 mapfile -d ':' -t paths < <(printf '%s' "${PATH}")
-mapfile -d '' -t binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable)
+mapfile -d '' -t binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -printf0)
 #
 # Load all interactive users into an array
 # Load all non-interactvie users into an array
@@ -58,7 +57,7 @@ while IFS=\= read -r key value; do
 	value="${value%\"}"
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
-done < /etc/os-release
+done </etc/os-release
 #
 # The variable which decides what delimitates a key/value pair when using the reconfig library command.
 declare -x delimiter=' '
@@ -71,13 +70,12 @@ declare -x delimiter=' '
 # Environment Check
 #
 # Alert the user of the checks to avoid an invisible hang
-echo 'Running environment checks...'
-#
 # Start the check
 # 1. Is this running in Bash & NOT sourced?
 # 2. Does this script have root permissions?
 # 3. Is the active init. system SystemD?
 # 4. Is the output a terminal?
+log i 'Running environment checks...'
 if [[ -z "${BASH_SOURCE[0]}" ]]; then errors+=('Script must be ran by Bash intepreter & must NOT be sourced.')
 elif [[ "${EUID}" -ne 0 ]]; then errors+=("Must run as root. Try (sudo bash $0).")
 elif [[ "$(</proc/1/comm)" != systemd ]]; then errors+=('System is not using SystemD which is the only system daemon supported by this script.')
