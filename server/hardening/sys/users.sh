@@ -3,6 +3,7 @@
 #
 # Prompt for users to ...
 # Delete, remove password, lock, reshell, reUID & regroup.
+(
 preprompt_msg="$(for user in "${all_users[@]}"; do
 	id -a "${user}"
 done)"
@@ -12,7 +13,7 @@ mapfile -t users_lock < <(checklist 'Select users to lock' checklist "${all_user
 mapfile -t users_reshell < <(checklist 'Select users to select a new shell for' checklist "${all_users[@]}")
 mapfile -t users_reuid < <(checklist 'Select users to assign a new UID' checklist "${all_users[@]}")
 mapfile -t users_regroup < <(checklist 'Select users to reassign groups for' checklist "${all_users[@]}")
-unset preprompt_msg
+)
 
 
 

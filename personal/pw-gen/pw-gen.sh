@@ -4,11 +4,12 @@
 #
 # File name/location of dictionary file...
 # ...and URL to fallback dictionary.
-IFS= read -rd '' -a dict_location < <(find /usr/share/dict -type f,l -readable -print0)
+mapfile -td '' dict_locations < <(find /usr/share/dict -type f,l -readable -print0)
+dict_location="${dict_locations[0]}"
 dict_url='https://www.mit.edu/~ecprice/wordlist.10000'
 #
 # The help menu
-IFS= read -rd'' help <<-'EOF'
+IFS= read -rd '' help <<-'EOF'
 	You're looking at: The Help Menu
 	Either you used a non-existent option or asked to be directed here by way of -h.
 

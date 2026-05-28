@@ -16,19 +16,19 @@ done
 # Validate permissions
 if
 	[[ -n "${owner}" && ! "${owner}" =~ ${num_chk} ]] ||
-	! getent passwd "${owner}" &>/dev/null
+	! getent passwd -- "${owner}" &>/dev/null
 then
 	errors+=("${owner} is an invalid user.")
 elif
 	[[ -n "${group}" && ! "${group}" =~ ${num_chk} ]] ||
-	! getent group "${group}" &>/dev/null
+	! getent group -- "${group}" &>/dev/null
 then
 	errors+=("${group} is an invalid group.")
 elif [[ -n "${mode}" && ! "${mode}" =~ ^[01234567]{3,4} ]]; then
 	errors+=("${mode} is an invalid mode.")
 fi
 if [[ -n "${errors[*]}" ]]; then
-	for error in "${errors[@]}"; do error "${error}"; done
+	for error in "${errors[@]}"; do log e "${error}"; done
 	exit 254
 fi
 #
@@ -38,17 +38,17 @@ shift "$(( OPTIND - 1 ))"
 # Iterate over every path
 for path in "$@"; do
 	# Create non-existent files
-	touch "${path}"
+	touch -- "${path}"
 	#
 	# Save stats for file pre-change
-	before="$(stat -c '%a %u/%U:%g/%G' "${path}")"
+	before="$(stat -c '%a %u/%U:%g/%G' -- "${path}")"
 	#
 	# Attempt the change
-	chown -hP "${owner}:${group}" "${path}"
-	[[ -n "${mode}" ]] && chmod -hP "${mode}" "${path}"
+	chown -hP -- "${owner}:${group}" "${path}"
+	[[ -n "${mode}" ]] && chmod -hP -- "${mode}" "${path}"
 	#
 	# Check stats for file post-change
-	after="$(stat -c '%a %u/%U:%g/%G' "${path}")"
+	after="$(stat -c '%a %u/%U:%g/%G' -- "${path}")"
 	#
 	# Log diffs bewteen pre and post stats
 	[[ "${before}" != "${after}" ]] &&

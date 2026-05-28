@@ -2,7 +2,7 @@
 # Invalidities
 #
 # Map out files /w broken ownership.
-IFS= read -rd '' -a paths < <(find / -xdev \( -nouser -o -nogroup \) -print0)
+mapfile -d '' paths < <(find / -xdev \( -nouser -o -nogroup \) -print0)
 for path in "${paths[@]}"; do (
 	# Verbosity: note invalidities, their type, and the UID/GID.
 	[[ "$(stat -c '%U' "${path}")" == UNKNOWN ]] && invalid_type+=UID
@@ -28,7 +28,7 @@ perm_fix -m 1777 -o 0 -g 0 /tmp /var/tmp /dev/shm
 # Abiguous Path Audit
 #
 # Prompt for manual review for paths in /etc/ which aren't owned by a system user.
-IFS= read -rd '' -a paths < <(find /etc \( ! -group 0 -o ! -user 0 \) -print0)
+mapfile -d '' paths < <(find /etc \( ! -group 0 -o ! -user 0 \) -print0)
 for path in "${paths[@]}"; do
 	# If the owners are system users/groups, it's probably fine.
 	if [[ "$(stat -c %g "${path}")" -ge 1000 || "$(stat -c %u "${path}")" -ge 1000 ]]
@@ -38,7 +38,7 @@ for path in "${paths[@]}"; do
 done
 #
 # Prompt for manual review for paths which are world-writable.
-IFS= read -rd '' -a paths < <(find / -xdev -perm -0002 -print0)
+mapfile -d '' -a paths < <(find / -xdev -perm -0002 -print0)
 for path in "${paths[@]}"; do
 	select_fix "${path}"
 done
