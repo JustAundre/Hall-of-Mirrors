@@ -105,7 +105,9 @@ if [[ -x "${script}" ]]; then
 	# Log to master a log file
 	session_id=1
 	while compgen -G "*-${session_id}.log" >/dev/null; do (( session_id++ )) done
-	exec &> >(tee -a "$(basename "${script}" | sed 's/.sh//')-${session_id}.log")
+	main_log="logs/$(basename "${script}" | sed 's/.sh//g')-${session_id}.log"
+	touch "${main_log}"
+	exec &> >(tee -a "${main_log}")
 	#
 	# Execute the script
 	. "${script}"
