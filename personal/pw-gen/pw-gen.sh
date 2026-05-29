@@ -113,7 +113,7 @@ while getopts 's:m:M:c:a:p:hv' arg; do
 		;;
 		*)
 			echo "${help}" >&4
-			exit 1
+			exit 2
 		;;
 	esac
 done
@@ -156,7 +156,7 @@ if [[
 		n = Random number
 		s = Provided separator
 	EOF
-	read -erp 'Enter your generation pattern (Default is wnswnswn): ' pattern >&4
+	read -erp 'Enter your generation pattern (Default is "wnswnswn"): ' pattern >&4
 fi
 
 
@@ -168,19 +168,19 @@ fi
 #
 # Ensures the separator is not empty (defaults to hyphen)
 if [[ -z "${separator}" ]]; then
-	echo 'i: No separator given; defaulting to a hyphen (-)' >&4
+	echo 'i: No separator given; defaulting to a hyphen "-"' >&4
 	separator='-'
 fi
 #
 # Ensures the minimum length is a number (defaults to 4)
 if [[ ! "${min}" =~ ^[0-9]+$ ]]; then
-	echo 'i: Invalid/missing minimum length; defaulting to 4.' >&4
+	echo 'i: Invalid/missing minimum length; defaulting to "4".' >&4
 	min=4
 fi
 #
 # Ensures the maximum length is a number (defaults to 8)
 if [[ ! "${max}" =~ ^[0-9]+$ ]]; then
-	echo 'i: Invalid/missing maximum length; defaulting to 8.' >&4
+	echo 'i: Invalid/missing maximum length; defaulting to "8".' >&4
 	max=8
 fi
 #
@@ -203,7 +203,7 @@ fi
 # Ensures the pattern exists
 if [[ -z "${pattern}" ]]; then
 	echo 'i: Invalid/missing response; defaulting to wnswnswn.' >&4
-	pattern='wnswnswn'
+	pattern=wnswnswn
 fi
 #
 # Ensures the password count is at least 1
@@ -222,7 +222,7 @@ fi
 # If no dictionary is present...
 if [[
 	! -f "${dict_location}" &&
-	! -f 'en_US-dict.txt'
+	! -f en_US-dict.txt
 ]]; then
 	# Attempt to download one (with consent)...
 	echo "W: A pre-existing dictionary couldn't be located in \"${dict_location}\"."
@@ -248,14 +248,14 @@ if [[
 		# Will timeout if download takes too long.
 		if ! curl -s "${dict_url}" --connect-timeout 5 >"${dict_location}"; then
 			# Alert user of the error
-			cat >&4 <<-'EOF'
-				E: Failed to download dictionary;
+			cat >&4 <<-EOF
+				E: Failed to download dictionary; the curl command exited with code "$?".
 				    deleting possible remnant file(s) & quitting...
 			EOF
 			#
 			# Remove remnant empty file
 			[[ -f "${dict_location}" ]] && rm -v "${dict_location}"
-			exit 2
+			exit 1
 		fi
 	fi
 fi

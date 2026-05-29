@@ -6,11 +6,11 @@
 #
 # CD into the script's parent directory;
 # Source global functions and variables.
-cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 69
 #
 # Add custom commands to PATH
 # Secure UMASK
-declare -rx PATH="$(pwd)/lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin"
+[[ -d "$(pwd)/lib" ]] && declare -rx PATH="$(pwd)/lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin" || exit 69
 umask 077
 #
 # Include hidden directories when globbing
@@ -40,11 +40,11 @@ mapfile -td '' binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -
 # Load all users into an array
 mapfile -t int_users < <(
 	grep -vE '/(nologin|false|true)$' /etc/passwd |
-	awk -F: '$3 >= 1000 { print $1 }'
+		awk -F: '$3 >= 1000 { print $1 }'
 )
 mapfile -t nonint_users < <(
 	grep -E '/(nologin|false|true)$' /etc/passwd |
-	awk -F: '$3 < 1000 { print $1 }'
+		awk -F: '$3 < 1000 { print $1 }'
 )
 mapfile -t all_users < <(cut -d: -f1 </etc/passwd)
 #
@@ -80,9 +80,9 @@ fi
 if [[ -n "${errors[*]}" ]]; then
 	for error in "${errors[@]}"; do log e "${error}"; done
 	log w 'One or more startup checks failed.'
-	confirm 'Continue' || exit 1
+	confirm 'Continue' || exit 69
 else
-	log i "No errors!"
+	log i 'No errors!'
 fi
 
 

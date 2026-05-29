@@ -108,7 +108,7 @@ hash firewall-cmd && while true; do
 		echo "firewall-cmd ${firewall_cmd_args[*]}"
 		#
 		# Stop execution if the rule is incorrect
-		confirm 'Is this correct' || exit 255
+		confirm 'Is this correct' || continue
 		#
 		# Commit rule to disk/memory respectively if selected.
 		[[ "${persistence,,}" =~ 'in-memory' ]] && firewall-cmd "${firewall_cmd_args[@]}"
