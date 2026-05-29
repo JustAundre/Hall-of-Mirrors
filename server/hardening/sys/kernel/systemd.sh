@@ -2,8 +2,5 @@
 # SystemD Configuration
 #
 # Disable core dumping
-(
-	declare -x target_file=/etc/systemd/coredump.conf delimiter=\=
-	reconfig Storage none
-	reconfig ProcessSizeMax 0
-)
+reconfig -d \= Storage none /etc/systemd/coredump.conf
+reconfig -d \= ProcessSizeMax 0 /etc/systemd/coredump.conf

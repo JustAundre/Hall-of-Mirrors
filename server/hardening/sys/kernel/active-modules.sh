@@ -16,7 +16,10 @@ while IFS= read -r mod; do
 done < <(grep -Eo '^[^ ]+' /proc/modules | sort)
 #
 # Prompt for ones to disable.
-mapfile -t mods_disable < <(checklist 'These are active kernel modules; select those to unload and disable.' checklist "${readable[@]}" | cut -d: -f1)
+mapfile -t mods_disable < <(
+	checklist -mt 'These are active kernel modules; select those to unload and disable.' "${readable[@]}" |
+		cut -d: -f1
+)
 #
 # Unload 'em.
 modprobe -r "${mods_disable[@]}"

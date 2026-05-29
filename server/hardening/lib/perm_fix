@@ -15,12 +15,12 @@ done
 # Validate user:group
 # Validate permissions
 if
-	[[ -n "${owner}" && ! "${owner}" =~ ${num_chk} ]] ||
+	[[ -n "${owner}" && ! "${owner}" =~ ^[0-9]+$ ]] ||
 	! getent passwd -- "${owner}" &>/dev/null
 then
 	errors+=("${owner} is an invalid user.")
 elif
-	[[ -n "${group}" && ! "${group}" =~ ${num_chk} ]] ||
+	[[ -n "${group}" && ! "${group}" =~ ^[0-9]+$ ]] ||
 	! getent group -- "${group}" &>/dev/null
 then
 	errors+=("${group} is an invalid group.")

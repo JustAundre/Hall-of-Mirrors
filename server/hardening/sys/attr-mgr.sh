@@ -6,7 +6,7 @@ options=(
 	remove
 	restore
 )
-if [[ "$(checklist 'Attribute manager' radiolist "${options[@]}")" == remove ]]; then
+if [[ "$(checklist -t 'Remove/restore immutable and append-only attributes' "${options[@]}")" == remove ]]; then
 	# Alert the user of the possible lengthy scan
 	log i $'This will take a second; if you ask, no the script didn\'t hang.'
 	#

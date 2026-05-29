@@ -16,11 +16,11 @@ for choice in "${choices[@]}"; do
 	# Validate given user and group
 	# Change the ownership
 	if [[ "${choice}" == 'Change ownership' ]]; then
-		until [[ "${user}" =~ ${num_chk} ]] || getent passwd -- "${user}" &>/dev/null && [[ -n "${user}" ]]; do
+		until [[ "${user}" =~ ^[0-9]+$ ]] || getent passwd -- "${user}" &>/dev/null && [[ -n "${user}" ]]; do
 			[[ -n "${x}" ]] && log w 'Invalid username/UID provided.' || x=true
 			read -rp 'Enter the new user owner: ' user
 		done
-		until [[ "${user}" =~ ${num_chk} ]] || getent group -- "${group}" &>/dev/null && [[ -n "${group}" ]]; do
+		until [[ "${user}" =~ ^[0-9]+$ ]] || getent group -- "${group}" &>/dev/null && [[ -n "${group}" ]]; do
 			[[ -n "${y}" ]] && log w 'Invalid group/GID provided.' || y=true
 			read -rp 'Enter the new group owner: ' group
 		done

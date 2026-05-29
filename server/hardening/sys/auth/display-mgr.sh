@@ -2,43 +2,37 @@
 # Display Manager
 #
 # LightDM
-hash lightdm && (
-	declare -x target_file=/etc/lightdm/lightdm.conf delimiter=\=
-	#
+if hash lightdm; then
 	# Disable guest login
-	reconfig allow-guest false
+	reconfig -d \= allow-guest false /etc/lightdm/lightdm.conf
 	#
 	# Disable automatic login
-	reconfig AutomaticLogin false
+	reconfig -d \= AutomaticLogin false /etc/lightdm/lightdm.conf
 	#
 	# Disable user enumeration
-	reconfig greeter-show-manual-login true
-	reconfig greeter-hide-users true
+	reconfig -d \= greeter-show-manual-login true /etc/lightdm/lightdm.conf
+	reconfig -d \= greeter-hide-users true /etc/lightdm/lightdm.conf
 	#
 	# Disable remote X server login
-	reconfig xdmcp-enabled false
+	reconfig -d \= xdmcp-enabled false /etc/lightdm/lightdm.conf
 	#
 	# Disable VNC/RDP access
-	reconfig vnc-server-enabled false
-)
+	reconfig -d \= vnc-server-enabled false /etc/lightdm/lightdm.conf
+fi
 #
-# GDM3
-hash gdm && (
-	declare -x target_file=/etc/gdm/custom.conf delimiter=\=
-	#
+# GDM
+if hash gdm; then
 	# Disable automatic login
-	reconfig AutomaticLoginEnable false
-)
+	reconfig -d \= AutomaticLoginEnable false /etc/gdm/custom.conf
+fi
 #
 # SDDM
-(
-	declare -x target_file=/etc/sddm.conf
-	
+if hash sddm; then
 	# Disable automatic login
-	reconfig User ''
-	reconfig Session ''
+	reconfig User '' /etc/sddm.conf
+	reconfig Session '' /etc/sddm.conf
 	
 	# Hide the user list
-	reconfig HideUsers ''
-	reconfig DisableDebug true
-)
+	reconfig HideUsers '' /etc/sddm.conf
+	reconfig DisableDebug true /etc/sddm.conf
+fi

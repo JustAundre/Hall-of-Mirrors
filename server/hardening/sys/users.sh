@@ -7,12 +7,12 @@
 preprompt_msg="$(for user in "${all_users[@]}"; do
 	id -a "${user}"
 done)"
-mapfile -t users_del < <(checklist 'Select users to delete' checklist "${all_users[@]}")
-mapfile -t users_nullpass < <(checklist 'Select users to remove passwords from' checklist "${all_users[@]}")
-mapfile -t users_lock < <(checklist 'Select users to lock' checklist "${all_users[@]}")
-mapfile -t users_reshell < <(checklist 'Select users to select a new shell for' checklist "${all_users[@]}")
-mapfile -t users_reuid < <(checklist 'Select users to assign a new UID' checklist "${all_users[@]}")
-mapfile -t users_regroup < <(checklist 'Select users to reassign groups for' checklist "${all_users[@]}")
+mapfile -t users_del < <(checklist -mt 'Select users to delete' "${all_users[@]}")
+mapfile -t users_nullpass < <(checklist -mt 'Select users to remove passwords from' "${all_users[@]}")
+mapfile -t users_lock < <(checklist -mt 'Select users to lock' "${all_users[@]}")
+mapfile -t users_reshell < <(checklist -mt 'Select users to select a new shell for' "${all_users[@]}")
+mapfile -t users_reuid < <(checklist -mt 'Select users to assign a new UID' "${all_users[@]}")
+mapfile -t users_regroup < <(checklist -mt 'Select users to reassign groups for' "${all_users[@]}")
 )
 
 

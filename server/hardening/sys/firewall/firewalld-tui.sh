@@ -9,7 +9,7 @@ hash firewall-cmd && while true; do
 		'In-memory'
 		'On-disk & in-memory'
 	)
-	if hash firewall-cmd; then persistence="$(checklist 'Where should this rule go?' radiolist "${persistences[@]}")"
+	if hash firewall-cmd; then persistence="$(checklist -t 'Where should this rule go?' "${persistences[@]}")"
 	else persistence='On-disk & in-memory'
 	fi
 	#

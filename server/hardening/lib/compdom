@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-#
-# URL Simplification
-#
+# Simplify URLs
 # URL to compare against.
 official_url="${1#*://}"
 official_url="${official_url%%/*}"
@@ -13,13 +11,6 @@ repo_url="${2#*://}"
 repo_url="${repo_url%%/*}"
 repo_url="${repo_url%:*}"
 repo_url="${repo_url#www.}"
-
-
-
-
-
-#
-# Comparison
 #
 # If URL to compare exists and matches right-to-left, return success.
 [[ -n "${repo_url}" && "${repo_url}" =~ ^(.+\."${official_url}"|"${official_url}")$ ]]

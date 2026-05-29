@@ -1,51 +1,65 @@
 #!/usr/bin/env bash
-# TODO: Switch to getopt
+# -m|--multi || Whether or not to allow multi-selection.
+#
 # Open a fd for UI text
 exec {ui}>&2
 #
 # Grab args
-title="$1"
-type="$2"
-shift 2
-opts=("$@")
+args="$(getopt --options mt: --longoptions multi,title: -- "$@")"
+eval set -- "${args[*]}"
+while true; do
+	case "$1" in
+		-m|--multi)
+			multi=true
+			shift
+		;;
+		-t|--title)
+			title="$2"
+			shift 2
+		;;
+		--)
+			shift
+			break
+		;;
+		*)
+			break
+		;;
+	esac
+done
+entries=("$@")
 #
 # Display options
 clear >&"${ui}"
 [[ -n "${preprompt_msg}" ]] && echo -- "${preprompt_msg}" >&"${ui}"
 echo "${title}" >&"${ui}"
-for item in "${@}"; do
+for item in "${entries[@]}"; do
 	x="$((x + 1))"
 	item="${x}) ${item}"
 	printf '    %s\n' "${item}" >&"${ui}"
 done
 #
 # Determinte selection mode & grab selection(s)
-if [[ "${type}" == checklist ]]; then
+if [[ -n "${multi}" ]]; then
 	cat >&"${ui}" <<-'EOF'
 		Enter your selections—separated by spaces.
 		(i.e. "1 4 6 9")
 	EOF
-elif [[ "${type}" == radiolist ]]; then
+else
 	cat >&"${ui}" <<-'EOF'
 		Enter a single selection
 		(i.e. "5")
 	EOF
-else
-	log e <<-EOF
-		Incorrect usage of the checklist function;
-		"${type}" was given as the 2nd argument, but the only valid options are "checklist" OR "radiolist".
-	EOF
-	exit 1
 fi
 read -erp 'Type your selection(s) then press [ENTER] to submit: ' -a selections >&"${ui}"
 #
 # Do nothing with empty responses
 # Validate user choices & return the choices
 [[ -z "${selections[*]}" ]] && exit 0
+[[ -z "${multi}" && "${#selections[@]}" -gt 1 ]] && exit 255
 for selection in "${selections[@]}"; do
 	[[
-		"${selection}" =~ ${num_chk} &&
+		"${selection}" =~ ^[0-9]+$ &&
 		"${selection}" -gt 0 &&
-		"${selection}" -le "${#opts[@]}"
-	]] && echo "${opts["$(("${selection}" - 1 ))"]}"
+		"${selection}" -le "$#"
+	]] && echo "${entries["$(("${selection}" - 1 ))"]}"
 done

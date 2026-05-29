@@ -30,13 +30,10 @@ set -o pipefail
 #
 # Helper Variables
 #
-# Regex to compare against to verify user input is a number
-num_chk='^[0-9]+$'
-#
 # Load the PATH variable into an array
 # Load all executables in the PATH into an array
-mapfile -d ':' -t paths < <(printf '%s' "${PATH}")
-mapfile -d '' -t binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -printf0)
+mapfile -td : paths < <(printf '%s' "${PATH}")
+mapfile -td '' binaries < <(find "${paths[@]}" -maxdepth 1 -type f -executable -printf0)
 #
 # Load all interactive users into an array
 # Load all non-interactvie users into an array
@@ -58,9 +55,6 @@ while IFS=\= read -r key value; do
 	value="${value#\"}"
 	os_info["${key}"]="${value}"
 done </etc/os-release
-#
-# The variable which decides what delimitates a key/value pair when using the reconfig library command.
-declare -x delimiter=' '
 
 
 
@@ -105,7 +99,7 @@ while read -r script; do
 done < <(find sys svc -name '*.sh')
 #
 # List them off--select 1.
-script="${options["$(checklist "Choose a script to run." radiolist "${!options[@]}")"]}"
+script="${options["$(checklist -t 'Choose a script to run' "${!options[@]}")"]}"
 if [[ -x "${script}" ]]; then
 	# Find a valid file name for the log file
 	# Log to master a log file
