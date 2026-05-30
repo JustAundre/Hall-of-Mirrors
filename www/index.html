@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Hall of Mirrors</title>
+	<title>The ASS Suite</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 	<link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&amp;display=swap" rel="stylesheet">
@@ -60,17 +60,49 @@
 	<button aria-label="Open Settings" onclick="openConfig()"><i class="icon-settings"></i></button>
 </header>
 <main>
-	<article id="sidebar">
-		<h1>Welcome.</h1>
-		<span class="subtext">
-			Do you like my placeholder text ya'll?
-			<br>
-			-Aundre
-		</span>
+	<aside id="sidebar">
+		<h1>Aundre's Shell Script Suite</h1>
+		<span class="subtext">Pick a card, any card; it's all Bash anyways.</span>
 		<span id="item-desc"></span>
-	</article>
-	<article id="projects-grid">
-	</article>
+	</aside>
+	<ul id="projects-grid">
+		<li class="project-card" style="--accent-hue: 50;">
+			<h3><a href="#">BullSH</a></h3>
+			<span>Threats have since advanced from programs to people and programs, but people have room for trickery.</span><br>
+			<span class="subtext">Probably never going to be used on a real server.</span><br>
+			<a href="#">Read Docs</a>
+		</li>
+		<li class="project-card" style="--accent-hue: 160;">
+			<h3><a href="#">Hardening Scripts</a></h3>
+			<span>Scripts to audit every corner of your server, to bring it back from the depths of hell.</span><br>
+			<span class="subtext">Although, realistically, you would just do a clean install.</span><br>
+			<a href="#">Read Docs</a>
+		</li>
+		<li class="project-card" style="--accent-hue: 320;">
+			<h3><a href="#">Custom Dependencies</a></h3>
+			<span>More bash scripts fashioned into commands to reduce redundancy across my projects.</span><br>
+			<span class="subtext">Consistent, clean, short.</span><br>
+			<a href="#">Read Docs</a>
+		</li>
+		<li class="project-card" style="--accent-hue: 200;">
+			<h3><a href="#">Password Generator</a></h3>
+			<span>A local password generator which allows changing of the way its generated down to the character and for batch generation.</span><br>
+			<span class="subtext">Supports CLI args/opts!</span><br>
+			<a href="#">Read Docs</a>
+		</li>
+		<li class="project-card" style="--accent-hue: 0;">
+			<h3><a href="#">Sample Documentation</a></h3>
+			<span>Comes in PDFs and source MD files; detailed writeups of things my teammates and I previously have done in <a href="https://www.competitionsciences.org/competitions/collegiate-cyber-defense-competition/">CCDCs</a>.</span><br>
+			<span class="subtext">Iowa State University's Highschool CCDC was brutal.</span><br>
+			<a href="#">Read Docs</a>
+		</li>
+		<li class="project-card" style="--accent-hue: 20;">
+			<h3><a href="#">Misc. Guides</a></h3>
+			<span>Comes in PDFs and source MD files; written out and summarized parts of things I've learned.</span><br>
+			<span class="subtext">A guide on how to write shell script is coming Soon™!</span><br>
+			<a href="#">Read Docs</a>
+		</li>
+	</ul>
 	<div id="background"></div>
 </main>
 <footer>
