@@ -1,4 +1,4 @@
-# Hall of Mirrors
+# Aundre's Shell Script Suite
 
 > [!IMPORTANT]
 > Certain tools here depend on the active security of your system to be safely deployed.
