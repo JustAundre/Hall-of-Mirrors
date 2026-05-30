@@ -17,6 +17,12 @@ Clone the repository
 git clone https://github.com/JustAundre/Hall-of-Mirrors.git
 ```
 
+Update/download submodules
+
+```bash
+git submodule update --init --recursive
+```
+
 ## Global Dependencies
 
 Must be running *`Linux`
