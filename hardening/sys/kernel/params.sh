@@ -10,7 +10,8 @@ before="$(sysctl -a)"
 	install -m 640 -o 0 -g 0 cnf/sysctl/kernel.conf /etc/sysctl.d/99-security.conf
 #
 # Load Anti-IPv6 sysctl profile
-[[ -f /etc/sysctl.d/99-disable-ipv6.conf ]] || confirm 'Disable IPv6 @ kernel level' &&
+[[ -f /etc/sysctl.d/99-disable-ipv6.conf ]] ||
+	confirm 'Disable IPv6 @ kernel level' &&
 	install -m 640 -o 0 -g 0 cnf/sysctl/kernel-no-ipv6.conf /etc/sysctl.d/99-disable-ipv6.conf
 #
 # Install service to disable mutability of kernel modules 10 seconds after boot.
@@ -25,6 +26,6 @@ sysctl --system >/dev/null
 after="$(sysctl -a)"
 #
 # Check for changes
-diff -u <(echo -- "${before}") <(echo -- "${after}") &&
+diff -u <(printf '%s' "${before}") <(printf '%s' "${after}") &&
 	log i 'Nothing has changed, meaning your sysctl is likely already sufficiently hardened.'
 )

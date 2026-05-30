@@ -34,16 +34,15 @@ systemctl enable --now file-locker.service
 cat >>/etc/ssh/sshd_config <<-'EOF'
 
 	# Force all users into terminal logger
-	ForceCommand /bin/sudo /opt/logger.sh
+	ForceCommand sudo /opt/logger.sh
 EOF
 #
 # Get excluded users
-read -erp 'Enter the usernames of users to exclude from the logger (supports the user@0.0.0.0 format) (space-separated): ' -a exclusions
+read -erp 'Enter the usernames of users to exclude from the logger (supports the username@ip format) (space-separated): ' -a exclusions
 #
 # Set up user exclusions
-for user in "${exclusions[@]}"
-do
-	tee -a /etc/ssh/sshd_config <<-EOF
+for user in "${exclusions[@]}"; do
+	cat >>/etc/ssh/sshd_config <<-EOF
 
 		# Exclude user from logger script
 		Match User ${user}

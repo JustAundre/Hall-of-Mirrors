@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2034
-# shellcheck disable=SC2154
 #
 # Environment Setup
 #
@@ -8,9 +6,12 @@
 # Source global functions and variables.
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 69
 #
-# Add custom commands to PATH
+# Add library commands to PATH
+[[ -d "$(pwd)/lib" ]] &&
+	declare -rx PATH="$(pwd)/../lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin" ||
+	exit 69
+#
 # Secure UMASK
-[[ -d "$(pwd)/lib" ]] && declare -rx PATH="$(pwd)/lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin" || exit 69
 umask 077
 #
 # Include hidden directories when globbing

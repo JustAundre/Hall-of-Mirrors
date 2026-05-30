@@ -89,7 +89,7 @@ hash firewall-cmd && while true; do
 			rich_rule+=\'
 			#
 			# Prints the live composition, plain-English transcription, and current working field.
-			printf -- '%s\n\n%s\n\e[1;32m> %s\e[0m\n' "${rich_rule}" "${readable}" "${input["${target}"]}"
+			printf '%s\n\n%s\n\e[1;32m> %s\e[0m\n' "${rich_rule}" "${readable}" "${input["${target}"]}"
 			#
 			# Read input character by character
 			# Backspace works as backspace.

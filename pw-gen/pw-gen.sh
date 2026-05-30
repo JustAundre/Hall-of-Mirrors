@@ -2,17 +2,18 @@
 #
 # Environment Setup
 #
-# File name/location of dictionary file...
-# ...and URL to fallback dictionary.
+# Add library commands to "$PATH".
+[[ -d "$(pwd)/lib" ]] &&
+	declare -rx PATH="$(pwd)/../lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin" ||
+	exit 69
+#
+# Filename/path of dictionary file & URL to fallback dictionary.
 mapfile -td '' dict_locations < <(find /usr/share/dict -type f,l -readable -print0)
 dict_location="${dict_locations[0]}"
 dict_url='https://www.mit.edu/~ecprice/wordlist.10000'
 #
 # The help menu
 IFS= read -rd '' help <<-'EOF'
-	You're looking at: The Help Menu
-	Either you used a non-existent option or asked to be directed here by way of -h.
-
 	About:
 	    A very customizable & automatible password generator
 
@@ -58,10 +59,8 @@ IFS= read -rd '' help <<-'EOF'
 	    printed to stderr.
 EOF
 #
-# Duplicate stderr from FD 2 to FD 3, FD 3 will be used as "stdver" (standard verbose)
-# Duplicate stderr from FD 2 to FD 4, FD 4 will be used as "stdwrn" (standard warning)
-exec 3>&2
-exec 4>&2
+# Create a new terminal output stream; "${ui}" will be used for UI-element outputs.
+exec {ui}>&2
 #
 # Helper function to pull a random word
 word_pull() {
@@ -73,11 +72,11 @@ word_pull() {
 	]]; do
 		# Verbose output: print scrapped words
 		[[ -n "${verbose}" && -n "${word}" ]] &&
-			echo "i: Dropped word \"${word}\" because it did not meet complexity requirements." >&3
+			log w "Dropped word \"${word}\" because it did not meet complexity requirements."
 		#
 		# Error out if failed to find a word matching set constraints for more than 250 cycles
 		if [[ "${kill}" -gt 250 ]]; then
-			echo 'E: Script took too long to find a word within constraints, stopping to avoid system stress...' >&4
+			log e 'E: Script took too long to find a word within constraints, stopping to avoid system stress...'
 			return 4
 		fi
 		#
@@ -85,7 +84,7 @@ word_pull() {
 		# ...& increase cycle count
 		word="$(shuf -n1 "${dict_location}")"
 		if [[ -z "${word}" ]]; then
-			echo 'E: Failed to fetch word from the dictionary.' >&4
+			log e 'Failed to fetch word from the dictionary.'
 			return 2
 		fi
 		(( kill++ ))
@@ -108,11 +107,11 @@ while getopts 's:m:M:c:a:p:hv' arg; do
 		p) pattern="${OPTARG}";;
 		v) verbose=y;;
 		h)
-			echo "${help}" >&4
+			log e "${help}"
 			exit 0
 		;;
 		*)
-			echo "${help}" >&4
+			log e "Invalid argument \"${arg}\""$'\n\n'"${help}"
 			exit 2
 		;;
 	esac
@@ -125,38 +124,27 @@ done
 #
 # Generation Tuning
 #
-# Prompts for tuning
 # Separator
-[[ -z "${separator}" && -t 0 ]] &&
-	read -erp 'Enter a separator (Default is -): ' separator >&4
-#
 # Minimum word length
-[[ -z "${min}" && -t 0 ]] &&
-	read -erp 'Minimum word length (Default is 4): ' min >&4
-#
 # Maximum word length
-[[ -z "${max}" && -t 0 ]] &&
-	read -erp 'Max word length (Default is 8): ' max >&4
-#
 # Whether to capitalize the first character of words
-[[ -z "${capitals}" && -t 0 ]] &&
-	read -erp 'Capitalize first letters? [Y/n]: ' capitals >&4
-#
 # How many passwords to generate
-[[ -z "${password_amount}" && -t 0 ]] &&
-	read -erp 'Amount of passwords (Default is 1): ' password_amount >&4
-#
-# The pattern to use during generation
+# Generation pattern
+[[ -z "${separator}" && -t 0 ]] && read -erp 'Enter a separator (Default is -): ' separator >&"${ui}"
+[[ -z "${min}" && -t 0 ]] && read -erp 'Minimum word length (Default is 4): ' min >&"${ui}"
+[[ -z "${max}" && -t 0 ]] && read -erp 'Max word length (Default is 8): ' max >&"${ui}"
+[[ -z "${capitals}" && -t 0 ]] && read -erp 'Capitalize first letters? [Y/n]: ' capitals >&"${ui}"
+[[ -z "${password_amount}" && -t 0 ]] && read -erp 'Amount of passwords (Default is 1): ' password_amount >&"${ui}"
 if [[
 	-z "${pattern}" &&
 	-t 0
 ]]; then
-	cat >&4 <<-'EOF'
+	cat >&"${ui}" <<-'EOF'
 		w = Random word
 		n = Random number
 		s = Provided separator
 	EOF
-	read -erp 'Enter your generation pattern (Default is "wnswnswn"): ' pattern >&4
+	read -erp 'Enter your generation pattern (Default is "wnswnswn"): ' pattern >&"${ui}"
 fi
 
 
@@ -168,27 +156,27 @@ fi
 #
 # Ensures the separator is not empty (defaults to hyphen)
 if [[ -z "${separator}" ]]; then
-	echo 'i: No separator given; defaulting to a hyphen "-"' >&4
-	separator='-'
+	log w 'No separator given; defaulting to a hyphen "-"'
+	separator=-
 fi
 #
 # Ensures the minimum length is a number (defaults to 4)
 if [[ ! "${min}" =~ ^[0-9]+$ ]]; then
-	echo 'i: Invalid/missing minimum length; defaulting to "4".' >&4
+	log w 'Invalid/missing minimum length; defaulting to "4".'
 	min=4
 fi
 #
 # Ensures the maximum length is a number (defaults to 8)
 if [[ ! "${max}" =~ ^[0-9]+$ ]]; then
-	echo 'i: Invalid/missing maximum length; defaulting to "8".' >&4
+	log w 'Invalid/missing maximum length; defaulting to "8".'
 	max=8
 fi
 #
 # Ensures the minimum is not greater than the maximum
 if [[ "${min}" -gt "${max}" ]]; then
-	cat >&4 <<-EOF
-		W: Minimum (${min}) is greater than maximum (${max}) is an unfufilable condition;
-		i: Swapping the values of min/max from ${min}/${max} to ${max}/${min} to fix contradiction & proceeding...
+	log w <<-EOF
+		Minimum (${min}) is greater than maximum (${max}) is an unfufilable condition;
+		    Swapping the values of min/max from ${min}/${max} to ${max}/${min} to fix contradiction & proceeding...
 	EOF
 	read -r max min <<< "${min} ${max}"
 fi
@@ -196,19 +184,19 @@ fi
 # Ensures the response to capitals is a yes/no
 capitals="${capitals:0:1}"
 if [[ ! "${capitals}" =~ ^[yYnN]$ ]]; then
-	echo 'i: Invalid/missing response; defaulting to [y]es.' >&4
+	log w 'Invalid/missing response; defaulting to [y]es.'
 	capitals=y
 fi
 #
 # Ensures the pattern exists
 if [[ -z "${pattern}" ]]; then
-	echo 'i: Invalid/missing response; defaulting to wnswnswn.' >&4
+	log w 'Invalid/missing response; defaulting to wnswnswn.'
 	pattern=wnswnswn
 fi
 #
 # Ensures the password count is at least 1
 if [[ "${password_amount}" -lt 1 ]]; then
-	echo 'i: Invalid/missing response; defaulting to 1.' >&4
+	log w 'Invalid/missing response; defaulting to 1.'
 	password_amount=1
 fi
 
@@ -230,38 +218,38 @@ if [[
 	#
 	# if there's a terminal.
 	if [[ -t 0 ]]; then
-		read -erp "Download a dictionary from '${dict_url}' to '$(pwd)/${dict_location}? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&4
+		read -erp "Download a dictionary from '${dict_url}' to '$(pwd)/${dict_location}? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&2
 	else
-		cat >&4 <<-'EOF'
-			E: As this is non-interactive,
+		log e <<-'EOF'
+			As this is non-interactive,
 			    a prompt won't be shown for downloading an external dictionary,
-			    the dictionary won't be downloaded
-			    & the script will now close.
+			    the dictionary won't be downloaded & the script will now close.
 		EOF
 		exit 3
 	fi
 	#
 	# Start the download (if consented)
 	if [[ "${download}" =~ ^[yY] ]]; then
-		echo 'i: Downloading...' >&4
+		echo 'i: Downloading...' >&2
 		#
 		# Will timeout if download takes too long.
 		if ! curl -s "${dict_url}" --connect-timeout 5 >"${dict_location}"; then
 			# Alert user of the error
-			cat >&4 <<-EOF
-				E: Failed to download dictionary; the curl command exited with code "$?".
+			log e <<-EOF
+				Failed to download dictionary; the curl command exited with code "$?".
 				    deleting possible remnant file(s) & quitting...
 			EOF
 			#
 			# Remove remnant empty file
-			[[ -f "${dict_location}" ]] && rm -v "${dict_location}"
+			[[ -f "${dict_location}" ]] &&
+				rm -v "${dict_location}"
 			exit 1
 		fi
 	fi
 fi
 #
 # Generate password(s)
-echo 'Generated password(s):' >&4
+echo 'Generated password(s):' >&2
 for (( x=0; x < password_amount; x++ )); do
 	unset result
 	for (( y=0; y < ${#pattern}; y++ )); do
@@ -282,7 +270,7 @@ for (( x=0; x < password_amount; x++ )); do
 			;;
 			*)
 				# More input validation
-				echo "W: Unrecognized character \"${char}\" in pattern at line 1, column ${y}. Ignoring..." >&4
+				log w "Unrecognized character \"${char}\" in pattern at line 1, column ${y}. Ignoring..."
 			;;
 		esac
 	done

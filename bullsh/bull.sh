@@ -19,15 +19,15 @@ warn() {
 		fail)
 			shift 1
 			local msg="W: ${USER}/${UID}@${SSH_CLIENT%% *} with EUID ${EUID} on ${TTY} failed ${layer_at} with input: ${input}"
-			printf -- '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
+			printf '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		pass)
 			local msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed onto ${layer_at}"
-			printf -- '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
+			printf '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		enter)
 			local msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed into a real terminal."
-			printf -- '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
+			printf '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		*)
 			echo 'E: The warn function was called with a non-existent warning type.'
@@ -109,7 +109,7 @@ hash() {
 	local PS1="${PS1}"
 	local layer_at="${layer_at}"
 	local counts="${counts}"
-	printf -- '%s' "${input}" | python3 -c "${python_hashing_logic}"
+	printf '%s' "${input}" | python3 -c "${python_hashing_logic}"
 }
 #
 # Function to check input
@@ -150,9 +150,9 @@ passwd_check() {
 			else sudo echo "${USER} is not in the sudoers file.  This incident will be reported."
 			fi
 		elif [[ "${cmd}" == printf ]]; then
-			printf -- %s "${input/'printf '//}"
+			printf '%s' "${input/'printf '//}"
 		elif [[ "${cmd}" == echo ]]; then
-			printf -- %s "${input/'echo '//}\n"
+			printf '%s' "${input/'echo '//}\n"
 		elif [[ "${cmd}" =~ ^([a-zA-Z0-9_-]+)= ]]; then
 			echo "rbash: ${BASH_REMATCH[1]}: readonly variable"
 		elif type -t "${cmd}" &>/dev/null; then

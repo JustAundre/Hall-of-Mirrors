@@ -30,12 +30,12 @@ entries=("$@")
 #
 # Display options
 clear >&"${ui}"
-[[ -n "${preprompt_msg}" ]] && echo -- "${preprompt_msg}" >&"${ui}"
+[[ -n "${preprompt_msg}" ]] && echo "${preprompt_msg}" >&"${ui}"
 echo "${title}" >&"${ui}"
 for item in "${entries[@]}"; do
 	x="$((x + 1))"
 	item="${x}) ${item}"
-	printf '    %s\n' "${item}" >&"${ui}"
+	echo "    ${item}" >&"${ui}"
 done
 #
 # Determinte selection mode & grab selection(s)

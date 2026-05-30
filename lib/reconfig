@@ -19,4 +19,4 @@ shift "$(( OPTIND - 1 ))"
 touch "$3"
 grep -qE "^[^#].*$1${delimiter}.*$" <"$3" &&
 	sed -i "s/^[^#]*$1.*$/$1${delimiter}$2/" <"$3"
-echo -- "$1${delimiter}$2" >>"$3"
+echo "$1${delimiter}$2" >>"$3"
