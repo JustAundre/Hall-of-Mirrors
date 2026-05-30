@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# Process each file path
-for path in "$@"; do
-	# Create the file's preceeding directories, then the file itself.
-	mkdir -p "$(dirname "${path}")"
-	>>"${path}"
-done

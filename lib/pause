@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-read -t "$1" -n1 -rp "(Auto-resuming in $1 seconds...)"$'\n⏸️ ⏸️ ⏸️ ===> ANY TO RESUME <=== ⏸️ ⏸️ ⏸️\n'
-info 'Resumed.'
