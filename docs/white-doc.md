@@ -529,8 +529,8 @@ To comply with the requirement that “...Warehouse Workers must have access to 
 
 | Host-name | FQDN                   | Internal IP |
 | --------- | ---------------------- | ----------- |
-| `AD`      | `ad.team8.isucdc.com`  | `10.8.0.10` |
-| `WWW`     | `www.team8.isucdc.com` | `10.8.0.20` |
-| `WMS`     | `wms.team8.isucdc.com` | `10.8.0.30` |
-| `DB`      | `db.team8.isucdc.com`  | `10.8.0.40` |
-| `LP`      | `lp.team8.isucdc.com`  | `10.8.0.50` |
+| `AD`      | `ad.example.com`  | `10.8.0.10` |
+| `WWW`     | `www.example.com` | `10.8.0.20` |
+| `WMS`     | `wms.example.com` | `10.8.0.30` |
+| `DB`      | `db.example.com`  | `10.8.0.40` |
+| `LP`      | `lp.example.com`  | `10.8.0.50` |
