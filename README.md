@@ -1,13 +1,13 @@
 # Aundre's Shell Script Suite
 
 > [!IMPORTANT]
-> Certain tools here depend on the active security of your system to be safely deployed.
----
+> Certain tools here depend on the active integrity/security of your system to be confidently deployed without fail and or external manipulation.
+
 > [!CAUTION]
-> This is a highly experimental and fluid project, I am ***not*** responsible for data loss.
-> Better pull up a zfs/btrfs/VM/Proxmox/Timeshift snapshot,
-> cause if you aren't using those and trying to use hardening scripts...
-> ***It's no-one's fault but your own.***
+> Experimental project; data loss may occur and the project owner does not claim liability in such occurances.
+
+> [!WARNING]
+> Documentation needs to be written and/or rewritten.
 
 ## Download
 
