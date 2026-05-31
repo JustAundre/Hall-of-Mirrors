@@ -1,11 +1,9 @@
-# Logging
-
-Persistent, secure & readable full session logs; because logs aren't any good if you can bypass them, can change them, can't read them or don't get the full picture.
+# Shellcam
 
 ## Dependencies
 
 Must have/use the below:
-- SSH
+- SSHD
 
 ## Installation
 
@@ -27,6 +25,8 @@ cd Hall-of-Mirrors/main/logging
 
 Use the below to queue up all logs & select ones to delete after review.
 
+Or alternatively, wrap the below in a `function() {}` and put in your `~/.bashrc` file to easily call.
+
 ```bash
 mapfile -t logs < <(ls -1t /var/log/sessions/*)
 
@@ -41,11 +41,13 @@ done
 ```
 
 Use the below to actively monitor history files in home directories:
+
 ```bash
 mapfile -t histories < <(find /home -maxdepth 2 -type f -name '*history')
 
 for history in "${histories[@]}"; do
 	printf 'Monitoring %s:\n\n' "${history}"
+	sleep 1.5
 	tail -fn10 "${history}" &
 done
 ```
