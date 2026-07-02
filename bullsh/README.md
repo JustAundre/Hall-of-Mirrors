@@ -40,22 +40,6 @@ All logs contain:
 
 BullSH session log files are in `/var/tmp/` opposed to `/var/`***`log/`*** due to security risks.
 
-## The Password(s)
-
-Default Password(s):
-
-L1: `*hMyL0(o)r`
-
-L2: `DGE3TM3oOU`
-
-L3: `T.PLE@$3!?`
-
-## Changing the Password(s)
-
-First, get the password you want to change to in plaintext. Hash your password into [SHA512](https://www.quora.com/How-does-SHA-512-work/) (with the hashing rounds accounted for.)
-
-Go into `bull.sh` & change the `hashes` variable to your new hash
-
 ## Roadmap/Notes
 
 - There is room to add some fake success logic to redirect the attacker to a whole 'nother system entirely.

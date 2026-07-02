@@ -3,7 +3,7 @@
 # Environment Setup
 #
 # Source configuration
-. /opt/.bullshrc
+. /opt/.bullshrc || exit 1
 
 
 
