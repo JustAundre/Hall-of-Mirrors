@@ -23,15 +23,14 @@ cd shellcam
 2. Bash history files cannot be deleted; only new entries may be added!
 3. Username on the file stays consistent, even across commands such as `sudo -i`, `sudo su` & `sudo bash`.
 
-Use the below to queue up all logs & select ones to delete after review.
+Use the below to queue up all logs (descending from newest) for viewing and then select which to delete after review.
 (Alternatively, you can wrap the below in a `function() {}` and put in your `~/.bashrc` file to easily call.)
 
 ```bash
 mapfile -t logs < <(ls -1t /var/log/sessions/*)
 
 for log in "${logs[@]}"; do
-	less -R "${log}" &&
-		read -rp "Delete (${log})?: " del
+	less -R "${log}" && read -rp "Delete (${log})?: " del
 	if [[ "${del}" =~ ^[yY] ]]; then
 		chattr -ia "${log}"
 		rm -v "${log}"
