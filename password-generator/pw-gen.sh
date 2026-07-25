@@ -2,10 +2,9 @@
 #
 # Environment Setup
 #
-# Add library commands to "$PATH".
-[[ -d "$(pwd)/lib" ]] &&
-	declare -rx PATH="$(pwd)/../lib:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin" ||
-	exit 69
+# Add library commands to PATH
+[[ -d "$(pwd)/../lib" ]] || exit 69
+declare -rx PATH="$(pwd)/../lib:${PATH}"
 #
 # Filename/path of dictionary file & URL to fallback dictionary.
 mapfile -td '' dict_locations < <(find /usr/share/dict -type f,l -readable -print0)
@@ -44,7 +43,7 @@ IFS= read -rd '' help <<-'EOF'
 
 	    -h: Requires NO argument
 	        Displays this information screen
-				
+
 	Demonstration:
 	    ./passwd-gen.sh -s '-|-' -m 1 -M 5 -c yes -a 2 -p wnsnw
 	    Will generate something akin to:
