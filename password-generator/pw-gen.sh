@@ -11,53 +11,6 @@ mapfile -td '' dict_locations < <(find /usr/share/dict -type f,l -readable -prin
 dict_location="${dict_locations[0]}"
 dict_url='https://www.mit.edu/~ecprice/wordlist.10000'
 #
-# The help menu
-IFS= read -rd '' help <<-'EOF'
-	About:
-	    A very customizable & automatible password generator
-
-	    Missing CLI arguments will be prompted for interactively if possible
-	    Pre-determined defaults will substitute invalid arguments
-
-	Flags:
-	    -s: Requires an argument (Any string)
-	        Defines the separator used in password generation
-
-	    -m: Requires an argument (Numbers only, musn't be more than argument for -M)
-	        Defines the minimum amount of characters a word must contain
-
-	    -M: Requires an argument (Numbers only, musn't be less than argument for -m)
-	        Defines the maximum amount of characters a word may contain
-
-	    -c: Requires an argument (yes/no)
-	        Use of this flag enables capitalized first letters for words in password generation
-
-	    -a: Requires an argument (Numbers only).
-	        Determines the amount of passwords that will be generated with the provided pattern
-
-	    -p: Requires an argument (Any string is technically allowed but characters other than w/W/n/N/s/S are ignored in operation)
-	        Determines the arrangement of the password
-
-	    -v: Requires NO argument
-	        Displays verbose output
-
-	    -h: Requires NO argument
-	        Displays this information screen
-
-	Demonstration:
-	    ./passwd-gen.sh -s '-|-' -m 1 -M 5 -c yes -a 2 -p wnsnw
-	    Will generate something akin to:
-
-	    Generated password(s):
-	    Rip1-|-1Dozen
-	    Fotos6-|-0Clara
-
-	Scripter's Notes:
-	    The script may be used in tandem with other scripts with-
-	    less friction as the "Generated password(s):" text is-
-	    printed to stderr.
-EOF
-#
 # Create a new terminal output stream; "${ui}" will be used for UI-element outputs.
 exec {ui}>&2
 #
@@ -96,7 +49,7 @@ word_pull() {
 }
 #
 # Parse CLI arguments
-while getopts 's:m:M:c:a:p:hv' arg; do
+while getopts 's:m:M:c:a:p:v' arg; do
 	case "${arg}" in
 		s) separator="${OPTARG}";;
 		m) min="${OPTARG}";;
@@ -105,12 +58,9 @@ while getopts 's:m:M:c:a:p:hv' arg; do
 		a) password_amount="${OPTARG}";;
 		p) pattern="${OPTARG}";;
 		v) verbose=y;;
-		h)
-			log e "${help}"
-			exit 0
 		;;
 		*)
-			log e "Invalid argument \"${arg}\""$'\n\n'"${help}"
+			log e "Invalid argument \"${arg}\""
 			exit 2
 		;;
 	esac
