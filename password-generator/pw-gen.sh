@@ -2,9 +2,11 @@
 #
 # Environment Setup
 #
-# Add library commands to PATH
-[[ -d "$(pwd)/../lib" ]] || exit 69
-declare -rx PATH="$(pwd)/../lib:${PATH}"
+# Source library commands
+[[ -d "$(pwd)/../lib/" ]] || exit 69
+for function in "$(pwd)/../lib/"*".sh"; do
+	source "${function}"
+done
 #
 # Filename/path of dictionary file & URL to fallback dictionary.
 mapfile -td '' dict_locations < <(find /usr/share/dict -type f,l -readable -print0)

@@ -15,7 +15,7 @@
 # Send identifiers to a log file
 warn() {
 	local input="$(printf "%q" "$*")"
-	case "$1" in
+	case "${1}" in
 		fail)
 			shift 1
 			local msg="W: ${USER}/${UID}@${SSH_CLIENT%% *} with EUID ${EUID} on ${TTY} failed ${layer_at} with input: ${input}"
