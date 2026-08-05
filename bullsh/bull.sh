@@ -14,20 +14,20 @@
 #
 # Send identifiers to a log file
 warn() {
-	local input="$(printf "%q" "$*")"
+	local input="$(printf "%q" "$*")" msg
 	case "${1}" in
 		fail)
 			shift 1
-			local msg="W: ${USER}/${UID}@${SSH_CLIENT%% *} with EUID ${EUID} on ${TTY} failed ${layer_at} with input: ${input}"
-			printf '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
+			msg="W: ${USER}/${UID}@${SSH_CLIENT%% *} with EUID ${EUID} on ${TTY} failed ${layer_at} with input: ${input}"
+			tee -a "${config[log_file]}" <<<"${msg}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		pass)
-			local msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed onto ${layer_at}"
-			printf '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
+			msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed onto ${layer_at}"
+			tee -a "${config[log_file]}" <<<"${msg}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		enter)
-			local msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed into a real terminal."
-			printf '%s' "${msg}" | tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
+			msg="OK: ${USER}/${UID}@${SSH_CLIENT%% *} on ${TTY} passed into a real terminal."
+			tee -a "${config[log_file]}" <<<"${msg}" | systemd-cat -t "${config[log_tag]}"
 		;;
 		*)
 			echo 'E: The warn function was called with a non-existent warning type.'
@@ -109,7 +109,7 @@ hash() {
 	local PS1="${PS1}"
 	local layer_at="${layer_at}"
 	local counts="${counts}"
-	printf '%s' "${input}" | python3 -c "${python_hashing_logic}"
+	python3 -c "${python_hashing_logic}" <<<"${input}"
 }
 #
 # Function to check input

@@ -29,7 +29,7 @@ for file in "${log_dir}"/*; do
 	#
 	# Check if this specific file is in our list (or is being prepared for logging)
 	if
-		printf '%s' "${is_open}" | grep -qx "${file}" ||
+		grep -qx "${file}" <<<"${is_open}" ||
 		[[ "$(stat -c %s "${file}")" == 0 ]]
 	#
 	# File is actively being logged to

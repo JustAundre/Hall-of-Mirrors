@@ -30,7 +30,7 @@ declare -r log_file="${log_file}"
 if [[ ! -t 0 ]]; then
 	# ...plus any commands
 	[[ -n "${SSH_ORIGINAL_COMMAND}" ]] && cmd="with command ${SSH_ORIGINAL_COMMAND}"
-	echo "${LOGNAME}/${UID} from ${SSH_CLIENT} attempted to run non-interactive command: (${cmd})" | systemd-cat -p3 -t logger
+	systemd-cat -p3 -t logger <<<"${LOGNAME}/${UID} from ${SSH_CLIENT} attempted to run non-interactive command: (${cmd})"
 	exit 255
 else
 	# Start logging

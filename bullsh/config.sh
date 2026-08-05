@@ -77,9 +77,9 @@ counts=0
 IFS= read -rd '' PROMPT_COMMAND <<-EOF
 	history -a
 	last_cmd=\$(sed 's/^[ ]*[0-9]*[ ]*//' <<<"\$(history 1)")
-	[[ -n "\$last_cmd" ]] &&
-		echo "EUID: \${EUID} | UID: ${UID} | User: ${USER} | IP: ${SSH_CLIENT%% *} | TTY: ${SSH_TTY} | Cmd: \${last_cmd}" |
-		tee -a "${config[log_file]}" | systemd-cat -t "${config[log_tag]}"
+	[[ -n "\${last_cmd}" ]] &&
+		tee -a "${config[log_file]}" <<<"EUID: \${EUID} | UID: ${UID} | User: ${USER} | IP: ${SSH_CLIENT%% *} | TTY: ${SSH_TTY} | Cmd: \${last_cmd}" |
+			systemd-cat -t "${config[log_tag]}"
 EOF
 declare -r PROMPT_COMMAND
 #

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+#
+# Installation
+#
 # Install the logging directory
 mkdir -p /var/log/sessions
 chown 0:0 /var/log/sessions
@@ -9,7 +12,7 @@ install -m 750 -o 0 -g 0 logger.sh /opt/logger.sh
 cat >>/etc/sudoers <<-'EOF'
 
 	# Run the logger script as root (needed to send log to secure locations, users are lowered to their original users/privileges)
-	ALL ALL=(ALL) SETENV: NOPASSWD: /opt/logger.sh'
+	ALL ALL=(ALL) SETENV: NOPASSWD: /opt/logger.sh
 EOF
 #
 # Allow passing of necessary variables through sudo

@@ -45,9 +45,7 @@ word_pull() {
 	done
 	#
 	# Capitalize beginning of word as needed, then print result.
-	[[ "${capitals}" =~ ^[yY]$ ]] &&
-		printf '%s' "${word^}" ||
-		printf '%s' "${word}"
+	[[ "${capitals}" =~ ^[yY]$ ]] && printf '%s' "${word^}" || printf '%s' "${word}"
 }
 #
 # Parse CLI arguments
