@@ -72,4 +72,4 @@ find . -type f -name '*.sh' -exec shellcheck -x {} +
 
 ## Transparency
 
-While AIs/LLMs were utilized in the process of making the code contained in this repository, such AI/LLMs ***did not directly write any of the code present.*** The AI/LLMs only were utilized in my learning process and were not prompted to directly provide a fix to an issue or write new functionality; only put enlighten me on why something wasn't working.
+While LLMs were utilized in the process of making the code contained in this repo, these LLMs **did not** directly write *any* of the code present. The LLMs only were utilized in my learning process and were not prompted to provide a fix to an issue or write new functionality, period; only in my process to learn and improve, or the catching of minor semantic inconsistencies are they utilized.
