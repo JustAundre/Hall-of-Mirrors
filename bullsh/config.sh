@@ -74,7 +74,7 @@ counts=0
 	declare -x PS1="[${USER}@${HOSTNAME%%.*} ~]$ "
 #
 # Log everything
-IFS= read -rd '' PROMPT_COMMAND <<-EOF
+IFS= read -rd '' PROMPT_COMMAND <<- EOF
 	history -a
 	last_cmd=\$(sed 's/^[ ]*[0-9]*[ ]*//' <<<"\$(history 1)")
 	[[ -n "\${last_cmd}" ]] &&

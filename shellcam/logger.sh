@@ -4,7 +4,7 @@
 #
 # Environment variables/checks
 [[ -n "${LOG}" ]] && exit 253
-declare -rx AUID="$(</proc/self/loginuid)"
+declare -rx AUID="$(< /proc/self/loginuid)"
 declare -rx LOGNAME="$(getent passwd "${AUID}" | cut -d: -f1)"
 declare -rx HOME="$(getent passwd "${AUID}" | cut -d: -f6)"
 #
@@ -14,7 +14,7 @@ declare -rx HOME="$(getent passwd "${AUID}" | cut -d: -f6)"
 # Find an unoccupied file location
 count=0
 while [[ -f "${log_file}" || -z "${log_file}" ]]; do
-	(( count++ ))
+	((count++))
 	log_file="/var/log/sessions/${LOGNAME}-${count}.log"
 done
 declare -r log_file="${log_file}"
@@ -30,7 +30,7 @@ declare -r log_file="${log_file}"
 if [[ ! -t 0 ]]; then
 	# ...plus any commands
 	[[ -n "${SSH_ORIGINAL_COMMAND}" ]] && cmd="with command ${SSH_ORIGINAL_COMMAND}"
-	systemd-cat -p3 -t logger <<<"${LOGNAME}/${UID} from ${SSH_CLIENT} attempted to run non-interactive command: (${cmd})"
+	systemd-cat -p3 -t logger <<< "${LOGNAME}/${UID} from ${SSH_CLIENT} attempted to run non-interactive command: (${cmd})"
 	exit 255
 else
 	# Start logging

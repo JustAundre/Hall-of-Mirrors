@@ -41,7 +41,7 @@ word_pull() {
 			log e 'Failed to fetch word from the dictionary.'
 			return 2
 		fi
-		(( kill++ ))
+		((kill++))
 	done
 	#
 	# Capitalize beginning of word as needed, then print result.
@@ -51,17 +51,17 @@ word_pull() {
 # Parse CLI arguments
 while getopts 's:m:M:c:a:p:v' arg; do
 	case "${arg}" in
-		s) separator="${OPTARG}";;
-		m) min="${OPTARG}";;
-		M) max="${OPTARG}";;
-		c) capitals="${OPTARG}";;
-		a) password_amount="${OPTARG}";;
-		p) pattern="${OPTARG}";;
-		v) verbose=y;;
+		s) separator="${OPTARG}" ;;
+		m) min="${OPTARG}" ;;
+		M) max="${OPTARG}" ;;
+		c) capitals="${OPTARG}" ;;
+		a) password_amount="${OPTARG}" ;;
+		p) pattern="${OPTARG}" ;;
+		v) verbose=y ;;
 		*)
 			log e "Invalid argument \"${arg}\""
 			exit 2
-		;;
+			;;
 	esac
 done
 
@@ -87,7 +87,7 @@ if [[
 	-z "${pattern}" &&
 	-t 0
 ]]; then
-	cat >&"${ui}" <<-'EOF'
+	cat >&"${ui}" <<- 'EOF'
 		w = Random word
 		n = Random number
 		s = Provided separator
@@ -122,7 +122,7 @@ fi
 #
 # Ensures the minimum is not greater than the maximum
 if [[ "${min}" -gt "${max}" ]]; then
-	log w <<-EOF
+	log w <<- EOF
 		Minimum (${min}) is greater than maximum (${max}) is an unfufilable condition;
 		    Swapping the values of min/max from ${min}/${max} to ${max}/${min} to fix contradiction & proceeding...
 	EOF
@@ -168,7 +168,7 @@ if [[
 	if [[ -t 0 ]]; then
 		read -erp "Download a dictionary from '${dict_url}' to '$(pwd)/${dict_location}? (aprox. ~76kb of characters, 10k words) [y/N]: '" download >&2
 	else
-		log e <<-'EOF'
+		log e <<- 'EOF'
 			As this is non-interactive,
 			    a prompt won't be shown for downloading an external dictionary,
 			    the dictionary won't be downloaded & the script will now close.
@@ -181,9 +181,9 @@ if [[
 		echo 'i: Downloading...' >&2
 		#
 		# Will timeout if download takes too long.
-		if ! curl -s "${dict_url}" --connect-timeout 5 >"${dict_location}"; then
+		if ! curl -s "${dict_url}" --connect-timeout 5 > "${dict_location}"; then
 			# Alert user of the error
-			log e <<-EOF
+			log e <<- EOF
 				Failed to download dictionary; the curl command exited with code "$?".
 				    deleting possible remnant file(s) & quitting...
 			EOF
@@ -198,28 +198,28 @@ fi
 #
 # Generate password(s)
 echo 'Generated password(s):' >&2
-for (( x=0; x < password_amount; x++ )); do
+for ((x = 0; x < password_amount; x++)); do
 	unset result
-	for (( y=0; y < ${#pattern}; y++ )); do
+	for ((y = 0; y < ${#pattern}; y++)); do
 		char="${pattern:${y}:1}"
 		case "${char}" in
-			w|W)
+			w | W)
 				# Parse w/W into a random word
 				word="$(word_pull)" || exit "$?"
 				result+="${word}"
-			;;
-			n|N)
+				;;
+			n | N)
 				# Parse n/N into a random number [0-9]
-				result+="$(( RANDOM % 10 ))"
-			;;
-			s|S)
+				result+="$((RANDOM % 10))"
+				;;
+			s | S)
 				# Parse s/S into the given separator
 				result+="${separator}"
-			;;
+				;;
 			*)
 				# More input validation
 				log w "Unrecognized character \"${char}\" in pattern at line 1, column ${y}. Ignoring..."
-			;;
+				;;
 		esac
 	done
 	#

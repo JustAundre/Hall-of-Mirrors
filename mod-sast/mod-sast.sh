@@ -53,20 +53,20 @@ calc_score() {
 	)); do
 		# For every "numerator" in "denominator" instances of "flagged" starting from 1, quadratically increase the score by "quad_mod"
 		# Bash doesn't really have fractions so this is the closest we're getting without the bc command.
-		if (( i % denominator < numerator )); then
-			(( counter += base_add ))
-			(( base_add += quad_mod ))
+		if ((i % denominator < numerator)); then
+			((counter += base_add))
+			((base_add += quad_mod))
 		fi
 		#
 		# Enforce the bounds
-		if (( counter > max )); then
+		if ((counter > max)); then
 			# Send score breakdown with notice of score being rounded down
 			capped=true
 			printf 'Points from %s: %s/%s (rounded down from %s)\n' "${readable_name}" "${max}" "${max}" "${counter}"
 			counter="${max}"
 			break
 		fi
-		if (( "${#link[@]}" > 0 && quad_mod < 0 && counter < min )); then
+		if (("${#link[@]}" > 0 && quad_mod < 0 && counter < min)); then
 			# Ditto but rounded up
 			capped=true
 			printf 'Points from %s: %s/%s (rounded up from from %s)\n' "${readable_name}" "${min}" "${max}" "${counter}"
@@ -82,10 +82,11 @@ calc_score() {
 	score["${link_name}"]="${counter}/${max}"
 }
 combine_scores() {
-	local val total total_max message="${1}"; shift 1
+	local val total total_max message="${1}"
+	shift 1
 	for key in "${@}"; do
 		val="${score["${key}"]:-0/0}"
-		local total="$(( total + ${val%%/*} ))" total_max="$(( total_max + ${val##*/} ))"
+		local total="$((total + ${val%%/*}))" total_max="$((total_max + ${val##*/}))"
 	done
 	printf '%s: %s/%s\n' "${message}" "${total}" "${total_max}"
 }
@@ -98,9 +99,12 @@ combine_scores() {
 # Decompilation
 #
 # Enumerate all JAR files in passed path (if passed path was passed and exists, else CWD).
-if [[ -n "${1}" && -e "${1}" ]]; then mapfile -td '' jars < <(find "${1}" -type f -name '*.jar' -print0)
-elif [[ -n "${1}" ]]; then echo 'W: Provided path does not exist; falling back to CWD.'
-else mapfile -td '' jars < <(find . -type f -name '*.jar' -print0)
+if [[ -n "${1}" && -e "${1}" ]]; then
+	mapfile -td '' jars < <(find "${1}" -type f -name '*.jar' -print0)
+elif [[ -n "${1}" ]]; then
+	echo 'W: Provided path does not exist; falling back to CWD.'
+else
+	mapfile -td '' jars < <(find . -type f -name '*.jar' -print0)
 fi
 #
 # Exit if no JARs were found
