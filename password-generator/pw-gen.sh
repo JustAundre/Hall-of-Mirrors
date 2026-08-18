@@ -3,9 +3,9 @@
 # Environment Setup
 #
 # Source library commands
-[[ -d "$(pwd)/../lib/" ]] || exit 69
-for function in "$(pwd)/../lib/"*".sh"; do
-	source "${function}"
+[[ -d "$../lib/" ]] || exit 69
+for function in "$../lib/"*; do
+	. "${function}"
 done
 #
 # Filename/path of dictionary file & URL to fallback dictionary.
@@ -58,7 +58,6 @@ while getopts 's:m:M:c:a:p:v' arg; do
 		a) password_amount="${OPTARG}";;
 		p) pattern="${OPTARG}";;
 		v) verbose=y;;
-		;;
 		*)
 			log e "Invalid argument \"${arg}\""
 			exit 2
