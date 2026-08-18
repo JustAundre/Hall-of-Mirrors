@@ -3,7 +3,7 @@
 # Environment Setup
 #
 # Source configuration
-. ./config.sh || exit 1
+. "$(dirname "${0}")/config.sh" || exit 1
 
 
 
