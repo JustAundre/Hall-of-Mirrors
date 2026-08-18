@@ -25,7 +25,7 @@ filemon() {
 			# Ensure the path isn't a directory
 			# Ampersand (&) placed at the end of...
 			# ...metamod to prevent it from bottle-necking.
-			[[ -f "${file}" ]] && metamod "${file}" "${3}" "${4}" "${5}" &
+			[[ -f ${file} ]] && metamod "${file}" "${3}" "${4}" "${5}" &
 		done
 }
 

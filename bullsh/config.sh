@@ -69,7 +69,7 @@ stop_hash=true
 counts=0
 #
 # The prompt to show on each new line
-[[ "${config[fake_root]}" == true ]] &&
+[[ ${config[fake_root]} == true ]] &&
 	declare -x PS1="[root@${HOSTNAME%%.*} ~]# " ||
 	declare -x PS1="[${USER}@${HOSTNAME%%.*} ~]$ "
 #
@@ -84,4 +84,4 @@ EOF
 declare -r PROMPT_COMMAND
 #
 # Dynamic handling for SSH_CONNECTION/ip_from
-[[ -z "${SSH_CLIENT}" ]] && SSH_CLIENT=Local
+[[ -z ${SSH_CLIENT} ]] && SSH_CLIENT=Local

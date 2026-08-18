@@ -39,7 +39,7 @@ warn() {
 # Function to send an annoyance to the terminal which got the password wrong
 annoyance() {
 	# Prevent intensive resource consumption
-	[[ -z "${annoying}" ]] && annoying=placeholder || return 1
+	[[ -z ${annoying} ]] && annoying=placeholder || return 1
 	#
 	# Check annoyance type
 	case "${config[annoyance_index]}" in
@@ -124,56 +124,53 @@ passwd_check() {
 	# Simulate a fake delay (if configured)
 	# Silently lock out after max_tries
 	# Generate hash only if not locked out
-	[[ "${layer_at}" -eq 1 ]] && history -s "${input}"
-	[[ "${config[fake_latency]}" == y ]] && sleep "${config[fake_latency]}"
-	[[ "${counts}" -gt "${config[retry_cap]}" && "${stop_hash}" != true ]] && declare -r stop_hash=true
-	[[ "${stop_hash}" == n ]] && local in_hashed="$(hash)"
+	[[ ${layer_at} -eq 1 ]] && history -s "${input}"
+	[[ ${config[fake_latency]} == y ]] && sleep "${config[fake_latency]}"
+	[[ ${counts} -gt ${config[retry_cap]} && ${stop_hash} != true ]] && declare -r stop_hash=true
+	[[ ${stop_hash} == n ]] && local in_hashed="$(hash)"
 	#
 	# Input Parsing
 	# Print a fake error & exit if the input is too big
-	if [[ "${#input}" -gt "${config[stdin_cap]}" ]]; then
+	if [[ ${#input} -gt ${config[stdin_cap]} ]]; then
 		printf "\nrbash: fork: cannot allocate memory\n"
 		exit 255
 	#
 	# Do nothing on empty input
-	elif [[ -z "${input}" ]]; then
+	elif [[ -z ${input} ]]; then
 		return
 	#
 	# Mimic rbash restrictions & errors (L1 exclusive)
-	elif [[ "${layer_at}" -eq 1 ]]; then
-		if [[ "${cmd}" == */* ]]; then
+	elif [[ ${layer_at} -eq 1 ]]; then
+		if [[ ${cmd} == */* ]]; then
 			echo "rbash: ${cmd}: cannot specify \"/\" in command names"
-		elif [[ "${cmd}" =~ ^(exit|logout)$ ]]; then
+		elif [[ ${cmd} =~ ^(exit|logout)$ ]]; then
 			exit 1
-		elif [[ "${cmd}" == sudo ]]; then
-			if [[ "${config[fake_root]}" == true ]]; then
+		elif [[ ${cmd} == sudo ]]; then
+			if [[ ${config[fake_root]} == true ]]; then
 				sudo echo 'root is not in the sudoers file.  This incident will be reported.'
 			else
 				sudo echo "${USER} is not in the sudoers file.  This incident will be reported."
 			fi
-		elif [[ "${cmd}" == printf ]]; then
+		elif [[ ${cmd} == printf ]]; then
 			printf '%s' "${input/'printf '//}"
-		elif [[ "${cmd}" == echo ]]; then
+		elif [[ ${cmd} == echo ]]; then
 			printf '%s' "${input/'echo '//}\n"
-		elif [[ "${cmd}" =~ ^([a-zA-Z0-9_-]+)= ]]; then
+		elif [[ ${cmd} =~ ^([a-zA-Z0-9_-]+)= ]]; then
 			echo "rbash: ${BASH_REMATCH[1]}: readonly variable"
 		elif type -t "${cmd}" &> /dev/null; then
 			echo "rbash: ${cmd}: Permission denied"
 		fi
 		#
-		# Just maybe don't try this on epileptic people...
-		# Although maybe don't connect to a server via SSH,
-		# that can send your terminal anything, if you're epileptic.
-		[[ "${config[annoyance_index]}" != 0 ]] && annoyance &
+		# EPILEPSY WARNING
+		[[ ${config[annoyance_index]} != 0 ]] && annoyance &
 	fi
 	#
 	# Check for current layers' password
 	if [[
-		"${stop_hash}" == n &&
-		-n "${input}" &&
-		"${in_hashed}" == "${target_hash}"
+		${stop_hash} == n &&
+		-n ${input} &&
+		${in_hashed} == "${target_hash}"
 	]]; then
-		# Log success
 		# Reset fail counter & return success.
 		warn pass
 		counts=0
@@ -197,7 +194,7 @@ declare -rf warn annoyance handover hash passwd_check
 # The Honey
 #
 # Check for non-interactive commands
-if [[ -n "${SSH_ORIGINAL_COMMAND}" ]]; then
+if [[ -n ${SSH_ORIGINAL_COMMAND} ]]; then
 	warn fail "${SSH_ORIGINAL_COMMAND} -- via non-interactive SSH execution"
 	exit 10
 fi
@@ -206,39 +203,36 @@ fi
 while true; do
 	case "${layer_at}" in
 		1)
-			# L1 -- False Terminal
+			# L1 | False Terminal
 			read -t "${config[read_tmout]}" -erp "${PS1}" -n "$((max_stdin + 1))" input || exit 1
 			#
 			# Check the input & move into next layer if correct.
 			passwd_check || break
-			[[ "${#passwd_hashes[@]}" -gt 1 ]] || handover
+			[[ ${#passwd_hashes[@]} -gt 1 ]] || handover
 			#
-			# Check the input & move into next layer...
-			# Or pass into real shell if no more layers.
-			# Time to go mute!
+			# Check the input & move into next layer or pass into real shell if no more layers.
 			stty -echo
 			trap '' INT TERM TSTP
 			echo 'This account is currently not available.'
 			((layer_at++))
 			;;
 		2)
-			# L2 -- Silence
+			# L2 | Silence
 			read -t "${config[read_tmout]}" -ern "$((max_stdin + 1))" input || exit 1
 			#
 			# Check the input & move into next layer...
 			# Or pass into real shell if no more layers.
 			passwd_check || break
-			[[ "${#passwd_hashes[@]}" -gt 2 ]] || handover
+			[[ ${#passwd_hashes[@]} -gt 2 ]] || handover
 			((layer_at++))
 			;;
 		3)
-			# L3 -- Silence (Again)
+			# L3 | Silence (Again)
 			read -t "${config[read_tmout]}" -ern "$((max_stdin + 1))" input || exit 1
 			#
-			# Check the input & move into next layer...
-			# Or pass into real shell if no more layers.
+			# Check the input & move into next layer or pass into real shell if no more layers.
 			passwd_check || break
-			[[ "${#passwd_hashes[@]}" -gt 3 ]] || handover
+			[[ ${#passwd_hashes[@]} -gt 3 ]] || handover
 			((layer_at++))
 			;;
 		*)

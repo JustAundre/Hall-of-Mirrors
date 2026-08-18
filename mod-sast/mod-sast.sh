@@ -28,7 +28,7 @@ pattern_chk() {
 	done
 	mapfile -t "${link_name}" < <(rg -i "${args[@]}" --trim | sort -u)
 	echo "JAR references ${readable_name} ${#link[@]} times."
-	[[ "${#link[@]}" -gt 0 ]] && printf '%s\n' "${link[@]}"
+	[[ ${#link[@]} -gt 0 ]] && printf '%s\n' "${link[@]}"
 	echo
 }
 
@@ -76,7 +76,7 @@ calc_score() {
 	done
 	#
 	# If scoring wasn't pruned (and as a result, a breakdown was already sent), then don't send another.
-	[[ -z "${capped}" ]] && printf 'Points from %s: %s/%s\n' "${readable_name}" "${counter}" "${max}"
+	[[ -z ${capped} ]] && printf 'Points from %s: %s/%s\n' "${readable_name}" "${counter}" "${max}"
 	#
 	# Assign score to its own index inside an associative array.
 	score["${link_name}"]="${counter}/${max}"
@@ -99,16 +99,16 @@ combine_scores() {
 # Decompilation
 #
 # Enumerate all JAR files in passed path (if passed path was passed and exists, else CWD).
-if [[ -n "${1}" && -e "${1}" ]]; then
+if [[ -n ${1} && -e ${1} ]]; then
 	mapfile -td '' jars < <(find "${1}" -type f -name '*.jar' -print0)
-elif [[ -n "${1}" ]]; then
+elif [[ -n ${1} ]]; then
 	echo 'W: Provided path does not exist; falling back to CWD.'
 else
 	mapfile -td '' jars < <(find . -type f -name '*.jar' -print0)
 fi
 #
 # Exit if no JARs were found
-if [[ "${#jars[@]}" -eq 0 ]]; then
+if [[ ${#jars[@]} -eq 0 ]]; then
 	echo 'E: No files ending in ".jar" were found.' >&2
 	exit 2
 fi
