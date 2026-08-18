@@ -4,10 +4,10 @@
 #
 # Create and echo the random file path for the decompilation directory
 if ! decompilation_dir="$(mktemp -d /tmp/decompilation-XXXXXX)"; then
-	printf 'E: Failed to create temporary data directory for decompilation of data @ %s--exiting...' "$(date)"
+	printf 'E: Failed to create temporary data directory for decompilation of data @ "%s".' "$(date)"
 	exit 1
 fi
-echo "Path of temporary decompilation data: ${decompilation_dir}"
+printf 'Path of temporary decompilation data: %s' "${decompilation_dir}"
 #
 # Set auto-cleanup on exit.
 trap 'rm -rf "${decompilation_dir}"' EXIT
@@ -105,13 +105,13 @@ fi
 #
 # Exit if no JARs were found
 if [[ "${#jars[@]}" -eq 0 ]]; then
-	echo 'E: No JAR files in the CWD to scan were found; the JAR files'\'' file extension must be ".jar"' >&2
+	echo 'E: No files ending in ".jar" were found.' >&2
 	exit 2
 fi
 #
 # Enqueue all JARs for simultanious decompilation.
 for jar in "${jars[@]}"; do
-	printf 'Started decompilation of "%s" @ "%s"...\n' "$(pwd)/${jar}" "$(date)"
+	printf '%s: Decompiling "%s"...\n' "$(date)" "$(pwd)/${jar}"
 	cfr "${jar}" --outputdir "${decompilation_dir}/$(basename "${jar}" .jar)" --silent true &
 done
 echo 'i: Awaiting decompilation of JARs to finish...'
