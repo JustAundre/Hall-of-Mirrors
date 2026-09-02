@@ -3,7 +3,7 @@
 # Environment Setup
 #
 # Source library commands
-[[ -d "$../lib/" ]] || exit 69
+[[ -d "../lib/" ]] || exit 69
 for function in "$../lib/"*; do
 	. "${function}"
 done
