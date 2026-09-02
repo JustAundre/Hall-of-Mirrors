@@ -28,8 +28,7 @@ filemon() {
 	inotifywait --includei "${2}" --format '%w%f%0' -qmrP -e attrib -e move -e create -- "${1}" |
 		while read -r file; do
 			# Ensure the path isn't a directory
-			# Ampersand (&) placed at the end of...
-			# ...metamod to prevent it from bottle-necking.
+			# Ampersand (&) placed at the end of metamod to prevent it from bottle-necking.
 			[[ -f ${file} ]] && metamod "${file}" "${3}" "${4}" "${5}" &
 		done
 }
