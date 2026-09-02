@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+
+
+
+
+
 #
 # FirewallD TUI
 #
@@ -9,21 +14,23 @@ hash firewall-cmd && while true; do
 		'In-memory'
 		'On-disk & in-memory'
 	)
-	if hash firewall-cmd; then persistence="$(checklist -t 'Where should this rule go?' "${persistences[@]}")"
-	else persistence='On-disk & in-memory'
+	if hash firewall-cmd; then
+		persistence="$(checklist -t 'Where should this rule go?' "${persistences[@]}")"
+	else
+		persistence='On-disk & in-memory'
 	fi
 	#
 	# Gather the IP version, source/destination IPs and ports, the protocol, and the action.
 	# (Subshell for variable clearing again.)
 	(
 		input=(
-			'ipv4' # IP version
-			'1.0.0.0' # Source IP
-			'30' # Source port
+			'ipv4'      # IP version
+			'1.0.0.0'   # Source IP
+			'30'        # Source port
 			'2.0.0.0/8' # Destination IP
-			'60' # Destination port
-			'tcp' # Protocol
-			'drop' # Action
+			'60'        # Destination port
+			'tcp'       # Protocol
+			'drop'      # Action
 		)
 		target=0
 		while true; do
@@ -41,17 +48,27 @@ hash firewall-cmd && while true; do
 			# Interprets the source IP
 			# Uses `ip route get` as a linter for IP addresses.
 			[[ -n "${input[1]}" ]] && rich_rule+="source address=\"${input[1]}\" "
-			if [[ -z "${input[1]}" ]]; then readable+='finds requests from anywhere, '
-			elif ip route get "${input[1]}" &>/dev/null; status="$?"; [[ ! "${status}" -eq 1 ]]; then readable+="finds requests from ${input[1]}, "
-			else readable+='finds requests from N/A, '
+			if [[ -z "${input[1]}" ]]; then
+				readable+='finds requests from anywhere, '
+			elif
+				ip route get "${input[1]}" &>/dev/null
+				status="$?"
+				[[ ! "${status}" -eq 1 ]]
+			then
+				readable+="finds requests from ${input[1]}, "
+			else
+				readable+='finds requests from N/A, '
 			fi
 			#
 			# Interprets the source port
 			# The lowest port number is 0 (exclusive) and 2^16 - 1 (inclusive).
 			[[ -n "${input[2]}" ]] && rich_rule+="source-port port=\"${input[2]}\" "
-			if [[ "${input[2]}" =~ ^[0-9]{1,5}$ && "${input[2]}" -gt 0 && "${input[2]}" -le 65535 ]]; then readable+="port ${input[2]}, "
-			elif [[ -z "${input[2]}" ]]; then readable+="coming from any port, "
-			else readable+="port N/A, "
+			if [[ "${input[2]}" =~ ^[0-9]{1,5}$ && "${input[2]}" -gt 0 && "${input[2]}" -le 65535 ]]; then
+				readable+="port ${input[2]}, "
+			elif [[ -z "${input[2]}" ]]; then
+				readable+="coming from any port, "
+			else
+				readable+="port N/A, "
 			fi
 			#
 			# Interprets the destination port
@@ -59,25 +76,38 @@ hash firewall-cmd && while true; do
 			# [3] is partially parsed here and [4] is partially parsed below because-
 			# the ip/port format is flipped to port/ip in the English transcription in favor of sentence flow.
 			[[ -n "${input[3]}" ]] && rich_rule+="destination address=\"${input[3]}\" "
-			if [[ "${input[4]}" =~ ^[0-9]{1,5}$ && "${input[4]}" -gt 0 && "${input[4]}" -le 65535 ]]; then readable+="en route to port ${input[4]} "
-			elif [[ -z "${input[4]}" ]]; then readable+="en route to any port "
-			else readable+="en route to port N/A "
+			if [[ "${input[4]}" =~ ^[0-9]{1,5}$ && "${input[4]}" -gt 0 && "${input[4]}" -le 65535 ]]; then
+				readable+="en route to port ${input[4]} "
+			elif [[ -z "${input[4]}" ]]; then
+				readable+="en route to any port "
+			else
+				readable+="en route to port N/A "
 			fi
 			#
 			# Interprets the destination IP
 			# Same underlying logic as source IP/[1]
 			[[ -n "${input[4]}" ]] && rich_rule+="port port=\"${input[4]}\" "
-			if [[ -z "${input[3]}" ]]; then readable+='of any IP '
-			elif ip route get "${input[3]}" &>/dev/null; status="$?"; [[ ! "${status}" -eq 1 ]]; then readable+="of ${input[3]} "
-			else readable+='of N/A '
+			if [[ -z "${input[3]}" ]]; then
+				readable+='of any IP '
+			elif
+				ip route get "${input[3]}" &>/dev/null
+				status="$?"
+				[[ ! "${status}" -eq 1 ]]
+			then
+				readable+="of ${input[3]} "
+			else
+				readable+='of N/A '
 			fi
 			#
 			# Interprets the protocol;
 			# Only valid options are tcp/udp.
 			[[ -n "${input[5]}" ]] && rich_rule+="protocol=\"${input[5]}\" "
-			if [[ "${input[5]}" =~ ^(udp|tcp)$ ]]; then readable+="with the ${input[5]} protocol "
-			elif [[ -z "${input[5]}" ]]; then readable+='with any protocol '
-			else readable+='with the N/A protocol '
+			if [[ "${input[5]}" =~ ^(udp|tcp)$ ]]; then
+				readable+="with the ${input[5]} protocol "
+			elif [[ -z "${input[5]}" ]]; then
+				readable+='with any protocol '
+			else
+				readable+='with the N/A protocol '
 			fi
 			#
 			# Interprets the action;
@@ -95,10 +125,14 @@ hash firewall-cmd && while true; do
 			# Backspace works as backspace.
 			# Change fields with [ENTER].
 			IFS= read -srn1 char
-			if [[ "${char}" == $'\x7f' || "${char}" == $'\b' ]]; then input["${target}"]="${input[${target}]%?}"
-			elif [[ -z "${char}" ]]; then (( target++ ))
-			elif [[ "${char}" =~ ^[a-zA-Z0-9.:/]$ ]]; then input["${target}"]+="${char}"
-			else log w "Invalid character \"${char}\"" && pause
+			if [[ "${char}" == $'\x7f' || "${char}" == $'\b' ]]; then
+				input["${target}"]="${input[${target}]%?}"
+			elif [[ -z "${char}" ]]; then
+				((target++))
+			elif [[ "${char}" =~ ^[a-zA-Z0-9.:/]$ ]]; then
+				input["${target}"]+="${char}"
+			else
+				log w "Invalid character \"${char}\"" && pause
 			fi
 			#
 			# Exit once all fields are filled
@@ -108,11 +142,13 @@ hash firewall-cmd && while true; do
 		echo "firewall-cmd ${firewall_cmd_args[*]}"
 		#
 		# Stop execution if the rule is incorrect
+		# shellcheck disable=SC2106
 		confirm 'Is this correct' || continue
 		#
 		# Commit rule to disk/memory respectively if selected.
 		[[ "${persistence,,}" =~ 'in-memory' ]] && firewall-cmd "${firewall_cmd_args[@]}"
-		[[ "${persistence,,}" =~ 'on-disk' ]] && firewall_cmd_args+=('--permanent'); firewall-cmd "${firewall_cmd_args[@]}"
+		[[ "${persistence,,}" =~ 'on-disk' ]] && firewall_cmd_args+=('--permanent')
+		firewall-cmd "${firewall_cmd_args[@]}"
 	)
 	#
 	# Is it time to exit?

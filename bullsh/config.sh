@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
+
+
+
+
+
 #
 # Anti-DDoS
 #
 # Kill extra sessions of the script from the same user
-pgrep -f "${0}" -u "${USER}" | grep -v "^$$\$" | xargs kill -9
+pgrep -f "${0}" -u "${USER}" | grep -v "^$$\$" | xargs kill -9 &> /dev/null
 
 
 
@@ -14,17 +19,14 @@ pgrep -f "${0}" -u "${USER}" | grep -v "^$$\$" | xargs kill -9
 #
 # Configure hashes used for authentication (SHA-256).
 declare -r hashes=(
-	e5b98bb4f21fd6a3ab4fe9c6928734f960501ab9217f7f22905804d9a1c0e11a0575b9c79930e3f7ab818d98fcfa93dd4424560afbb8232c7a318689885513a0
-	c9edc4de9de21784f2e86f2dd087fa8b1670a9442ce614eb2eb1b3358052dd3996b09c3262912fcec67d8ab2d9e4f2fa12e72acb0548cad63ec1af15f9951f17
-	6899eb9d96ef8fb19d9c09efa879281b453ca4f7339b3a553111ab12a2c3dfcdd9be236712519894d0490032b047dcc49af050554e8037f9332262f362fdd786
+	249694f401f802a11b17b75b597aaca095eb716385f75322cd570549090d1db45bea25dc91bb602c59228c2b32bd77efe9ac84b7fe798809de577f62fae13ab1
+	b04232e51b1e2e37d2690f6a2b8fef8502342eea5983171f98b9c60bb5b1b1f2af6a24ace5b87a9275842b32199135408e9f92dc930cfd5c165dcc7c026d26a7
+	108eb11bd9dd27ccd670adb6dacdeb3da42709d0bc68ffdc64031110e4e535b36e9c452c1acaf30a66ce2a3c98396c92de118a08e8f6705ebfe7d35691bf529e
 )
 #
 # General BullSH configurations
 declare -Ar config=(
-	# Configure where to log to
-	# Set log_file to /dev/null to disable to-file logging.
-	# JournalCTL logging is required right now.
-	[log_file]=/var/tmp/shell.log
+	# JournalCTL log tag
 	[log_tag]=bullsh
 	#
 	# Limitations
@@ -39,10 +41,8 @@ declare -Ar config=(
 	# Extra Flare
 	# fake_root determines whether the PS1 variable will display 'root' as the user. Takes a boolean of y/n, T/F, or 1/0.
 	# fake_latency determines how much delay there is between each [ENTER].
-	# annoyance_index determines what kind of fate awaits the user when their input is not the password.
-	[fake_root]=true
+	[fake_root]=1
 	[fake_latency]="0.$((RANDOM % 3 + 1))"
-	[annoyance_index]=0
 	#
 	# Advanced Options
 	# hashing_rounds determines for how many rounds will input be hashed
@@ -61,24 +61,31 @@ declare -Ar config=(
 declare -rx TMOUT=1
 declare -r python_hashing_logic="import hashlib, sys; h = sys.stdin.read().encode(); exec('for _ in range(${config[hashing_rounds]}):\n    h = hashlib.sha512(h).hexdigest().encode()'); print(h.decode())"
 #
-# What layer of the MFA to start at
+# Which layer # start at
 # Whether the script stops checking for the password (y/n)
 # The amount of login attempts to start with
 layer_at=1
-stop_hash=true
+stop_hash=0
 counts=0
-#
-# The prompt to show on each new line
-[[ ${config[fake_root]} == true ]] &&
-	declare -x PS1="[root@${HOSTNAME%%.*} ~]# " ||
+if (( config[fake_root] )); then
+	declare -x PS1="[root@${HOSTNAME%%.*} ~]# "
+else
 	declare -x PS1="[${USER}@${HOSTNAME%%.*} ~]$ "
+fi
+if TTY="$(tty)"; then
+	TTY="${TTY#*/*/}"
+	SSH_TTY="${TTY}"
+else
+	TTY="${SSH_TTY}"
+fi
+declare -rx TTY SSH_TTY
 #
 # Log everything
 IFS= read -rd '' PROMPT_COMMAND <<- EOF
 	history -a
 	last_cmd=\$(sed 's/^[ ]*[0-9]*[ ]*//' <<<"\$(history 1)")
 	[[ -n "\${last_cmd}" ]] &&
-		tee -a "${config[log_file]}" <<<"EUID: \${EUID} | UID: ${UID} | User: ${USER} | IP: ${SSH_CLIENT%% *} | TTY: ${SSH_TTY} | Cmd: \${last_cmd}" |
+		tee -a "${config[log_file]}" <<<"EUID: \${EUID} | UID: ${UID} | User: ${USER} | IP: ${SSH_CLIENT%% *} | TTY: ${TTY} | Cmd: \${last_cmd}" |
 			systemd-cat -t "${config[log_tag]}"
 EOF
 declare -r PROMPT_COMMAND

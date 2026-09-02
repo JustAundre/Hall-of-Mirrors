@@ -1,75 +1,21 @@
 # Aundre's Shell Script Suite
 
 > [!IMPORTANT]
-> Certain tools here depend on the active integrity/security of your system to be confidently deployed without fail and or external manipulation.
+>
+> Certain tools here depend on the active integrity/security of your system
+> to be confidently deployed without fail and or external manipulation.
 
 > [!CAUTION]
-> Experimental project; data loss may occur and the project owner does not claim liability in such occurances.
+>
+> Experimental project; data loss may occur and the project owner
+> does not claim liability in such occurances.
 
-> [!WARNING]
-> Documentation needs to be written and/or rewritten.
+A mono-repo of shell script and other associated files
+made for making a Linux server more secure, serveilant and/or restrictive.
 
-## Download
+Made with a burning, passionate love and hate for red teammers of [CCDCs](https://cyber-atlas.ncaecybergames.org/competitions/Collegiate%20Cyber%20Defense%20Competition).
 
-Clone the repository
+## Getting Started
 
-```bash
-git clone https://github.com/JustAundre/Hall-of-Mirrors.git
-```
-
-Update/download submodules
-
-```bash
-git submodule update --init --recursive
-```
-
-## Global Dependencies
-
-Must be running *`Linux`
-
-- *`MacOS` doesn't count.
-
-Must have/use:
-
-- `GNU Coreutils`
-- `inotify-tools`
-
-Required active shell
-
-- `Bash 5.0+`
-
-Required in-use Init. System
-
-- `SystemD`
-
-Basically everything here will also depend on the installation of `/server/general-conf/secure-env.sh`
-
-## Installation
-
-Refer to the respective `README.md`s for each of the subdirectories here for usage and installation instructions.
-
-## Repository Development
-
-Formatting checks
-
-- Run the below & implement formatting suggestions/fixes as needed.
-
-```bash
-shfmt -d .
-```
-
-Error & best practices checks
-
-- Run the below & implement fixes to oversights & best practices as needed.
-
-```bash
-find . -type f -name '*.sh' -exec shellcheck -x {} +
-```
-
-## Roadmap
-
-1. Scripts in `service-scripts/` need serious refactoring, reorganization & rescripting.
-
-## Transparency
-
-While LLMs were utilized in the process of making the code contained in this repo, these LLMs **did not** directly write *any* of the code present. The LLMs only were utilized in my learning process and were not prompted to provide a fix to an issue or write new functionality, period; only in my process to learn and improve, or the catching of minor semantic inconsistencies are they utilized.
+See the homepage of the [wiki](https://github.com/JustAundre/ass-suite/wiki)
+for instructions on how to download and utilize this project.
