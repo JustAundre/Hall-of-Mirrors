@@ -1,9 +1,0 @@
-[Unit]
-Description=Monitor /var/log/sessions for changes in real-time
-
-[Path]
-PathChanged=/var/log/sessions
-Unit=log-locker.service
-
-[Install]
-WantedBy=multi-user.target

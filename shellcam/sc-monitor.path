@@ -1,0 +1,9 @@
+[Unit]
+Description=Monitor shellcam logs
+
+[Path]
+PathChanged=/var/log/sessions
+Unit=sc-monitor.service
+
+[Install]
+WantedBy=multi-user.target

@@ -5,47 +5,38 @@
 
 
 #
-# Installation
+# Register Shellcam
 #
-# Install the logging directory
+# Create the logging directory
 mkdir -p /var/log/sessions
 chown 0:0 /var/log/sessions
 chmod 640 /var/log/sessions
 #
-# Install logger.sh to /opt/logger.sh
-install -m 750 -o 0 -g 0 logger.sh /opt/logger.sh
-cat >> /etc/sudoers <<- 'EOF'
-
-	# Run the logger script as root (needed to send log to secure locations, users are lowered to their original users/privileges)
-	ALL ALL=(ALL) SETENV: NOPASSWD: /opt/logger.sh
-EOF
-#
+# Allow shellcam to be ran as root by all users without a password (needed to send log to secure locations, users are lowered to their original users/privileges)
 # Allow passing of necessary variables through sudo
-cat >> /etc/sudoers <<- 'EOF'
-
-	# Allow passthrough of SSH_* variables to programs ran via sudo for better forensics.
-	Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"
-EOF
+# Register shellcam in a ForceCommand directive
+{
+	printf '%s\n%s' '# Run shellcam script as root w/o' 'ALL ALL=(ALL) SETENV: NOPASSWD: /opt/shellcam/main.sh'
+	printf '%s\n\t%s' '# Allow passthrough of SSH_* variables to programs ran via sudo for better forensics.' 'Defaults env_keep += "SSH_CLIENT SSH_CONNECTION SSH_TTY SSH_ORIGINAL_COMMAND"'
+	printf '%s\n%s' '# Force all users into terminal logger' 'ForceCommand sudo /opt/shellcam/main.sh'
+} >> /etc/sudoers
 #
-# Enable the session logger
-cat >> /etc/ssh/sshd_config <<- 'EOF'
-
-	# Force all users into terminal logger
-	ForceCommand sudo /opt/logger.sh
-EOF
-#
-# Get excluded users
-read -erp 'Enter the usernames of users to exclude from the logger (supports the username@ip format) (space-separated): ' -a exclusions
-#
-# Set up user exclusions
-for user in "${exclusions[@]}"; do
-	cat >> /etc/ssh/sshd_config <<- EOF
-
-		# Exclude user from logger script
-		Match User ${user}
-		    ForceCommand none
-	EOF
-done
-#
-# Restart SSH/SSHD
+# Restart SSH(D)
 systemctl restart sshd || systemctl restart ssh
+
+
+
+
+
+#
+# Protect Shellcam Logs
+#
+# Install monitor service
+cd "$(dirname "${0}")" || exit 1
+ln -v sc-monitor.service /etc/systemd/system/sc-monitor.service
+ln -v sc-monitor.path /etc/systemd/system/sc-monitor.path
+#
+# Register and enable monitor service
+systemctl daemon-reload
+systemctl enable --now sc-monitor.service
+systemctl enable --now sc-monitor.path

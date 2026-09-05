@@ -7,13 +7,9 @@
 #
 # Environment Setup
 #
-# Secure PATH variable
-declare -rx PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin'
-#
 # Define location of logs
-declare -r log_dir='/var/log/sessions'
-#
 # Find log files currently being logged to
+declare -r log_dir='/var/log/sessions'
 is_open="$(lsof -c script -a +D "${log_dir}" -Fn 2>/dev/null | grep '^n' | cut -c2-)"
 declare -r is_open
 

@@ -3,7 +3,7 @@ Description=Session log locker
 
 [Service]
 Type=oneshot
-ExecStart=/opt/log-locker.sh
+ExecStart=/opt/shellcam/service.sh
 MemoryMax=64MB
 TasksMax=64
 
